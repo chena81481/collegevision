@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Send the communication
     if (type === "EMAIL") {
-      if (process.env.RESEND_API_KEY) {
+      if (resend) {
         await resend.emails.send({
           from: 'CollegeVision <admissions@collegevision.in>',
           to: [lead.email],

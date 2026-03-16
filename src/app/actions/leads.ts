@@ -4,8 +4,10 @@ import { createClient } from '@/utils/supabase/server'
 import { Resend } from 'resend'
 import twilio from 'twilio'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
 
 export async function submitApplicationLead(formData: FormData) {
   const phone = formData.get('phone') as string
@@ -70,17 +72,19 @@ export async function submitApplicationLead(formData: FormData) {
     const formattedPhone = phone.startsWith('+') ? phone : `+91${phone.replace(/[^0-9]/g, '')}`
     
     try {
-      await twilioClient.messages.create({
-        body: `Hi ${firstName}! 🎓 Priya here from CollegeVision.\n\nI just received your profile for the *${courseName} at ${universityName}*. \n\nI'm reviewing your eligibility for the fee waiver now. When is a good time to call you today?`,
-        from: 'whatsapp:+14155238886', 
-        to: `whatsapp:${formattedPhone}`
-      })
+      if (twilioClient) {
+        await twilioClient.messages.create({
+          body: `Hi ${firstName}! 🎓 Priya here from CollegeVision.\n\nI just received your profile for the *${courseName} at ${universityName}*. \n\nI'm reviewing your eligibility for the fee waiver now. When is a good time to call you today?`,
+          from: 'whatsapp:+14155238886', 
+          to: `whatsapp:${formattedPhone}`
+        })
+      }
     } catch (twilioErr) {
       console.error("Twilio WhatsApp failed:", twilioErr)
     }
 
     // 4. Fire Automated Welcome Email via Resend
-    if (studentEmail) {
+    if (studentEmail && resend) {
       await resend.emails.send({
         from: 'Priya at CollegeVision <counseling@collegevision.com>',
         to: studentEmail,

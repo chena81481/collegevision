@@ -2,7 +2,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { LeadStatus, ActivityType, LeadStatusType } from "@/lib/constants";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function triggerLeadAutomation(leadId: string, newStatus: LeadStatusType) {
   try {
@@ -43,7 +43,7 @@ export async function triggerLeadAutomation(leadId: string, newStatus: LeadStatu
 
     // 3. Automated Emails (Resend)
     if (newStatus === LeadStatus.WON) {
-      if (process.env.RESEND_API_KEY) {
+      if (resend) {
         await resend.emails.send({
           from: 'CollegeVision <admissions@collegevision.in>',
           to: [lead.email],
