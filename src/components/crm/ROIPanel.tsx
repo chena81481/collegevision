@@ -66,7 +66,7 @@ export function ROIPanel({ application }: { application: any }) {
                 value={[scholarship]} 
                 max={2000000} 
                 step={50000} 
-                onValueChange={(vals) => setScholarship(vals[0])}
+                onValueChange={(vals: number[]) => setScholarship(vals[0])}
                 className="[&_.relative]:bg-emerald-500"
               />
             </div>
@@ -80,7 +80,7 @@ export function ROIPanel({ application }: { application: any }) {
                 value={[salary]} 
                 max={5000000} 
                 step={100000} 
-                onValueChange={(vals) => setSalary(vals[0])}
+                onValueChange={(vals: number[]) => setSalary(vals[0])}
               />
             </div>
           </div>

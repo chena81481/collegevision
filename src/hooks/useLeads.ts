@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { LeadStatus } from "@prisma/client";
+import { LeadStatusType } from "@/lib/constants";
 import { toast } from "sonner";
 
 export function useLeads() {
@@ -23,7 +23,7 @@ export function useLeads() {
     }
   }, []);
 
-  const updateLeadStatus = async (leadId: string, newStatus: LeadStatus) => {
+  const updateLeadStatus = async (leadId: string, newStatus: LeadStatusType) => {
     // Optimistic Update
     const oldLeads = [...leads];
     setLeads((prev) =>

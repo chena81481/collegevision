@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { LeadStatus } from "@prisma/client";
+import { LeadStatus } from "@/lib/constants";
 
 export async function GET() {
   try {

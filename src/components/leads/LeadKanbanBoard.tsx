@@ -1,7 +1,7 @@
 "use client";
 
 import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
-import { LeadStatus } from "@/lib/constants";
+import { LeadStatus, LeadStatusType } from "@/lib/constants";
 import { LeadCard } from "./LeadCard";
 import { useLeads } from "@/hooks/useLeads";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ export function LeadKanbanBoard() {
       return;
     }
 
-    const newStatus = destination.droppableId as LeadStatus;
+    const newStatus = destination.droppableId as LeadStatusType;
     updateLeadStatus(draggableId, newStatus);
   };
 

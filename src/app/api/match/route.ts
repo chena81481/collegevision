@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
-import { calculateTrueROI } from '@/lib/roi-calculator';
+import { calculateROI } from '@/lib/roi-calculator';
 
 // ─── Clients ─────────────────────────────────────────────────────────────────
 const supabase = createClient(
@@ -123,7 +123,7 @@ Required JSON format:
       logoUrl: course.universities?.logo_url ?? null,
       gradientStart: course.universities?.gradient_start ?? 'from-slate-50',
       gradientEnd: course.universities?.gradient_end ?? 'to-white',
-      roi: calculateTrueROI(course.total_fee_inr, course.avg_ctc_inr ?? 0, course.duration_months),
+      roi: calculateROI(course.total_fee_inr, 0, 0, course.avg_ctc_inr ?? 0, (course.duration_months ?? 24) / 12),
     }));
 
     return NextResponse.json({

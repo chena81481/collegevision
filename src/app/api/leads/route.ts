@@ -1,7 +1,7 @@
 // app/api/leads/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { LeadStatus } from "@prisma/client";
+import { LeadStatus } from "@/lib/constants";
 import { getLeadFilters } from "@/lib/auth";
 
 // GET all leads

@@ -44,3 +44,20 @@ export const ActivityType = {
 } as const;
 
 export type ActivityTypeType = keyof typeof ActivityType;
+
+export const CounselorRole = {
+  ADMIN: "ADMIN",
+  COUNSELOR: "COUNSELOR",
+} as const;
+
+export type CounselorRoleType = keyof typeof CounselorRole;
+
+export const ApplicationStatus = {
+  SHORTLISTED: "SHORTLISTED",
+  APPLIED: "APPLIED",
+  OFFER_RECEIVED: "OFFER_RECEIVED",
+  REJECTED: "REJECTED",
+  WAITLISTED: "WAITLISTED",
+} as const;
+
+export type ApplicationStatusType = keyof typeof ApplicationStatus;

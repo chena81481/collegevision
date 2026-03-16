@@ -1,10 +1,10 @@
 import prisma from "@/lib/prisma";
-import { LeadStatus, ActivityType } from "@prisma/client";
+import { LeadStatus, ActivityType, LeadStatusType } from "@/lib/constants";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function triggerLeadAutomation(leadId: string, newStatus: LeadStatus) {
+export async function triggerLeadAutomation(leadId: string, newStatus: LeadStatusType) {
   try {
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
