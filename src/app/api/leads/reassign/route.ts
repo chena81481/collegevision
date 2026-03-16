@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { getCounselor, isAdmin } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -16,44 +16,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid request data" }, { status: 400 });
     }
 
-    // Verify counselor exists
-    const targetCounselor = await prisma.counselor.findUnique({
-      where: { id: targetCounselorId }
-    });
+    const supabase = createAdminClient();
 
-    if (!targetCounselor) {
+    // Verify counselor exists
+    const { data: targetCounselor, error: counselorError } = await supabase
+      .from('counselors')
+      .select('name')
+      .eq('id', targetCounselorId)
+      .single();
+
+    if (counselorError || !targetCounselor) {
       return NextResponse.json({ error: "Target counselor not found" }, { status: 404 });
     }
 
     // Bulk update leads
-    const updateResult = await prisma.lead.updateMany({
-      where: {
-        id: { in: leadIds }
-      },
-      data: {
-        ownerCounselorId: targetCounselorId
-      }
-    });
+    const { data: updateResult, error: updateError, count } = await supabase
+      .from('leads')
+      .update({ ownerCounselorId: targetCounselorId })
+      .in('id', leadIds);
 
-    // Log the bulk activity (we'll just log one activity per lead or a summarized one if we had a BulkActivity model)
-    // For now, let's create individual activities for tracking
-    const activityPromises = leadIds.map(leadId => 
-      prisma.activity.create({
-        data: {
-          leadId,
-          counselorId: user.id, // Admin who did the reassigning
-          type: "ASSIGNED",
-          description: `Bulk reassigned to ${targetCounselor.name} by Admin`
-        }
-      })
-    );
+    if (updateError) throw updateError;
 
-    await Promise.all(activityPromises);
+    // Log the bulk activity
+    const activities = leadIds.map(leadId => ({
+      leadId,
+      counselorId: user.id, // Admin who did the reassigning
+      type: "ASSIGNED",
+      description: `Bulk reassigned to ${targetCounselor.name} by Admin`
+    }));
+
+    const { error: activityError } = await supabase.from('activities').insert(activities);
+    if (activityError) throw activityError;
 
     return NextResponse.json({ 
       success: true, 
-      count: updateResult.count,
-      message: `Successfully reassigned ${updateResult.count} leads to ${targetCounselor.name}`
+      count: leadIds.length,
+      message: `Successfully reassigned ${leadIds.length} leads to ${targetCounselor.name}`
     });
   } catch (error) {
     console.error("Lead Reassignment Error:", error);

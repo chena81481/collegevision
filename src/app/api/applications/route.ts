@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getCounselor, canAccessLead } from "@/lib/auth";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { canAccessLead } from "@/lib/auth";
 
 // Create or update application
 export async function POST(request: NextRequest) {
@@ -19,18 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const application = await prisma.application.upsert({
-      where: {
-        leadId_universityId: { leadId, universityId }
-      },
-      update: {
-        status,
-        scholarshipAmount,
-        tuitionFee,
-        livingCost,
-        notes
-      },
-      create: {
+    const supabase = createAdminClient();
+    const { data: application, error: upsertError } = await supabase
+      .from('applications')
+      .upsert({
         leadId,
         universityId,
         status,
@@ -38,17 +30,18 @@ export async function POST(request: NextRequest) {
         tuitionFee,
         livingCost,
         notes
-      }
-    });
+      }, { onConflict: 'leadId,universityId' })
+      .select()
+      .single();
+
+    if (upsertError) throw upsertError;
 
     // Log Activity
-    await prisma.activity.create({
-      data: {
-        leadId,
-        counselorId,
-        type: "UPDATED",
-        description: `Application status for ${universityId} updated to ${status}`
-      }
+    await supabase.from('activities').insert({
+      leadId,
+      counselorId,
+      type: "UPDATED",
+      description: `Application status for ${universityId} updated to ${status}`
     });
 
     return NextResponse.json(application);
@@ -68,11 +61,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Lead ID is required" }, { status: 400 });
     }
 
-    const applications = await prisma.application.findMany({
-      where: { leadId },
-      include: { university: true }
-    });
+    const supabase = createAdminClient();
+    const { data: applications, error } = await supabase
+      .from('applications')
+      .select('*, university:universities(*)')
+      .eq('leadId', leadId);
 
+    if (error) throw error;
     return NextResponse.json(applications);
   } catch (error) {
     console.error("Application GET Error:", error);

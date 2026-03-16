@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { canAccessLead } from "@/lib/auth";
 
 export async function GET(
@@ -14,11 +14,14 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const documents = await prisma.document.findMany({
-      where: { leadId: id },
-      orderBy: { createdAt: "desc" }
-    });
+    const supabase = createAdminClient();
+    const { data: documents, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('leadId', id)
+      .order('createdAt', { ascending: false });
 
+    if (error) throw error;
     return NextResponse.json(documents);
   } catch (error) {
     console.error("Error fetching documents:", error);
@@ -41,23 +44,26 @@ export async function POST(
     const body = await request.json();
     const { name, type, url } = body;
 
-    const document = await prisma.document.create({
-      data: {
+    const supabase = createAdminClient();
+    const { data: document, error: docError } = await supabase
+      .from('documents')
+      .insert({
         name,
         type,
         url,
         leadId: id
-      }
-    });
+      })
+      .select()
+      .single();
+
+    if (docError) throw docError;
 
     // Log activity
-    await prisma.activity.create({
-      data: {
-        type: "UPDATED",
-        description: `Uploaded document: ${name} (${type})`,
-        leadId: id,
-        counselorId: activeCounselorId
-      }
+    await supabase.from('activities').insert({
+      type: "UPDATED",
+      description: `Uploaded document: ${name} (${type})`,
+      leadId: id,
+      counselorId: activeCounselorId
     });
 
     return NextResponse.json(document, { status: 201 });

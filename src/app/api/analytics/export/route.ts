@@ -1,21 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getLeadFilters, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { getLeadFilters } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
     const activeCounselorId = "c1"; // Placeholder for actual session
-    const isUserAdmin = await isAdmin(activeCounselorId);
     const rbacFilters = await getLeadFilters(activeCounselorId);
 
-    const leads = await prisma.lead.findMany({
-      where: rbacFilters,
-      include: {
-        university: true,
-        ownerCounselor: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const supabase = createAdminClient();
+    let query = supabase
+      .from('leads')
+      .select(`
+        *,
+        university:universities ( name ),
+        ownerCounselor:counselors ( name )
+      `)
+      .order('createdAt', { ascending: false });
+
+    if (rbacFilters.ownerCounselorId && rbacFilters.ownerCounselorId !== 'none') {
+      query = query.eq('ownerCounselorId', rbacFilters.ownerCounselorId);
+    } else if (rbacFilters.ownerCounselorId === 'none') {
+      return NextResponse.json([]); // No access
+    }
+
+    const { data: leads, error } = await query;
+
+    if (error) throw error;
 
     // Generate CSV content
     const headers = [
@@ -23,7 +33,7 @@ export async function GET(request: NextRequest) {
       "University", "Counselor", "Value", "Created At"
     ];
     
-    const rows = leads.map((lead: any) => [
+    const rows = (leads || []).map((lead: any) => [
       lead.id,
       lead.name,
       lead.email,
@@ -34,7 +44,7 @@ export async function GET(request: NextRequest) {
       lead.university?.name || "N/A",
       lead.ownerCounselor?.name || "Unassigned",
       lead.value || 0,
-      lead.createdAt.toISOString()
+      lead.createdAt ? new Date(lead.createdAt).toISOString() : "N/A"
     ]);
 
     const csvContent = [

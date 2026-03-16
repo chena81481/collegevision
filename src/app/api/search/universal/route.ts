@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,44 +10,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ leads: [], universities: [], knowledge: [] });
     }
 
-    const [leads, universities, knowledge] = await Promise.all([
-      (prisma as any).lead.findMany({
-        where: {
-          OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { email: { contains: query, mode: "insensitive" } },
-            { phone: { contains: query, mode: "insensitive" } },
-          ],
-        },
-        take: 5,
-        select: { id: true, name: true, email: true, status: true },
-      }),
-      (prisma as any).university.findMany({
-        where: {
-          OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { location: { contains: query, mode: "insensitive" } },
-          ],
-        },
-        take: 5,
-        select: { id: true, name: true, location: true, country: true },
-      }),
-      (prisma as any).knowledgeBaseResource.findMany({
-        where: {
-          OR: [
-            { title: { contains: query, mode: "insensitive" } },
-            { content: { contains: query, mode: "insensitive" } },
-          ],
-        },
-        take: 5,
-        select: { id: true, title: true, category: true },
-      }),
+    const supabase = createAdminClient();
+
+    const [
+      { data: leads },
+      { data: universities },
+      { data: knowledge }
+    ] = await Promise.all([
+      supabase.from('leads')
+        .select('id, name, email, status')
+        .or(`name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
+        .limit(5),
+      supabase.from('universities')
+        .select('id, name, location, country')
+        .or(`name.ilike.%${query}%,location.ilike.%${query}%`)
+        .limit(5),
+      supabase.from('knowledge_base_resources')
+        .select('id, title, category')
+        .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+        .limit(5)
     ]);
 
     return NextResponse.json({
-      leads,
-      universities,
-      knowledge,
+      leads: leads || [],
+      universities: universities || [],
+      knowledge: knowledge || [],
     });
   } catch (error) {
     console.error("Universal Search Error:", error);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function PATCH(
   request: NextRequest,
@@ -8,10 +8,15 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const task = await prisma.task.update({
-      where: { id },
-      data: body,
-    });
+    const supabase = createAdminClient();
+    const { data: task, error } = await supabase
+      .from('tasks')
+      .update(body)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
     return NextResponse.json(task);
   } catch (error) {
     return NextResponse.json({ error: "Failed to update task" }, { status: 500 });

@@ -1,10 +1,16 @@
-import prisma from "./prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { CounselorRole } from "./constants";
 
 export async function getCounselor(id: string) {
-  return await prisma.counselor.findUnique({
-    where: { id }
-  });
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('counselors')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error) return null;
+  return data;
 }
 
 export async function isAdmin(id: string) {
@@ -20,11 +26,14 @@ export async function canAccessLead(counselorId: string, leadId: string) {
   if (counselor.role === CounselorRole.ADMIN) return true;
 
   // Counselors see only their own leads
-  const lead = await prisma.lead.findUnique({
-    where: { id: leadId },
-    select: { ownerCounselorId: true }
-  });
+  const supabase = createAdminClient();
+  const { data: lead, error } = await supabase
+    .from('leads')
+    .select('ownerCounselorId')
+    .eq('id', leadId)
+    .single();
 
+  if (error) return false;
   return lead?.ownerCounselorId === counselorId;
 }
 

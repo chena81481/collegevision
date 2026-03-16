@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function POST(
   request: NextRequest,
@@ -17,25 +17,25 @@ export async function POST(
       );
     }
 
-    const note = await prisma.note.create({
-      data: {
+    const supabase = createAdminClient();
+    const { data: note, error: noteError } = await supabase
+      .from('notes')
+      .insert({
         content,
         leadId: id,
         counselorId,
-      },
-      include: {
-        counselor: true
-      }
-    });
+      })
+      .select('*, counselor:counselors(*)')
+      .single();
+
+    if (noteError) throw noteError;
 
     // Also log this as an activity
-    await prisma.activity.create({
-      data: {
-        type: "NOTE_ADDED",
-        description: "Added a new counselor note",
-        leadId: id,
-        counselorId,
-      }
+    await supabase.from('activities').insert({
+      type: "NOTE_ADDED",
+      description: "Added a new counselor note",
+      leadId: id,
+      counselorId,
     });
 
     return NextResponse.json(note, { status: 201 });

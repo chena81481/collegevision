@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { triggerLeadAutomation } from "@/lib/automation";
 import { canAccessLead } from "@/lib/auth";
 
@@ -20,28 +20,46 @@ export async function PATCH(
     const body = await request.json();
     const { status, priority, counselorId } = body;
 
-    const oldLead = await prisma.lead.findUnique({ where: { id } });
-    if (!oldLead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    const supabase = createAdminClient();
 
-    const updatedLead = await prisma.lead.update({
-      where: { id },
-      data: { 
+    const { data: oldLead, error: fetchError } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !oldLead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+
+    const { data: updatedLead, error: updateError } = await supabase
+      .from('leads')
+      .update({ 
         status: status || oldLead.status, 
         priority: priority || oldLead.priority,
         ownerCounselorId: counselorId || oldLead.ownerCounselorId
-      },
-      include: {
-        university: true,
-        ownerCounselor: true
-      }
-    });
+      })
+      .eq('id', id)
+      .select(`
+        *,
+        university:universities ( * ),
+        ownerCounselor:counselors ( * )
+      `)
+      .single();
+
+    if (updateError) throw updateError;
 
     // Trigger Automation if status changed
     if (status && status !== oldLead.status) {
-      await triggerLeadAutomation(id, status);
+      await triggerLeadAutomation(id, status as any);
     }
 
-    return NextResponse.json(updatedLead);
+    // Map to structure expected by frontend (Prisma style)
+    const formattedLead = {
+      ...updatedLead,
+      university: updatedLead.university,
+      ownerCounselor: updatedLead.ownerCounselor
+    };
+
+    return NextResponse.json(formattedLead);
   } catch (error) {
     console.error("Error updating lead:", error);
     return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });

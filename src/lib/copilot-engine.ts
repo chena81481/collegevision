@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || "");
 
@@ -12,14 +12,17 @@ export interface CopilotContext {
 export async function askCopilot({ leadId, universityId, query }: CopilotContext) {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const supabase = createAdminClient();
 
     // Fetch Lead Context
     let leadContext = "";
     if (leadId) {
-      const lead = await prisma.lead.findUnique({
-        where: { id: leadId },
-        include: { notes: true, activities: true, university: true }
-      });
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('*, university:universities(name), notes(content)')
+        .eq('id', leadId)
+        .single();
+
       if (lead) {
         leadContext = `
           Student Name: ${lead.name}
@@ -31,18 +34,17 @@ export async function askCopilot({ leadId, universityId, query }: CopilotContext
     }
 
     // Fetch Knowledge Base Context
-    const resources = await prisma.knowledgeBaseResource.findMany({
-      where: {
-        OR: [
-          { content: { contains: query, mode: 'insensitive' } },
-          { title: { contains: query, mode: 'insensitive' } },
-          universityId ? { universityId } : {}
-        ]
-      },
-      take: 3
-    });
+    let kbQuery = supabase.from('knowledge_base_resources').select('title, content');
+    
+    if (universityId) {
+      kbQuery = kbQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%,universityId.eq.${universityId}`);
+    } else {
+      kbQuery = kbQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
+    }
 
-    const knowledgeContext = resources.map(r => `[Resource: ${r.title}] ${r.content}`).join("\n\n");
+    const { data: resources } = await kbQuery.limit(3);
+
+    const knowledgeContext = (resources || []).map(r => `[Resource: ${r.title}] ${r.content}`).join("\n\n");
 
     const prompt = `
       You are the "CollegeVision AI Copilot", a specialized assistant for education counselors.

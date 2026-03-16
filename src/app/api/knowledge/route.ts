@@ -1,32 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("q") || "";
+    const search = searchParams.get("q") || "";
     const category = searchParams.get("category") || "";
 
-    const resources = await prisma.knowledgeBaseResource.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { title: { contains: query, mode: 'insensitive' } },
-              { content: { contains: query, mode: 'insensitive' } }
-            ]
-          },
-          category ? { category } : {}
-        ]
-      },
-      include: {
-        university: true
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      }
-    });
+    const supabase = createAdminClient();
+    let queryBuilder = supabase
+      .from('knowledge_base_resources')
+      .select('*, university:universities(*)');
 
+    if (search) {
+      queryBuilder = queryBuilder.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+    }
+
+    if (category) {
+      queryBuilder = queryBuilder.eq('category', category);
+    }
+
+    const { data: resources, error } = await queryBuilder.order('updatedAt', { ascending: false });
+
+    if (error) throw error;
     return NextResponse.json(resources);
   } catch (error) {
     console.error("KnowledgeBase GET Error:", error);
@@ -43,15 +39,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title, content, and category are required" }, { status: 400 });
     }
 
-    const resource = await prisma.knowledgeBaseResource.create({
-      data: {
+    const supabase = createAdminClient();
+    const { data: resource, error } = await supabase
+      .from('knowledge_base_resources')
+      .insert({
         title,
         content,
         category,
         universityId: universityId || null
-      }
-    });
+      })
+      .select()
+      .single();
 
+    if (error) throw error;
     return NextResponse.json(resource, { status: 201 });
   } catch (error) {
     console.error("KnowledgeBase POST Error:", error);

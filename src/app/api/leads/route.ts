@@ -1,7 +1,6 @@
 // app/api/leads/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { LeadStatus } from "@/lib/constants";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { getLeadFilters } from "@/lib/auth";
 
 // GET all leads
@@ -13,44 +12,57 @@ export async function GET(request: NextRequest) {
     const requestedCounselorId = searchParams.get("counselorId");
     
     // RBAC: Get filters based on the active session's counselor
-    // For now, we assume 'c1' is the logged-in counselor for demonstration
     const activeCounselorId = "c1"; 
     const rbacFilters = await getLeadFilters(activeCounselorId);
     
-    const where: any = { ...rbacFilters };
+    const supabase = createAdminClient();
+    let query = supabase
+      .from('leads')
+      .select(`
+        *,
+        universities ( * ),
+        counselors:ownerCounselorId ( * ),
+        lead_programs (
+          programs ( * )
+        )
+      `)
+      .order('createdAt', { ascending: false });
     
-    if (status) where.status = status;
-    // Only allow filtering by specific counselor if user is Admin or requesting self
+    // Apply RBAC filters
+    if (rbacFilters.ownerCounselorId && rbacFilters.ownerCounselorId !== 'none') {
+      query = query.eq('ownerCounselorId', rbacFilters.ownerCounselorId);
+    } else if (rbacFilters.ownerCounselorId === 'none') {
+      return NextResponse.json([]); // No access
+    }
+
+    if (status) query = query.eq('status', status);
+    
     if (requestedCounselorId) {
+       // Only allow filtering by specific counselor if user is Admin (no rbacFilters) or requesting self
        if (Object.keys(rbacFilters).length === 0 || requestedCounselorId === activeCounselorId) {
-         where.ownerCounselorId = requestedCounselorId;
+         query = query.eq('ownerCounselorId', requestedCounselorId);
        }
     }
     
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { phone: { contains: search, mode: "insensitive" } },
-      ];
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
     }
     
-    const leads = await prisma.lead.findMany({
-      where,
-      include: {
-        university: true,
-        ownerCounselor: true,
-        programs: {
-          include: { program: true }
-        },
-        _count: {
-          select: { notes: true, activities: true }
-        }
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: leads, error } = await query;
     
-    return NextResponse.json(leads);
+    if (error) throw error;
+    
+    // Map to match the structure the frontend expects (merging Supabase's relational structure)
+    const formattedLeads = (leads || []).map(lead => ({
+      ...lead,
+      university: lead.universities,
+      ownerCounselor: lead.counselors,
+      programs: (lead.lead_programs || []).map((lp: any) => ({
+        program: lp.programs
+      }))
+    }));
+    
+    return NextResponse.json(formattedLeads);
   } catch (error) {
     console.error("Error fetching leads:", error);
     return NextResponse.json(
@@ -84,10 +96,14 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    const supabase = createAdminClient();
+
     // Check for duplicate
-    const existingLead = await prisma.lead.findFirst({
-      where: { email }
-    });
+    const { data: existingLead } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
     
     if (existingLead) {
       return NextResponse.json(
@@ -97,50 +113,61 @@ export async function POST(request: NextRequest) {
     }
     
     // Create lead
-    const lead = await prisma.lead.create({
-      data: {
+    const { data: lead, error: createError } = await supabase
+      .from('leads')
+      .insert({
         name,
         email,
         phone,
         source,
-        priority,
+        priority: priority || 'MEDIUM',
         universityId,
         ownerCounselorId,
-        programs: programIds.length > 0 ? {
-          create: programIds.map((programId: string) => ({
-            programId
-          }))
-        } : undefined,
-      },
-      include: {
-        university: true,
-        ownerCounselor: true,
-        programs: { include: { program: true } }
-      }
-    });
+      })
+      .select(`
+        *,
+        universities ( * ),
+        counselors:ownerCounselorId ( * )
+      `)
+      .single();
+    
+    if (createError) throw createError;
+
+    // Supabase doesn't do nested creates easily for M2M, do it manually
+    if (programIds.length > 0) {
+      const leadPrograms = programIds.map((programId: string) => ({
+        leadId: lead.id,
+        programId
+      }));
+      await supabase.from('lead_programs').insert(leadPrograms);
+    }
     
     // Log activity
-    await prisma.activity.create({
-      data: {
-        type: "CREATED",
-        description: `Lead created: ${name}`,
-        leadId: lead.id,
-        counselorId: ownerCounselorId,
-      }
+    await supabase.from('activities').insert({
+      type: "CREATED",
+      description: `Lead created: ${name}`,
+      leadId: lead.id,
+      counselorId: ownerCounselorId,
     });
     
     // Add initial notes if provided
     if (initialNotes && ownerCounselorId) {
-      await prisma.note.create({
-        data: {
-          content: initialNotes,
-          leadId: lead.id,
-          counselorId: ownerCounselorId,
-        }
+      await supabase.from('notes').insert({
+        content: initialNotes,
+        leadId: lead.id,
+        counselorId: ownerCounselorId,
       });
     }
+
+    // Format final object
+    const finalLead = {
+      ...lead,
+      university: lead.universities,
+      ownerCounselor: lead.counselors,
+      programs: [] // We could fetch again but usually not needed for initial POST return if frontend only needs the core object
+    };
     
-    return NextResponse.json(lead, { status: 201 });
+    return NextResponse.json(finalLead, { status: 201 });
   } catch (error) {
     console.error("Error creating lead:", error);
     return NextResponse.json(

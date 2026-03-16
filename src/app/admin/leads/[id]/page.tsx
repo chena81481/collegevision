@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { notFound } from "next/navigation";
 import { ChevronLeft, MoreVertical, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
@@ -18,28 +18,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Calculator, ListChecks, TrendingUp } from "lucide-react";
 
 async function getLead(id: string) {
-  const lead = await (prisma as any).lead.findUnique({
-    where: { id },
-    include: {
-      university: true,
-      ownerCounselor: true,
-      notes: {
-        include: { counselor: true },
-        orderBy: { createdAt: "desc" }
-      },
-      activities: {
-        include: { counselor: true },
-        orderBy: { createdAt: "desc" }
-      },
-      applications: {
-        include: { university: true },
-        orderBy: { updatedAt: "desc" }
-      }
-    }
-  });
+  const supabase = createAdminClient();
+  const { data: lead, error } = await supabase
+    .from('leads')
+    .select(`
+      *,
+      university:universities ( * ),
+      ownerCounselor:counselors!ownerCounselorId ( * ),
+      notes (
+        *,
+        counselor:counselors ( * )
+      ),
+      activities (
+        *,
+        counselor:counselors ( * )
+      ),
+      applications (
+        *,
+        university:universities ( * )
+      )
+    `)
+    .eq('id', id)
+    .single();
   
-  if (!lead) return null;
-  return lead;
+  if (error || !lead) return null;
+
+  // Format to match what the components expect (Prisma-like structure)
+  return {
+    ...lead,
+    notes: (lead.notes || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    activities: (lead.activities || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    applications: (lead.applications || []).sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  };
 }
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {

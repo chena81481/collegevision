@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function PATCH(
   request: NextRequest,
@@ -8,10 +8,15 @@ export async function PATCH(
   try {
     const { id } = await params;
     const { read } = await request.json();
-    const notification = await prisma.notification.update({
-      where: { id },
-      data: { read },
-    });
+    const supabase = createAdminClient();
+    const { data: notification, error } = await supabase
+      .from('notifications')
+      .update({ read })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
     return NextResponse.json(notification);
   } catch (error) {
     return NextResponse.json({ error: "Failed to update notification" }, { status: 500 });

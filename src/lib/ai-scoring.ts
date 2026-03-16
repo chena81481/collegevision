@@ -1,21 +1,23 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import prisma from "./prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export async function generateLeadScore(leadId: string) {
   try {
-    const lead = await (prisma as any).lead.findUnique({
-      where: { id: leadId },
-      include: {
-        notes: { orderBy: { createdAt: 'desc' }, take: 5 },
-        activities: { orderBy: { createdAt: 'desc' }, take: 10 },
-        university: true,
-      }
-    });
+    const supabase = createAdminClient();
+    const { data: lead, error: fetchError } = await supabase
+      .from('leads')
+      .select('*, university:universities(*), notes(*), activities(*)')
+      .eq('id', leadId)
+      .single();
 
-    if (!lead) throw new Error("Lead not found");
+    if (fetchError || !lead) throw new Error("Lead not found");
+
+    // Sort relations in JS
+    lead.notes = (lead.notes || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+    lead.activities = (lead.activities || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
 
     const context = `
       Lead Name: ${lead.name}
@@ -57,19 +59,20 @@ export async function generateLeadScore(leadId: string) {
     const data = JSON.parse(jsonStr);
 
     // Update lead with AI results
-    // We append the probability to the insights JSON to avoid schema changes for a single field
     const enrichedInsights = {
       bullets: data.insights,
       admissionProbability: data.admissionProbability
     };
 
-    await (prisma as any).lead.update({
-      where: { id: leadId },
-      data: {
+    const { error: updateError } = await supabase
+      .from('leads')
+      .update({
         aiScore: data.score,
         aiInsights: JSON.stringify(enrichedInsights)
-      }
-    });
+      })
+      .eq('id', leadId);
+
+    if (updateError) throw updateError;
 
     return data;
   } catch (error) {

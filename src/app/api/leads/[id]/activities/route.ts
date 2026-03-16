@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function POST(
   request: NextRequest,
@@ -17,14 +17,19 @@ export async function POST(
       );
     }
 
-    const activity = await prisma.activity.create({
-      data: {
+    const supabase = createAdminClient();
+    const { data: activity, error } = await supabase
+      .from('activities')
+      .insert({
         type: type as any,
         description,
         leadId: id,
         counselorId: counselorId || null,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
 
     return NextResponse.json(activity, { status: 201 });
   } catch (error) {
