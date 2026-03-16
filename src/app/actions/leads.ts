@@ -21,6 +21,26 @@ export async function submitApplicationLead(formData: FormData) {
   const lastName = nameParts.slice(1).join(' ')
 
   const supabase = await createClient()
+  const turnstileToken = formData.get('cf-turnstile-response') as string;
+
+  // 1. Verify Cloudflare Turnstile (Bot Protection)
+  if (process.env.NODE_ENV === 'production' || process.env.TURNSTILE_SECRET_KEY) {
+    if (!turnstileToken) throw new Error("Bot verification failed. Please try again.");
+    
+    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: process.env.TURNSTILE_SECRET_KEY,
+        response: turnstileToken,
+      }),
+    });
+
+    const verifyData = await verifyRes.json();
+    if (!verifyData.success) {
+      throw new Error("Security check failed. Please refresh the page.");
+    }
+  }
 
   try {
     // 1. Save to Legacy Lead Table

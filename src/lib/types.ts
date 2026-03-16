@@ -17,6 +17,7 @@ export interface CourseMatch {
   approvals: string[];
   badgeLabel: string | null;
   roi: number | null;          // Calculated dynamically server-side
+  category: string;             // e.g. "online-mba"
   matchScore: number;          // 0-100, higher = better match for the query
 }
 
@@ -35,4 +36,5 @@ export interface ParsedQuery {
   degreeKeyword: string | null; // e.g. "MBA", "BBA", "MCA"
   requiresEmi: boolean;
   requiredApprovals: string[];  // e.g. ["UGC-DEB", "NAAC A+"]
+  careerGoal: string | null;    // Added careerGoal
 }

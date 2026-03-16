@@ -61,5 +61,6 @@ export function parseQuery(query: string): ParsedQuery {
       lower.includes("installment") ||
       lower.includes("monthly"),
     requiredApprovals: parseApprovals(lower),
+    careerGoal: null, // Gemini backend handles specific extraction
   };
 }

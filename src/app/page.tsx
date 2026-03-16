@@ -11,6 +11,14 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import AuthModal from '@/components/features/AuthModal';
 import type { CourseMatch, MatchApiResponse, ParsedQuery } from '@/lib/types';
+import MatchCard from '@/components/features/MatchCard';
+import dynamic from 'next/dynamic';
+import { usePostHog } from 'posthog-js/react';
+
+const ROIChart = dynamic(() => import('@/components/ui/roi-chart'), {
+  ssr: false,
+  loading: () => <div className="h-40 w-full bg-slate-50 animate-pulse rounded-2xl" />
+});
 
 // Default cards shown before any AI search is performed
 const DEFAULT_COURSES: CourseMatch[] = [
@@ -20,7 +28,7 @@ const DEFAULT_COURSES: CourseMatch[] = [
     courseName: 'Online MBA', degreeLevel: 'Masters', durationMonths: 24,
     totalFeeInr: 150_000, avgCtcInr: 650_000, hasZeroCostEmi: true,
     approvals: ['UGC-DEB', 'AICTE'], badgeLabel: 'Top ROI',
-    roi: 1200, matchScore: 0,
+    roi: 1200, matchScore: 0, category: 'online-mba',
   },
   {
     id: 'c2', universityName: 'Amity Online', universitySlug: 'amity-online',
@@ -28,7 +36,7 @@ const DEFAULT_COURSES: CourseMatch[] = [
     courseName: 'Online MBA Finance', degreeLevel: 'Masters', durationMonths: 24,
     totalFeeInr: 175_000, avgCtcInr: 850_000, hasZeroCostEmi: true,
     approvals: ['UGC', 'NAAC A+'], badgeLabel: 'High Placement',
-    roi: 1357, matchScore: 0,
+    roi: 1357, matchScore: 0, category: 'online-mba',
   },
   {
     id: 'c3', universityName: 'IIT Patna', universitySlug: 'iit-patna',
@@ -36,7 +44,7 @@ const DEFAULT_COURSES: CourseMatch[] = [
     courseName: 'Online B.Sc Data Science', degreeLevel: 'Bachelors', durationMonths: 36,
     totalFeeInr: 230_000, avgCtcInr: 1_050_000, hasZeroCostEmi: false,
     approvals: ['UGC', 'Institute of Excellence'], badgeLabel: 'Premium Data',
-    roi: 1270, matchScore: 0,
+    roi: 1270, matchScore: 0, category: 'online-degrees',
   },
 ];
 
@@ -69,9 +77,18 @@ export default function CollegeVision() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const posthog = usePostHog();
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+    
+    // Track Funnel Start
+    posthog.capture('AI_Match_Started', {
+      query: searchQuery,
+      is_logged_in: !!user
+    });
+
     setIsLoading(true);
     try {
       const res = await fetch('/api/match', {
@@ -83,11 +100,20 @@ export default function CollegeVision() {
 
       if (data.success && data.matches) {
         setMatchResults(data.matches);
-        // Map the Gemini parsedIntent shape to our ParsedQuery UI type
+        
+        // Track Results Performance
+        posthog.capture('Match_Results_Viewed', {
+          results_count: data.matches.length,
+          top_match_university: data.matches[0]?.universityName,
+          top_match_score: data.matches[0]?.matchScore,
+          max_budget_parsed: data.parsedIntent?.maxBudgetINR
+        });
+
         setParsedFilters({
           maxBudgetInr: data.parsedIntent?.maxBudgetINR ?? null,
           degreeKeyword: data.parsedIntent?.degreeType ?? null,
           requiresEmi: data.parsedIntent?.needsEMI ?? false,
+          careerGoal: data.parsedIntent?.careerGoal ?? null, // Added careerGoal
           requiredApprovals: data.parsedIntent?.requiredApproval
             ? [data.parsedIntent.requiredApproval]
             : [],
@@ -481,84 +507,51 @@ export default function CollegeVision() {
           )}
 
           {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(matchResults ?? DEFAULT_COURSES).slice(0, 3).map((course, idx) => {
-              const isTop = idx === 0;
-              const feeFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(course.totalFeeInr);
-              const ctcFormatted = course.avgCtcInr ? `₹${(course.avgCtcInr / 100_000).toFixed(1)} LPA` : 'N/A';
-              return (
-                <div
-                  key={course.id}
-                  className={`relative bg-gradient-to-b ${course.gradientStart}/80 ${course.gradientEnd} rounded-3xl p-6 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col h-full group
-                    ${isTop ? 'border-2 border-blue-400 shadow-lg shadow-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20' : 'border border-slate-200 hover:shadow-xl hover:border-slate-300'}
-                    ${idx === 2 ? 'md:col-span-2 lg:col-span-1' : ''}`}
-                >
-                  {isTop && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md flex items-center gap-1.5">
-                      <Star className="w-3.5 h-3.5 fill-white" /> {matchResults ? 'Best Match' : 'Recommended'}
-                    </div>
-                  )}
-                  {matchResults && (
-                    <div className="absolute top-4 right-4 flex items-center gap-2">
-                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSaveCourse(course.id);
-                        }}
-                        className={`p-2 rounded-lg border transition-all ${
-                          savedCourseIds.has(course.id)
-                            ? 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/20'
-                            : 'bg-white/80 backdrop-blur-sm border-blue-100 text-blue-600 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-500'
-                        }`}
-                        title="Save for later"
-                      >
-                        <Heart className={`w-4 h-4 ${savedCourseIds.has(course.id) ? 'fill-current' : ''}`} />
-                      </button>
-                      <div className="bg-white border border-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm">
-                        {course.matchScore}% match
-                      </div>
-                    </div>
-                  )}
-                  <div className={`flex justify-between items-start mb-8 ${isTop ? 'mt-3' : ''}`}>
-                    <div className="h-12 px-4 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center font-bold text-sm tracking-widest text-slate-800 max-w-[160px] truncate">
-                      {course.universityName.toUpperCase()}
-                    </div>
-                    {course.badgeLabel && (
-                      <span className="bg-white border border-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm whitespace-nowrap ml-2">
-                        {course.badgeLabel}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-xl text-slate-900 mb-1">{course.universityName}</h3>
-                  <p className="text-sm text-slate-500 mb-2">{course.courseName} • {Math.round(course.durationMonths / 12)} Yrs</p>
-                  {course.roi !== null && (
-                    <div className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded mb-6 w-max border ${isTop ? 'bg-green-100 text-green-800 border-green-200' : 'bg-green-50 text-green-700 border-green-100'}`}>
-                      ROI: {course.roi}%
-                    </div>
-                  )}
-                  <div className="mt-auto">
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 mb-6">
-                      <div>
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">Total Fee <Info className="w-3 h-3 text-slate-300" /></div>
-                        <div className="text-base font-semibold text-slate-900">{feeFormatted}</div>
-                        {course.hasZeroCostEmi && <div className="text-[10px] text-blue-500 font-semibold mt-0.5">EMI available</div>}
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">Avg. CTC <Info className="w-3 h-3 text-slate-300" /></div>
-                        <div className="text-base font-semibold text-green-600">{ctcFormatted}</div>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/universities/${course.universitySlug}`}
-                      className={`w-full font-semibold py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-md
-                        ${isTop ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-50 text-slate-700 border border-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600'}`}
+          <div className="grid grid-cols-1 gap-8">
+            {(matchResults ?? []).map((course, idx) => (
+              <MatchCard 
+                key={course.id} 
+                course={course} 
+                isTopMatch={idx === 0} 
+              />
+            ))}
+            
+            {!matchResults && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {DEFAULT_COURSES.map((course, idx) => {
+                  const isTop = idx === 0;
+                  const feeFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(course.totalFeeInr);
+                  const ctcFormatted = course.avgCtcInr ? `₹${(course.avgCtcInr / 100_000).toFixed(1)} LPA` : 'N/A';
+                  return (
+                    <div
+                      key={course.id}
+                      className={`relative bg-gradient-to-b ${course.gradientStart}/80 ${course.gradientEnd} rounded-3xl p-6 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col h-full group
+                        ${isTop ? 'border-2 border-blue-400 shadow-lg shadow-blue-500/10' : 'border border-slate-200'}
+                      `}
+                      onClick={() => router.push(`/${course.category.toLowerCase()}/${course.universitySlug}`)}
                     >
-                      View Detailed ROI <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
+                      <div className="flex justify-between items-start mb-8">
+                        <div className="h-10 px-4 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-bold text-xs">
+                          {(course.universityName || 'Uni').toUpperCase()}
+                        </div>
+                      </div>
+                      <h3 className="font-bold text-lg text-slate-900 mb-1">{course.universityName}</h3>
+                      <p className="text-sm text-slate-500 mb-6">{course.courseName}</p>
+                      <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Fee</p>
+                          <p className="text-sm font-bold">{feeFormatted}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">ROI</p>
+                          <p className="text-sm font-bold text-green-600">{course.roi}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="mt-14 text-center">

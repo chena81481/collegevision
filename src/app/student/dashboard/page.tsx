@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Bookmark, FileText, ChevronRight, CheckCircle2, 
   Clock, AlertCircle, ArrowRight, Download, UploadCloud,
-  Star, TrendingUp, IndianRupee
+  Star, TrendingUp, IndianRupee, Settings, ShieldAlert
 } from 'lucide-react';
+import { deleteStudentAccount } from '@/app/actions/delete-account';
 import { createClient } from '@/utils/supabase/client';
 
 export default function StudentDashboard() {
@@ -164,6 +165,17 @@ export default function StudentDashboard() {
             }`}
           >
             <UploadCloud className="w-4 h-4" /> Document Vault
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`flex items-center gap-2 px-6 py-3.5 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
+              activeTab === 'settings' 
+              ? 'border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-lg' 
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-t-lg'
+            }`}
+          >
+            <Settings className="w-4 h-4" /> Settings
           </button>
         </div>
       </div>

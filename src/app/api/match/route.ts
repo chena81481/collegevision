@@ -20,6 +20,7 @@ interface ParsedIntent {
 }
 
 // ─── Route Handler ───────────────────────────────────────────────────────────
+// ─── Route Handler ───────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
     const { query } = await request.json();
@@ -42,7 +43,8 @@ Required JSON format:
   "degreeType": string | null,          // e.g. "MBA", "MCA", "BBA", "BCA", or null
   "maxBudgetINR": number | null,        // e.g. if they say "under 2 Lakhs" → 200000
   "needsEMI": boolean,                  // true if they mention EMI / installments / monthly payment
-  "requiredApproval": string | null     // e.g. "NAAC A+", "UGC-DEB", or null
+  "requiredApproval": string | null,    // e.g. "NAAC A+", "UGC-DEB", or null
+  "careerGoal": string | null           // e.g. "Product Manager", "Data Science", etc.
 }
     `.trim();
 
@@ -51,29 +53,27 @@ Required JSON format:
       contents: prompt,
     });
 
-    // Strip any accidental markdown code fences from Gemini's response
     const rawText = (aiResponse.text ?? '{}')
       .replace(/```json/gi, '')
       .replace(/```/g, '')
       .trim();
 
-    let parsedIntent: ParsedIntent = {
+    let parsedIntent: any = {
       degreeType: null,
       maxBudgetINR: null,
       needsEMI: false,
       requiredApproval: null,
+      careerGoal: null,
     };
 
     try {
       parsedIntent = JSON.parse(rawText);
     } catch {
-      console.warn('[/api/match] Gemini returned non-JSON, falling back to defaults:', rawText);
+      console.warn('[/api/match] Gemini returned non-JSON, falling back to defaults');
     }
 
-    console.log('[/api/match] AI Parsed Intent:', parsedIntent);
-
     // ───────────────────────────────────────────────────────────────────────
-    // STEP 2: Supabase query with dynamic filters
+    // STEP 2: Fetch broad candidate set (Top 50)
     // ───────────────────────────────────────────────────────────────────────
     let dbQuery = supabase
       .from('courses')
@@ -88,55 +88,89 @@ Required JSON format:
           is_premium
         )
       `)
-      .order('avg_ctc_inr', { ascending: false });
+      .limit(50);
 
     if (parsedIntent.degreeType) {
       dbQuery = dbQuery.ilike('name', `%${parsedIntent.degreeType}%`);
     }
 
-    if (parsedIntent.maxBudgetINR) {
-      dbQuery = dbQuery.lte('total_fee_inr', parsedIntent.maxBudgetINR);
-    }
+    const { data: candidates, error: dbError } = await dbQuery;
 
-    if (parsedIntent.needsEMI === true) {
-      dbQuery = dbQuery.eq('has_zero_cost_emi', true);
-    }
-
-    if (parsedIntent.requiredApproval) {
-      dbQuery = dbQuery.contains('approvals', [parsedIntent.requiredApproval]);
-    }
-
-    const { data: rawMatches, error: dbError } = await dbQuery.limit(6);
-
-    if (dbError) {
-      console.error('[/api/match] Supabase error:', dbError);
-      throw new Error('Failed to fetch matching courses.');
+    if (dbError || !candidates) {
+      throw new Error('Failed to fetch candidates');
     }
 
     // ───────────────────────────────────────────────────────────────────────
-    // STEP 3: Enrich with dynamic ROI & return
+    // STEP 3: Weighted Scoring Algorithm
     // ───────────────────────────────────────────────────────────────────────
-    const matches = (rawMatches ?? []).map((course) => ({
-      ...course,
-      universityName: course.universities?.name ?? 'Unknown',
-      universitySlug: course.universities?.slug ?? '',
-      logoUrl: course.universities?.logo_url ?? null,
-      gradientStart: course.universities?.gradient_start ?? 'from-slate-50',
-      gradientEnd: course.universities?.gradient_end ?? 'to-white',
-      roi: calculateROI(course.total_fee_inr, 0, 0, course.avg_ctc_inr ?? 0, (course.duration_months ?? 24) / 12),
-    }));
+    const scoredMatches = candidates.map(course => {
+      let score = 0;
+
+      // 1. Budget Fit (30%)
+      if (parsedIntent.maxBudgetINR) {
+        if (course.total_fee_inr <= parsedIntent.maxBudgetINR) {
+          score += 30;
+        } else if (course.total_fee_inr <= parsedIntent.maxBudgetINR * 1.2) {
+          score += 15; // Within 20% stretch
+        }
+      } else {
+        score += 20; // Default points if no budget specified
+      }
+
+      // 2. Career Alignment (25%) - Basic keyword match for now
+      if (parsedIntent.careerGoal && course.name.toLowerCase().includes(parsedIntent.careerGoal.toLowerCase())) {
+        score += 25;
+      } else if (parsedIntent.degreeType && course.name.toLowerCase().includes(parsedIntent.degreeType.toLowerCase())) {
+        score += 15;
+      }
+
+      // 3. ROI Potential (20%)
+      const roiResult = calculateROI(course.total_fee_inr, 0, 0, course.avg_ctc_inr ?? 0, (course.duration_months ?? 24) / 12);
+      const roiValue = roiResult.totalReturnsFiveYears;
+      if (roiValue > 1000000) score += 20; // Improved comparison
+      else if (roiValue > 500000) score += 10;
+
+      // 4. Approval Match (15%)
+      if (parsedIntent.requiredApproval && course.approvals?.includes(parsedIntent.requiredApproval)) {
+        score += 15;
+      } else {
+        score += 10;
+      }
+
+      // 5. EMI Bonus (10%)
+      if (parsedIntent.needsEMI && course.has_zero_cost_emi) {
+        score += 10;
+      }
+
+      return {
+        ...course,
+        matchScore: Math.min(score, 100),
+        universityName: course.universities?.name,
+        logoUrl: course.universities?.logo_url,
+        roi: roiValue,
+        category: course.category || "online-degrees",
+        universitySlug: course.universities?.slug,
+        matchReasons: [
+          course.has_zero_cost_emi ? "Zero-Cost EMI Available" : null,
+          roiValue > 1000 ? "Exceptionally High ROI" : null,
+          course.universities?.is_premium ? "Top-Tier University" : null,
+        ].filter(Boolean)
+      };
+    });
+
+    // Rank and return top 3
+    const topMatches = scoredMatches
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 3);
 
     return NextResponse.json({
       success: true,
       parsedIntent,
-      matches,
+      matches: topMatches,
     });
 
   } catch (err) {
     console.error('[/api/match] Error:', err);
-    return NextResponse.json(
-      { error: 'Our AI counselor is currently busy. Please try again.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'AI Matching Engine error' }, { status: 500 });
   }
 }
