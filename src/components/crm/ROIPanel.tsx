@@ -7,8 +7,7 @@ import {
   Info
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { calculateROI, formatFeeINR } from "@/lib/roi-calculator";
+mport { calculateROI, formatFeeINR } from "@/lib/roi-calculator";
 
 export function ROIPanel({ application }: { application: any }) {
   const [scholarship, setScholarship] = useState(application.scholarshipAmount || 0);
@@ -62,7 +61,7 @@ export function ROIPanel({ application }: { application: any }) {
                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Scholarship Amount</label>
                  <span className="text-sm font-black text-white">{formatFeeINR(scholarship)}</span>
               </div>
-              <Slider 
+              <input type="range" 
                 value={[scholarship]} 
                 max={2000000} 
                 step={50000} 
@@ -76,7 +75,7 @@ export function ROIPanel({ application }: { application: any }) {
                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Est. Graduate Salary</label>
                  <span className="text-sm font-black text-white">{formatFeeINR(salary)}/yr</span>
               </div>
-              <Slider 
+              <input type="range" 
                 value={[salary]} 
                 max={5000000} 
                 step={100000} 
