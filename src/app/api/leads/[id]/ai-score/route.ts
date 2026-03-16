@@ -4,10 +4,10 @@ import { getCounselor, canAccessLead } from "@/lib/auth";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const leadId = params.id;
+    const leadId = (await params).id;
     const adminId = "c1"; // Mock session
     
     // Auth check
