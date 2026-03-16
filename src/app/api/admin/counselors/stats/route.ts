@@ -29,7 +29,7 @@ export async function GET() {
       }
     });
 
-    const stats = counselors.map(c: any => {
+    const stats = counselors.map((c: any) => {
       const totalLeads = c.leads.length;
       const wonLeads = c.leads.filter(l => l.status === "WON");
       const wonValue = wonLeads.reduce((sum, l) => sum + (l.value || 0), 0);
