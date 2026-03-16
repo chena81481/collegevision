@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
-import { calculateTrueROI } from '@/lib/roi-calculator';
+import { calculateROI } from '@/lib/roi-calculator';
 
 // ─── Clients ─────────────────────────────────────────────────────────────────
 const supabase = createClient(
