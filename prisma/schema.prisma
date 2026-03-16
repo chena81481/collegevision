@@ -1,0 +1,273 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Counselor {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  phone     String?
+  department String?
+  role      CounselorRole @default(COUNSELOR)
+  
+  leads     Lead[]
+  notes     Note[]
+  activities Activity[]
+  tasks      Task[]         
+  notifications Notification[] 
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+enum CounselorRole {
+  ADMIN
+  COUNSELOR
+}
+
+model University {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  location  String?
+  website   String?
+  
+  programs  Program[]
+  leads     Lead[]
+  applications Application[]
+  knowledgeResources KnowledgeBaseResource[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Program {
+  id          String     @id @default(cuid())
+  name        String
+  universityId String
+  university  University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  
+  fees        Float?
+  duration    String?
+  description String?
+  
+  leadPrograms LeadProgram[]
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@unique([universityId, name])
+}
+
+model Lead {
+  id              String           @id @default(cuid())
+  name            String
+  email           String           @unique
+  phone           String
+  status          LeadStatus       @default(NEW_LEAD)
+  priority        LeadPriority     @default(MEDIUM)
+  source          String?
+  value           Float?           @default(0)
+  
+  universityId    String?
+  university      University?      @relation(fields: [universityId], references: [id])
+  
+  ownerCounselorId String?
+  ownerCounselor  Counselor?       @relation(fields: [ownerCounselorId], references: [id])
+  
+  programs        LeadProgram[] 
+  notes           Note[]
+  activities      Activity[]
+  tasks           Task[]           
+  notifications   Notification[]   
+  documents       Document[]       
+  milestones      ApplicationMilestone[] 
+  
+  aiScore         Int?             @default(0)
+  aiInsights      String?          
+  
+  applications    Application[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  url         String
+  verified    Boolean  @default(false)
+  
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ApplicationMilestone {
+  id          String   @id @default(cuid())
+  title       String
+  status      String
+  date        DateTime @default(now())
+  
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LeadProgram {
+  leadId    String
+  lead      Lead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  programId String
+  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  
+  @@id([leadId, programId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  counselorId String?
+  counselor Counselor? @relation(fields: [counselorId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  type      ActivityType
+  description String
+  
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  counselorId String?
+  counselor Counselor? @relation(fields: [counselorId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  completed   Boolean    @default(false)
+  
+  leadId      String?
+  lead        Lead?      @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  
+  counselorId String
+  counselor   Counselor  @relation(fields: [counselorId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Notification {
+  id          String     @id @default(cuid())
+  title       String
+  message     String
+  read        Boolean    @default(false)
+  
+  counselorId String
+  counselor   Counselor  @relation(fields: [counselorId], references: [id], onDelete: Cascade)
+  
+  leadId      String?
+  lead        Lead?      @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  
+  createdAt   DateTime   @default(now())
+}
+
+enum LeadStatus {
+  NEW_LEAD
+  CONTACTED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+
+enum ActivityType {
+  CREATED
+  STATUS_CHANGED
+  CONTACTED
+  NOTE_ADDED
+  ASSIGNED
+  UPDATED
+  TASK_CREATED
+  TASK_COMPLETED
+}
+
+enum ApplicationStatus {
+  SHORTLISTED
+  APPLIED
+  OFFER_RECEIVED
+  REJECTED
+  WAITLISTED
+}
+
+model Application {
+  id               String            @id @default(cuid())
+  leadId           String
+  lead             Lead              @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  universityId     String
+  university       University        @relation(fields: [universityId], references: [id])
+  
+  status           ApplicationStatus @default(SHORTLISTED)
+  scholarshipAmount Float?           @default(0)
+  tuitionFee       Float?            @default(0)
+  livingCost       Float?            @default(0)
+  notes            String?
+  
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([leadId, universityId])
+}
+
+model KnowledgeBaseResource {
+  id            String      @id @default(cuid())
+  title         String
+  content       String      // Markdown or plain text
+  category      String      // e.g., VISA, SCHOLARSHIP, UNIVERSITY_INFO
+  
+  universityId  String?
+  university    University? @relation(fields: [universityId], references: [id])
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // e.g., LEAD_DELETE, EXPORT_DATA
+  entityType  String   // e.g., LEAD, USER, UNIVERSITY
+  entityId    String?
+  actorId     String?  // Counselor ID
+  metadata    String?  @db.Text // JSON metadata
+  createdAt   DateTime @default(now())
+}
