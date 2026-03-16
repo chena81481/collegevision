@@ -7,7 +7,7 @@ import {
   Info
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-mport { calculateROI, formatFeeINR } from "@/lib/roi-calculator";
+import { calculateROI, formatFeeINR } from "@/lib/roi-calculator";
 
 export function ROIPanel({ application }: { application: any }) {
   const [scholarship, setScholarship] = useState(application.scholarshipAmount || 0);
