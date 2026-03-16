@@ -42,7 +42,7 @@ export async function askCopilot({ leadId, universityId, query }: CopilotContext
       take: 3
     });
 
-    const knowledgeContext = resources.map(r => `[Resource: ${r.title}] ${r.content}`).join("\n\n");
+    const knowledgeContext = resources.map((r: any) => `[Resource: ${r.title}] ${r.content}`).join("\n\n");
 
     const prompt = `
       You are the "CollegeVision AI Copilot", a specialized assistant for education counselors.
