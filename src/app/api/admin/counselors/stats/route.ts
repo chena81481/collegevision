@@ -31,9 +31,9 @@ export async function GET() {
 
     const stats = counselors.map((c: any) => {
       const totalLeads = c.leads.length;
-    const wonLeads = c.leads.filter((l: any) => l.status === "WON");      const wonValue = wonLeads.reduce((sum, l) => sum + (l.value || 0), 0);
+    const wonLeads = c.leads.filter((l: any) => l.status === "WON");      const wonValue = wonLeads.reduce((sum: any, l: any, l) => sum + (l.value || 0), 0);
       const conversionRate = totalLeads > 0 ? (wonLeads.length / totalLeads) * 100 : 0;
-      const activeLeads = c.leads.filter(l => !["WON", "LOST"].includes(l.status)).length;
+      const activeLeads = c.leads.filter((l: any) => !["WON", "LOST"].includes(l.status)).length;
 
       return {
         id: c.id,
