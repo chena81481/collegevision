@@ -46,6 +46,8 @@ Required JSON format:
   "needsEMI": boolean,                  // true if they mention EMI / installments / monthly payment
   "requiredApproval": string | null,    // e.g. "NAAC A+", "UGC-DEB", or null
   "careerGoal": string | null,          // e.g. "Product Manager", "Data Science", etc.
+  "studentLevel": "Bachelors" | "Masters" | "Other", // e.g. "Masters" if they have graduation degree
+  "admissionReadiness": "High" | "Medium" | "Low", // Predictive odds
   "confidenceScore": number             // 0-100 based on how clear the query intent is
 }
     `.trim();
@@ -65,6 +67,8 @@ Required JSON format:
       needsEMI: false,
       requiredApproval: null,
       careerGoal: null,
+      studentLevel: 'Other',
+      admissionReadiness: 'Medium',
       confidenceScore: 50,
     };
 
@@ -162,6 +166,15 @@ Required JSON format:
           score += 10;
         }
 
+        // 6. Admissions Predictive Logic (Bonus)
+        const admissionProbability = parsedIntent.admissionReadiness === 'High' ? 95 : parsedIntent.admissionReadiness === 'Medium' ? 70 : 45;
+        const admissionConditions = [];
+        if (parsedIntent.studentLevel === 'Masters' && course.degree_level === 'Masters') {
+          admissionConditions.push("Requires 50%+ in Graduation");
+        } else if (parsedIntent.studentLevel === 'Bachelors' && course.degree_level === 'Bachelors') {
+          admissionConditions.push("Requires 12th Pass Marksheet");
+        }
+
         // Adjust score based on NLP confidence
         const finalScore = Math.min(score * (parsedIntent.confidenceScore / 100) + (score * 0.2), 100);
 
@@ -169,6 +182,8 @@ Required JSON format:
           ...course,
           matchScore: Math.round(finalScore),
           confidenceScore: parsedIntent.confidenceScore,
+          admissionProbability,
+          admissionConditions,
           universityName: course.universities?.name,
           logoUrl: course.universities?.logo_url,
           roi: Math.round(roiValue / 10000), // Scaled for display

@@ -20,6 +20,8 @@ export interface CourseMatch {
   category: string;             // e.g. "online-mba"
   matchScore: number;          // 0-100, higher = better match for the query
   confidenceScore: number;     // 0-100, how well the AI understood the intent
+  admissionProbability?: number; // 0-100
+  admissionConditions?: string[];
 }
 
 export interface MatchApiRequest {

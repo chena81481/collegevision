@@ -44,9 +44,13 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
           <div className="h-10 px-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center font-black text-[10px] text-slate-400">
             {(course.universityName.split(' ')[0] || 'UNI').toUpperCase()}
           </div>
-          {course.confidenceScore >= 90 && (
-            <div className="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm border border-emerald-200">
-              {course.confidenceScore}% Intent Fit
+          {course.admissionProbability !== undefined && (
+            <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm border ${
+              course.admissionProbability >= 90 
+                ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                : 'bg-amber-100 text-amber-700 border-amber-200'
+            }`}>
+              {course.admissionProbability}% Admission Chance
             </div>
           )}
         </div>
@@ -91,6 +95,22 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
             <p className="text-base font-black text-blue-900">{course.roi}%</p>
           </div>
         </div>
+
+        {/* Admission Conditions / Explainer */}
+        {course.admissionConditions && course.admissionConditions.length > 0 && (
+          <div className="mb-6 p-4 bg-slate-50 rounded-3xl border border-slate-100/50">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+              <Check className="w-3 h-3 text-blue-600" /> Eligibility Insights
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {course.admissionConditions.map((cond, idx) => (
+                <p key={idx} className="text-[10px] font-bold text-slate-600 leading-tight">
+                  <span className="text-blue-500 mr-1.5">•</span> {cond}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* The "Earnings Multiple" Narrative */}

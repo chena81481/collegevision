@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import { FilterSidebar } from "@/components/features/FilterSidebar";
 import { UniversityCard } from "@/components/features/UniversityCard";
 import { CompareDock } from "@/components/features/CompareDock";

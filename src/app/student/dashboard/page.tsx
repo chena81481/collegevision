@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { deleteStudentAccount } from '@/app/actions/delete-account';
 import { createClient } from '@/utils/supabase/client';
+import JourneyTimeline from '@/components/features/JourneyTimeline';
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('saved');
@@ -406,6 +407,9 @@ export default function StudentDashboard() {
                </button>
              </div>
            </div>
+
+           {/* Journey Timeline */}
+           <JourneyTimeline />
 
            {/* Quick Actions / Tips */}
            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
