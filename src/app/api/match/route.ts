@@ -79,12 +79,27 @@ Required JSON format:
     }
 
     // ───────────────────────────────────────────────────────────────────────
-    // STEP 2: Fetch broad candidate set (Top 50)
+    // STEP 2: Fetch broad candidate set + Scholarships + User Profile
     // ───────────────────────────────────────────────────────────────────────
+    // Get Auth User for Scholarship Eligibility
+    const authHeader = request.headers.get('Authorization') || '';
+    const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    
+    let studentScore: number | null = null;
+    if (user) {
+      const { data: profile } = await supabase
+        .from('student_profiles')
+        .select('score_percentage')
+        .eq('user_id', user.id)
+        .single();
+      studentScore = profile?.score_percentage || null;
+    }
+
     let dbQuery = supabase
       .from('courses')
       .select(`
         *,
+        scholarships (*),
         universities (
           name,
           slug,
@@ -109,7 +124,7 @@ Required JSON format:
     // ───────────────────────────────────────────────────────────────────────
     // STEP 3: Predictive Scoring & Strict Filtering
     // ───────────────────────────────────────────────────────────────────────
-    const scoredMatches = candidates
+    const scoredMatches = (candidates as any[])
       .filter(course => {
         // Strict Budget Enforcement (Deal-Breaker)
         if (parsedIntent.isStrictBudget && parsedIntent.maxBudgetINR) {
@@ -175,6 +190,26 @@ Required JSON format:
           admissionConditions.push("Requires 12th Pass Marksheet");
         }
 
+        // 7. Scholarship Intelligence
+        let qualifiedScholarship = null;
+        if (studentScore && course.scholarships?.length > 0) {
+          // Find best scholarship student qualifies for
+          const scholarships = course.scholarships
+            .filter((s: any) => studentScore! >= s.min_score)
+            .sort((a: any, b: any) => b.discount_percentage - a.discount_percentage);
+          
+          if (scholarships.length > 0) {
+            const bestS = scholarships[0];
+            qualifiedScholarship = {
+              name: bestS.name,
+              discountPercentage: bestS.discount_percentage,
+              amountSaved: Math.round(course.total_fee_inr * (bestS.discount_percentage / 100)),
+              criteria: bestS.eligibility_criteria
+            };
+            score += 10; // Extra alignment score for scholarship availability
+          }
+        }
+
         // Adjust score based on NLP confidence
         const finalScore = Math.min(score * (parsedIntent.confidenceScore / 100) + (score * 0.2), 100);
 
@@ -184,15 +219,16 @@ Required JSON format:
           confidenceScore: parsedIntent.confidenceScore,
           admissionProbability,
           admissionConditions,
+          qualifiedScholarship,
           universityName: course.universities?.name,
           logoUrl: course.universities?.logo_url,
           roi: Math.round(roiValue / 10000), // Scaled for display
           category: course.category || "online-degrees",
           universitySlug: course.universities?.slug,
           matchReasons: [
+            qualifiedScholarship ? `You qualify for ${qualifiedScholarship.discountPercentage}% Scholarship!` : null,
             course.has_zero_cost_emi ? "Zero-Cost EMI Available" : null,
             roiValue > 1000000 ? "Exceptionally High ROI" : null,
-            course.universities?.is_premium ? "Top-Tier University" : null,
             isCareerMatch ? `Optimized for ${parsedIntent.careerGoal}` : null
           ].filter(Boolean)
         };

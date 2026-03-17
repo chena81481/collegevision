@@ -13,50 +13,61 @@ interface TimelineStep {
   timeEstimate: string;
 }
 
-const DEFAULT_STEPS: TimelineStep[] = [
-  {
-    id: 'match',
-    label: 'AI Match Found',
-    sublabel: '98% Eligibility Match',
-    icon: Search,
-    status: 'completed',
-    timeEstimate: 'Instant'
-  },
-  {
-    id: 'verify',
-    label: 'Document Verification',
-    sublabel: 'Upload Marksheets & ID',
-    icon: FileCheck,
-    status: 'current',
-    timeEstimate: '2-3 Days'
-  },
-  {
-    id: 'entrance',
-    label: 'Admission Process',
-    sublabel: 'Interview / Assessment',
-    icon: ClipboardList,
-    status: 'upcoming',
-    timeEstimate: '1 Week'
-  },
-  {
-    id: 'fee',
-    label: 'Course Fee Payment',
-    sublabel: 'Secure your seat',
-    icon: Wallet,
-    status: 'upcoming',
-    timeEstimate: 'Immediate'
-  },
-  {
-    id: 'graduation',
-    label: 'Graduation',
-    sublabel: 'UGC-DEB Degree Award',
-    icon: GraduationCap,
-    status: 'upcoming',
-    timeEstimate: '2 Years'
-  }
-];
+export default function JourneyTimeline({ application, programName = "Selected Program" }: { application?: any, programName?: string }) {
+  // Map application status to step indices
+  const statusToStep: Record<string, number> = {
+    'START_APPLICATION': 0,
+    'DOCUMENTS_PENDING': 1,
+    'UNDER_REVIEW': 2,
+    'OFFER_RECEIVED': 3,
+    'WON': 4
+  };
 
-export default function JourneyTimeline() {
+  const activeStepIndex = application ? (statusToStep[application.status] ?? 1) : 0;
+
+  const steps: TimelineStep[] = [
+    {
+      id: 'match',
+      label: 'AI Match Found',
+      sublabel: '98% Eligibility Match',
+      icon: Search,
+      status: activeStepIndex > 0 ? 'completed' : 'current',
+      timeEstimate: 'Instant'
+    },
+    {
+      id: 'verify',
+      label: 'Document Verification',
+      sublabel: application?.status === 'START_APPLICATION' ? 'Upload Marksheets & ID' : 'Verified via OCR',
+      icon: FileCheck,
+      status: activeStepIndex > 1 ? 'completed' : activeStepIndex === 1 ? 'current' : 'upcoming',
+      timeEstimate: '2-3 Days'
+    },
+    {
+      id: 'entrance',
+      label: 'Admission Process',
+      sublabel: 'Interview / Assessment',
+      icon: ClipboardList,
+      status: activeStepIndex > 2 ? 'completed' : activeStepIndex === 2 ? 'current' : 'upcoming',
+      timeEstimate: '1 Week'
+    },
+    {
+      id: 'fee',
+      label: 'Course Fee Payment',
+      sublabel: application?.is_fee_waived ? '₹500 Fee Waived' : 'Secure your seat',
+      icon: Wallet,
+      status: activeStepIndex > 3 ? 'completed' : activeStepIndex === 3 ? 'current' : 'upcoming',
+      timeEstimate: 'Immediate'
+    },
+    {
+      id: 'graduation',
+      label: 'Graduation',
+      sublabel: 'UGC-DEB Degree Award',
+      icon: GraduationCap,
+      status: activeStepIndex === 4 ? 'completed' : 'upcoming',
+      timeEstimate: '2 Years'
+    }
+  ];
+
   return (
     <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-100 relative overflow-hidden">
       {/* Background Decorative Element */}
@@ -66,18 +77,20 @@ export default function JourneyTimeline() {
         <div className="flex justify-between items-end mb-12">
           <div>
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Your Academic Roadmap</h3>
-            <p className="text-sm font-bold text-slate-500 mt-1">Live journey progress for <span className="text-blue-600">Online MBA</span></p>
+            <p className="text-sm font-bold text-slate-500 mt-1">Live journey progress for <span className="text-blue-600">{programName}</span></p>
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 text-[10px] font-black uppercase tracking-wider">
-            <CheckCircle2 className="w-3.5 h-3.5" /> High Probablity
-          </div>
+          {activeStepIndex >= 2 && (
+            <div className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 text-[10px] font-black uppercase tracking-wider">
+              <CheckCircle2 className="w-3.5 h-3.5" /> High Probability
+            </div>
+          )}
         </div>
 
         <div className="space-y-12">
-          {DEFAULT_STEPS.map((step, idx) => (
+          {steps.map((step, idx) => (
             <div key={step.id} className="relative flex gap-8">
               {/* Vertical Line Connector */}
-              {idx !== DEFAULT_STEPS.length - 1 && (
+              {idx !== steps.length - 1 && (
                 <div 
                   className={`absolute left-[24px] top-[48px] bottom-[-24px] w-0.5 ${
                     step.status === 'completed' ? 'bg-blue-600' : 'bg-slate-100'
@@ -135,9 +148,11 @@ export default function JourneyTimeline() {
           ))}
         </div>
 
-        <button className="w-full mt-12 bg-slate-900 hover:bg-black text-white py-4 rounded-2xl font-black text-xs transition-all active:scale-[0.98] shadow-xl">
-          View Detailed Checklist
-        </button>
+        {activeStepIndex < 4 && (
+          <button className="w-full mt-12 bg-slate-900 hover:bg-black text-white py-4 rounded-2xl font-black text-xs transition-all active:scale-[0.98] shadow-xl">
+            View Detailed Checklist
+          </button>
+        )}
       </div>
     </div>
   );

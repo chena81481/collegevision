@@ -4,87 +4,87 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Bookmark, FileText, ChevronRight, CheckCircle2, 
   Clock, AlertCircle, ArrowRight, Download, UploadCloud,
-  Star, TrendingUp, IndianRupee, Settings, ShieldAlert
+  Star, TrendingUp, IndianRupee, Settings, ShieldAlert,
+  Sparkles
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { deleteStudentAccount } from '@/app/actions/delete-account';
 import { createClient } from '@/utils/supabase/client';
 import JourneyTimeline from '@/components/features/JourneyTimeline';
+import DocumentVault from '@/components/features/DocumentVault';
+import { getStudentDashboardData, submitApplication } from '@/app/actions/applications';
+import { toast } from 'sonner';
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('saved');
-  const [user, setUser] = useState<{ name: string; email: string; profileCompletion: number } | null>(null);
-  const [isParsing, setIsParsing] = useState(false);
-  const [parsedData, setParsedData] = useState<{ studentName: string; board: string; year: string; score: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; profileCompletion: number; score?: number } | null>(null);
+  const [scholarshipCount, setScholarshipCount] = useState(0);
+  const [savedMatches, setSavedMatches] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+  
   const supabase = createClient();
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    const data = await getStudentDashboardData();
+    if (data) {
+      setSavedMatches(data.savedMatches);
+      setApplications(data.applications);
+    }
+    setLoading(false);
+  };
 
   // Fetch real user data
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
+        // Fetch profile to get score
+        const { data: profile } = await supabase
+          .from('student_profiles')
+          .select('score_percentage')
+          .eq('user_id', authUser.id)
+          .single();
+
         setUser({
+          id: authUser.id,
           name: authUser.user_metadata.full_name || authUser.email?.split('@')[0] || "Student",
           email: authUser.email || "",
-          profileCompletion: 60, // Mocked for now as requested
+          profileCompletion: profile ? 95 : 60,
+          score: profile?.score_percentage,
         });
+
+        if (profile?.score_percentage) {
+          // Check how many scholarships they qualify for
+          const { count } = await supabase
+            .from('scholarships')
+            .select('*', { count: 'exact', head: true })
+            .lte('min_score', profile.score_percentage);
+          setScholarshipCount(count || 0);
+        }
+
+        fetchDashboardData();
       }
     };
     fetchUser();
   }, []);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleApply = async (courseId: string, universityId: string) => {
+    setIsSubmitting(courseId);
+    const result = await submitApplication(courseId, universityId);
+    setIsSubmitting(null);
 
-    setIsParsing(true);
-    setParsedData(null);
-
-    // Convert to base64 for Gemini
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64Content = reader.result as string;
-      
-      try {
-        const response = await fetch('/api/parse-document', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64Content }),
-        });
-        
-        const data = await response.json();
-        setParsedData(data);
-      } catch (err) {
-        console.error("Parsing failed:", err);
-      } finally {
-        setIsParsing(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    if (result.success) {
+      toast.success(result.isFeeWaived ? "Application Submitted! ₹500 Fee Waived." : "Application Initiated!");
+      fetchDashboardData();
+      setActiveTab('applications');
+    } else {
+      toast.error(result.error || "Failed to submit application");
+    }
   };
 
-  // Simulated Saved Matches (In production, fetch from 'saved_matches' table)
-  const savedUniversities = [
-    {
-      id: 1,
-      name: "Symbiosis SCDL",
-      course: "Online BBA",
-      fee: "1,50,000",
-      roi: "433%",
-      status: "ready_to_apply",
-      logoColor: "bg-teal-900",
-      badge: "Top Match"
-    },
-    {
-      id: 2,
-      name: "Amity Online",
-      course: "Online MBA Finance",
-      fee: "1,75,000",
-      roi: "485%",
-      status: "documents_pending",
-      logoColor: "bg-orange-600",
-      badge: "High Placement"
-    }
-  ];
 
   if (!user) {
     return (
@@ -107,7 +107,18 @@ export default function StudentDashboard() {
                 {user.name.charAt(0)}
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome back, {user.name.split(' ')[0]}</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome back, {user.name.split(' ')[0]}</h1>
+                  {scholarshipCount > 0 && (
+                    <motion.div 
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-emerald-500/20"
+                    >
+                      <Sparkles className="w-3 h-3" /> {scholarshipCount} Scholarships Unlocked
+                    </motion.div>
+                  )}
+                </div>
                 <p className="text-sm text-slate-500 font-medium">{user.email}</p>
               </div>
             </div>
@@ -143,7 +154,7 @@ export default function StudentDashboard() {
             }`}
           >
             <Bookmark className="w-4 h-4" /> Saved Matches
-            <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full ml-1">{savedUniversities.length}</span>
+            <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full ml-1">{savedMatches.length}</span>
           </button>
           
           <button 
@@ -192,39 +203,62 @@ export default function StudentDashboard() {
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-xl font-bold text-slate-900 mb-6">Your Shortlisted Programs</h2>
               
-              {savedUniversities.map((uni) => (
-                <div key={uni.id} className="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-                  
-                  {/* University Logo Thumbnail */}
-                  <div className={`w-16 h-16 ${uni.logoColor} rounded-xl flex items-center justify-center text-white font-bold text-sm tracking-wider shrink-0`}>
-                    {uni.name.substring(0, 3).toUpperCase()}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-lg text-slate-900 truncate">{uni.name}</h3>
-                      <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-100 shrink-0">{uni.badge}</span>
-                    </div>
-                    <p className="text-sm text-slate-500 mb-3">{uni.course}</p>
+              {savedMatches.length > 0 ? (
+                savedMatches.map((match) => (
+                  <div key={match.id} className="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-5 items-start sm:items-center">
                     
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
-                       <span className="flex items-center gap-1"><IndianRupee className="w-3.5 h-3.5 text-slate-400"/> ₹{uni.fee} Total</span>
-                       <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                       <span className="flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded"><TrendingUp className="w-3.5 h-3.5"/> {uni.roi} ROI</span>
+                    {/* University Logo Thumbnail */}
+                    <div className="w-16 h-16 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold text-sm tracking-wider shrink-0 overflow-hidden">
+                      {match.course?.universities?.logo_url ? (
+                        <img src={match.course.universities.logo_url} alt={match.course.universities.name} className="w-full h-full object-contain p-2" />
+                      ) : (
+                        (match.course?.universities?.name || 'UNI').substring(0, 3).toUpperCase()
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-lg text-slate-900 truncate">{match.course?.universities?.name}</h3>
+                        {match.course?.badge_label && (
+                          <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-100 shrink-0">{match.course.badge_label}</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 mb-3">{match.course?.name}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
+                         <span className="flex items-center gap-1"><IndianRupee className="w-3.5 h-3.5 text-slate-400"/> ₹{match.course?.total_fee_inr?.toLocaleString()} Total</span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="w-full sm:w-auto flex flex-col gap-2 shrink-0 mt-4 sm:mt-0">
+                      {applications.some(a => a.course_id === match.course_id) ? (
+                        <button 
+                          onClick={() => setActiveTab('applications')}
+                          className="w-full sm:w-auto bg-green-50 text-green-700 border border-green-100 px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors text-center flex items-center gap-2"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Applied
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleApply(match.course_id, match.course.university_id)}
+                          disabled={isSubmitting === match.course_id}
+                          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm text-center disabled:opacity-50"
+                        >
+                          {isSubmitting === match.course_id ? "Processing..." : "Apply Now"}
+                        </button>
+                      )}
+                      <button className="w-full sm:w-auto bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-medium transition-colors text-center">
+                        View Details
+                      </button>
                     </div>
                   </div>
-
-                  {/* Action Buttons */}
-                  <div className="w-full sm:w-auto flex flex-col gap-2 shrink-0 mt-4 sm:mt-0">
-                    <button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm text-center">
-                      Apply Now
-                    </button>
-                    <button className="w-full sm:w-auto bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-medium transition-colors text-center">
-                      Compare ROI
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                  <p className="text-slate-500 font-medium">No saved matches yet. Use the explorer to find programs!</p>
                 </div>
-              ))}
+              )}
             </div>
           )}
 
@@ -233,149 +267,96 @@ export default function StudentDashboard() {
              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <h2 className="text-xl font-bold text-slate-900 mb-2">Application Tracking</h2>
                
-               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
-                 {/* Progress Line */}
-                 <div className="absolute left-10 top-12 bottom-12 w-0.5 bg-slate-100 z-0"></div>
-                 
-                 <div className="flex justify-between items-start mb-8 relative z-10 border-b border-slate-100 pb-4">
-                    <div>
-                      <h3 className="font-bold text-lg text-slate-900">Amity Online</h3>
-                      <p className="text-sm text-slate-500">Online MBA Finance</p>
-                    </div>
-                    <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-3 py-1 rounded-full border border-amber-200">
-                      Action Required
-                    </span>
-                 </div>
+               {applications.length > 0 ? (
+                 applications.map((app) => (
+                   <div key={app.id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                     {/* Progress Line */}
+                     <div className="absolute left-10 top-12 bottom-12 w-0.5 bg-slate-100 z-0"></div>
+                     
+                     <div className="flex justify-between items-start mb-8 relative z-10 border-b border-slate-100 pb-4">
+                        <div>
+                          <h3 className="font-bold text-lg text-slate-900">{app.university?.name}</h3>
+                          <p className="text-sm text-slate-500">{app.course?.name}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`text-[11px] font-bold px-3 py-1 rounded-full border ${
+                            app.status === 'WON' ? 'bg-green-100 text-green-800 border-green-200' :
+                            app.status === 'UNDER_REVIEW' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                            'bg-amber-100 text-amber-800 border-amber-200'
+                          }`}>
+                            {app.status.replace('_', ' ')}
+                          </span>
+                          {app.is_fee_waived && (
+                            <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" /> ₹500 Fee Waived
+                            </span>
+                          )}
+                        </div>
+                     </div>
 
-                 {/* Timeline Steps */}
-                 <div className="space-y-8 relative z-10">
-                    
-                    {/* Step 1: Done */}
-                    <div className="flex gap-4 items-start">
-                       <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shrink-0 shadow-sm z-10 border-4 border-white">
-                         <CheckCircle2 className="w-4 h-4 text-white" />
-                       </div>
-                       <div className="pt-1">
-                         <h4 className="text-sm font-bold text-slate-900 mb-1">Application Started</h4>
-                         <p className="text-xs text-slate-500">You initiated the application on March 12, 2026.</p>
-                       </div>
-                    </div>
+                     {/* Timeline Steps (Dynamic-ish) */}
+                     <div className="space-y-8 relative z-10">
+                        {/* Step 1: Application Started */}
+                        <div className="flex gap-4 items-start">
+                           <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shrink-0 shadow-sm z-10 border-4 border-white">
+                             <CheckCircle2 className="w-4 h-4 text-white" />
+                           </div>
+                           <div className="pt-1">
+                             <h4 className="text-sm font-bold text-slate-900 mb-1">Application Started</h4>
+                             <p className="text-xs text-slate-500">Initiated on {new Date(app.created_at).toLocaleDateString()}.</p>
+                           </div>
+                        </div>
 
-                    {/* Step 2: Current/Pending */}
-                    <div className="flex gap-4 items-start">
-                       <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm z-10 border-4 border-white">
-                         <AlertCircle className="w-4 h-4 text-white" />
-                       </div>
-                       <div className="pt-1 w-full">
-                         <h4 className="text-sm font-bold text-slate-900 mb-1">Upload Documents</h4>
-                         <p className="text-xs text-slate-500 mb-3">Please upload your 12th marksheet to proceed to counselor review.</p>
-                         <button className="bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2">
-                           <UploadCloud className="w-3.5 h-3.5" /> Upload Now
-                         </button>
-                       </div>
-                    </div>
+                        {/* Step 2: Documents */}
+                        <div className="flex gap-4 items-start">
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm z-10 border-4 border-white ${
+                             app.status !== 'START_APPLICATION' ? 'bg-green-500' : 'bg-amber-500'
+                           }`}>
+                             {app.status !== 'START_APPLICATION' ? <CheckCircle2 className="w-4 h-4 text-white" /> : <AlertCircle className="w-4 h-4 text-white" />}
+                           </div>
+                           <div className="pt-1 w-full">
+                             <h4 className="text-sm font-bold text-slate-900 mb-1">Verify Identity & Academic Docs</h4>
+                             <p className="text-xs text-slate-500 mb-3">
+                               {app.status === 'START_APPLICATION' ? "Required before submission." : "Documents verified via OCR."}
+                             </p>
+                             {app.status === 'START_APPLICATION' && (
+                               <button 
+                                 onClick={() => setActiveTab('documents')}
+                                 className="bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
+                               >
+                                 <UploadCloud className="w-3.5 h-3.5" /> Upload Now
+                               </button>
+                             )}
+                           </div>
+                        </div>
 
-                    {/* Step 3: Future */}
-                    <div className="flex gap-4 items-start opacity-50">
-                       <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 z-10 border-4 border-white">
-                         <Clock className="w-4 h-4 text-slate-400" />
-                       </div>
-                       <div className="pt-1">
-                         <h4 className="text-sm font-bold text-slate-500 mb-1">Counselor Review & Payment</h4>
-                         <p className="text-xs text-slate-400">Waiting for document submission.</p>
-                       </div>
-                    </div>
-
-                 </div>
-               </div>
-             </div>
-          )}
-
-          {/* CONTENT: DOCUMENT VAULT (OCR Setup) */}
-          {activeTab === 'documents' && (
-             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <div className="flex justify-between items-end mb-6">
-                 <div>
-                   <h2 className="text-xl font-bold text-slate-900 mb-1">Document Vault</h2>
-                   <p className="text-sm text-slate-500">Upload once, apply everywhere. Securely stored.</p>
-                 </div>
-               </div>
-
-               {/* Upload Dropzone */}
-               {!parsedData && !isParsing ? (
-                 <label className="border-2 border-dashed border-blue-200 bg-blue-50/30 rounded-3xl p-10 text-center hover:bg-blue-50/50 transition-colors cursor-pointer group block">
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                      <UploadCloud className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <h3 className="text-slate-900 font-bold mb-2">Drag & drop your documents</h3>
-                    <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">Upload your 10th/12th marksheets, Degree certificate, or Aadhar card (PDF, JPG, PNG).</p>
-                    <div className="bg-blue-600 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-blue-700 transition-colors inline-block">
-                      Browse Files
-                    </div>
-                 </label>
-               ) : isParsing ? (
-                 <div className="border-2 border-dashed border-blue-200 bg-blue-50/10 rounded-3xl p-16 text-center">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                    <h3 className="text-slate-900 font-bold mb-2">Magic AI Parsing...</h3>
-                    <p className="text-sm text-slate-500">Gemini is extracting data from your marksheet.</p>
-                 </div>
+                        {/* Step 3: Review */}
+                        <div className={`flex gap-4 items-start ${app.status === 'START_APPLICATION' || app.status === 'DOCUMENTS_PENDING' ? 'opacity-50' : ''}`}>
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 border-4 border-white ${
+                             app.status === 'UNDER_REVIEW' || app.status === 'WON' || app.status === 'OFFER_RECEIVED' ? 'bg-blue-600' : 'bg-slate-200'
+                           }`}>
+                             <Clock className={`w-4 h-4 ${app.status === 'UNDER_REVIEW' ? 'text-white' : 'text-slate-400'}`} />
+                           </div>
+                           <div className="pt-1">
+                             <h4 className="text-sm font-bold text-slate-900 mb-1">Counselor Portfolio Review</h4>
+                             <p className="text-xs text-slate-500">
+                               {app.status === 'WON' ? "Review successful." : "In progress by Priya Desai."}
+                             </p>
+                           </div>
+                        </div>
+                     </div>
+                   </div>
+                 ))
                ) : (
-                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-xl text-white animate-in zoom-in-95 duration-500">
-                    <div className="flex justify-between items-center mb-6">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                          <CheckCircle2 className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="font-bold text-lg">Magic Extraction Complete</h3>
-                      </div>
-                      <button 
-                        onClick={() => setParsedData(null)}
-                        className="text-white/60 hover:text-white text-xs font-medium"
-                      >
-                        Re-upload
-                      </button>
-                    </div>
-                    
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {parsedData && [
-                        { label: 'Full Name', value: parsedData.studentName },
-                        { label: 'Board', value: parsedData.board },
-                        { label: 'Year', value: parsedData.year },
-                        { label: 'Avg. Score', value: parsedData.score }
-                      ].map((item, idx) => (
-                        <div key={idx} className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                          <div className="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-1">{item.label}</div>
-                          <div className="text-sm font-bold truncate">{item.value}</div>
-                        </div>
-                      ))}
-                    </div>
+                 <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                   <p className="text-slate-500 font-medium">No active applications. Start one today!</p>
                  </div>
                )}
-
-               {/* Uploaded Files List */}
-               <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider pt-4">Uploaded Files</h3>
-               <div className="bg-white border border-slate-200 rounded-2xl p-2 shadow-sm">
-                  <div className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors">
-                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">PDF</div>
-                       <div>
-                         <div className="text-sm font-bold text-slate-900">12th_Marksheet_CBSE.pdf</div>
-                         <div className="text-xs text-slate-500 flex items-center gap-2">
-                           1.2 MB <span className="w-1 h-1 bg-slate-300 rounded-full"></span> 
-                           <span className="flex items-center gap-1 text-green-600 font-medium"><CheckCircle2 className="w-3 h-3"/> Verified</span>
-                         </div>
-                       </div>
-                     </div>
-                     <button className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
-                       <Download className="w-4 h-4" />
-                     </button>
-                  </div>
-               </div>
              </div>
           )}
+
+          {/* CONTENT: DOCUMENT VAULT (Managed Component) */}
+          {activeTab === 'documents' && <DocumentVault />}
 
         </div>
 
@@ -409,7 +390,10 @@ export default function StudentDashboard() {
            </div>
 
            {/* Journey Timeline */}
-           <JourneyTimeline />
+           <JourneyTimeline 
+             application={applications[0]} 
+             programName={applications[0]?.course?.name} 
+           />
 
            {/* Quick Actions / Tips */}
            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">

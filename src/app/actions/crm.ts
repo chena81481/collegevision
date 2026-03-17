@@ -209,3 +209,92 @@ export async function fetchCompanies() {
   }
   return data;
 }
+// --- LEAD ACTIVITIES (v2) ---
+
+export async function logLeadActivity(activity: {
+  leadId: string;
+  type: string;
+  description: string;
+  counselorId: string;
+  metadata?: any;
+}) {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('lead_activities')
+    .insert([{
+      lead_id: activity.leadId,
+      type: activity.type,
+      description: activity.description,
+      counselor_id: activity.counselorId,
+      metadata: activity.metadata || {}
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error logging lead activity:", error)
+    return { error: "Failed to log activity" }
+  }
+
+  revalidatePath(`/admin/leads/${activity.leadId}`)
+  return { success: true, activity: data }
+}
+
+export async function addLeadNote(leadId: string, content: string, counselorId: string) {
+  const supabase = await createClient()
+  
+  // 1. Insert into notes table (for specialized note features like mentions)
+  const { data: note, error: noteError } = await supabase
+    .from('notes')
+    .insert([{
+      lead_id: leadId,
+      content: content,
+      counselor_id: counselorId
+    }])
+    .select()
+    .single()
+
+  if (noteError) {
+    console.error("Error adding note:", noteError)
+    return { error: "Failed to add note" }
+  }
+
+  // 2. Also log as an activity for the unified feed
+  await logLeadActivity({
+    leadId,
+    type: 'NOTE',
+    description: content,
+    counselorId,
+    metadata: { note_id: note.id }
+  })
+
+  revalidatePath(`/admin/leads/${leadId}`)
+  return { success: true, note }
+}
+
+export async function reassignLead(leadId: string, counselorId: string) {
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('leads')
+    .update({ owner_counselor_id: counselorId })
+    .eq('id', leadId)
+
+  if (error) {
+    console.error("Error reassigning lead:", error)
+    return { error: "Failed to reassign lead" }
+  }
+
+  await logLeadActivity({
+    leadId,
+    type: 'ASSIGNED',
+    description: `Lead reassigned to counselor ${counselorId}`,
+    counselorId: 'SYSTEM',
+    metadata: { new_counselor_id: counselorId }
+  })
+
+  revalidatePath(`/admin/leads/${leadId}`)
+  revalidatePath('/admin/pipeline')
+  return { success: true }
+}

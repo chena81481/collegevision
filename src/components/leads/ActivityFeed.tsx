@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   History, MessageSquare, Phone, Mail, 
-  CheckCircle2, Clock, StickyNote, User 
+  CheckCircle2, Clock, StickyNote, User,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { addLeadNote } from "@/app/actions/crm";
 
 export function ActivityFeed({ leadId, initialActivities, initialNotes, counselorId }: { leadId: string, initialActivities: any[], initialNotes: any[], counselorId: string }) {
   const [activities, setActivities] = useState(initialActivities);
@@ -22,30 +24,29 @@ export function ActivityFeed({ leadId, initialActivities, initialNotes, counselo
     if (!newNote.trim()) return;
 
     setSubmittingNote(true);
-    try {
-      const response = await fetch(`/api/leads/${leadId}/notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newNote, counselorId }),
-      });
+    const result = await addLeadNote(leadId, newNote, counselorId);
+    setSubmittingNote(false);
 
-      if (!response.ok) throw new Error("Failed to add note");
-      const note = await response.json();
-      
-      setNotes([note, ...notes]);
+    if (result.success) {
+      setNotes([result.note, ...notes]);
       setNewNote("");
       toast.success("Note added successfully");
-    } catch (error) {
-      toast.error("Error adding note");
-    } finally {
-      setSubmittingNote(false);
+    } else {
+      toast.error(result.error || "Error adding note");
     }
   };
 
+  // Combine items for a truly unified timeline
   const combinedItems = [
     ...activities.map(a => ({ ...a, itemType: 'activity' })),
-    ...notes.map(n => ({ ...n, itemType: 'note', type: 'NOTE_ADDED', description: n.content }))
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    ...notes.map(n => ({ 
+      ...n, 
+      itemType: 'note', 
+      type: 'NOTE', 
+      description: n.content,
+      createdAt: n.createdAt || n.created_at // Handle Supabase naming
+    }))
+  ].sort((a, b) => new Date(b.createdAt || b.created_at).getTime() - new Date(a.createdAt || a.created_at).getTime());
 
   return (
     <div className="space-y-8">
@@ -65,7 +66,7 @@ export function ActivityFeed({ leadId, initialActivities, initialNotes, counselo
                  <button type="button" className="text-slate-400 hover:text-blue-600 transition-colors"><User className="h-4 w-4" /></button>
               </div>
               <Button disabled={submittingNote || !newNote.trim()} className="rounded-xl px-8 bg-blue-600 hover:bg-blue-700">
-                Post Note
+                {submittingNote ? "Posting..." : "Post Note"}
               </Button>
             </div>
           </form>
@@ -84,14 +85,22 @@ export function ActivityFeed({ leadId, initialActivities, initialNotes, counselo
               <div className={cn(
                 "absolute left-0 w-10 h-10 rounded-full flex items-center justify-center ring-4 ring-white shadow-sm z-10 transition-transform group-hover:scale-110",
                 item.type === 'CREATED' ? "bg-emerald-500 text-white" :
-                item.type === 'STATUS_CHANGED' ? "bg-amber-500 text-white" :
-                item.type === 'NOTE_ADDED' ? "bg-blue-500 text-white" :
+                item.type === 'STATUS_CHANGE' || item.type === 'STATUS_CHANGED' ? "bg-amber-500 text-white" :
+                item.type === 'NOTE' ? "bg-blue-500 text-white" :
+                item.type === 'WHATSAPP' ? "bg-green-500 text-white" :
+                item.type === 'CALL' ? "bg-emerald-600 text-white" :
+                item.type === 'EMAIL' ? "bg-indigo-500 text-white" :
+                item.type === 'APPLICATION_EVENT' ? "bg-purple-500 text-white" :
                 "bg-slate-500 text-white"
               )}>
                 {item.type === 'CREATED' && <CheckCircle2 className="h-5 w-5" />}
-                {item.type === 'STATUS_CHANGED' && <Clock className="h-5 w-5" />}
-                {item.type === 'NOTE_ADDED' && <MessageSquare className="h-5 w-5" />}
-                {['CONTACTED', 'ASSIGNED', 'UPDATED'].includes(item.type) && <History className="h-5 w-5" />}
+                {(item.type === 'STATUS_CHANGE' || item.type === 'STATUS_CHANGED') && <Clock className="h-5 w-5" />}
+                {item.type === 'NOTE' && <MessageSquare className="h-5 w-5" />}
+                {item.type === 'WHATSAPP' && <MessageSquare className="h-5 w-5" />}
+                {item.type === 'CALL' && <Phone className="h-5 w-5" />}
+                {item.type === 'EMAIL' && <Mail className="h-5 w-5" />}
+                {item.type === 'APPLICATION_EVENT' && <Sparkles className="h-5 w-5" />}
+                {!['CREATED', 'STATUS_CHANGE', 'STATUS_CHANGED', 'NOTE', 'WHATSAPP', 'CALL', 'EMAIL', 'APPLICATION_EVENT'].includes(item.type) && <History className="h-5 w-5" />}
               </div>
 
               <div className="flex-1 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all group-hover:shadow-md group-hover:border-slate-300 ml-4">
@@ -100,23 +109,29 @@ export function ActivityFeed({ leadId, initialActivities, initialNotes, counselo
                     {item.type.replace('_', ' ')}
                   </span>
                   <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">
-                    {new Date(item.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                    {new Date(item.createdAt || item.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                   </span>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed">
-                  {item.description}
+                  {item.description || item.content}
                 </p>
                 {item.counselor && (
                   <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-50">
                     <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-600">
-                      {item.counselor.name[0]}
+                      {(item.counselor.name || item.counselor.full_name || 'C')[0]}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-500">Log by {item.counselor.name}</span>
+                    <span className="text-[10px] font-bold text-slate-500">Log by {item.counselor.name || item.counselor.full_name}</span>
                   </div>
                 )}
               </div>
             </div>
           ))}
+
+          {combinedItems.length === 0 && (
+            <div className="text-center py-12 text-slate-400 italic text-sm">
+              No activity recorded yet for this lead.
+            </div>
+          )}
         </div>
       </div>
     </div>

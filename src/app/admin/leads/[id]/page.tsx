@@ -33,6 +33,10 @@ async function getLead(id: string) {
         *,
         counselor:counselors ( * )
       ),
+      lead_activities (
+        *,
+        counselor:counselors!lead_activities_counselor_id_fkey ( * )
+      ),
       applications (
         *,
         university:universities ( * )
@@ -43,12 +47,15 @@ async function getLead(id: string) {
   
   if (error || !lead) return null;
 
-  // Format to match what the components expect (Prisma-like structure)
+  const legacyActivities = lead.activities || [];
+  const newActivities = lead.lead_activities || [];
+  const allActivities = [...legacyActivities, ...newActivities].sort((a: any, b: any) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+
   return {
     ...lead,
-    notes: (lead.notes || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    activities: (lead.activities || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    applications: (lead.applications || []).sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    notes: (lead.notes || []).sort((a: any, b: any) => new Date(b.createdAt || b.created_at).getTime() - new Date(a.createdAt || a.created_at).getTime()),
+    activities: allActivities,
+    applications: (lead.applications || []).sort((a: any, b: any) => new Date(b.updatedAt || b.updated_at).getTime() - new Date(a.updatedAt || a.updated_at).getTime())
   };
 }
 

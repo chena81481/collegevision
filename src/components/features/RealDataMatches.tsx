@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, TrendingUp, Coins, Target, ArrowRight, BarChart2, Check } from 'lucide-react';
+import { Clock, TrendingUp, Coins, Target, ArrowRight, BarChart2, Check, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { CourseMatch } from '@/lib/types';
+import ScholarshipBadge from './ScholarshipBadge';
 
 interface OutcomeCardProps {
   course: CourseMatch;
@@ -16,11 +17,21 @@ interface OutcomeCardProps {
 function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
   const router = useRouter();
   
+  // Financial Adjustment: scholarship reduction
+  const finalFee = course.qualifiedScholarship 
+    ? course.totalFeeInr - course.qualifiedScholarship.amountSaved 
+    : course.totalFeeInr;
+
   // Logic: Break-even Calculation (Years to recoup investment assuming 10% salary attribution)
-  const breakEvenYears = (course.totalFeeInr / ((course.avgCtcInr || 600000) * 0.1)).toFixed(1);
+  const breakEvenYears = (finalFee / ((course.avgCtcInr || 600000) * 0.1)).toFixed(1);
   
   // Logic: 8-Year Wealth Generation (Salary * 8 - Fee)
-  const projectedEarnings = Math.round(((course.avgCtcInr || 600000) * 8) / 100000);
+  const projectedEarnings = Math.round(((course.avgCtcInr || 600000) * 8 - finalFee) / 100000);
+  
+  // Updated ROI Display (Simplified for demonstration)
+  const effectiveRoi = course.qualifiedScholarship 
+    ? Math.round((course.roi || 0) * (1 + (course.qualifiedScholarship.discountPercentage / 100)))
+    : course.roi;
 
   return (
     <motion.div 
@@ -36,11 +47,11 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
       )}
       {/* Header */}
       <div className="mb-8 items-start flex justify-between">
-        <div>
+        <div className="flex-1 mr-4">
           <h3 className="text-xl font-black text-slate-900 leading-tight">{course.universityName}</h3>
           <p className="text-sm font-bold text-slate-400 mt-1">{course.courseName}</p>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-2 shrink-0">
           <div className="h-10 px-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center font-black text-[10px] text-slate-400">
             {(course.universityName.split(' ')[0] || 'UNI').toUpperCase()}
           </div>
@@ -56,15 +67,32 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
         </div>
       </div>
 
+      {/* Scholarship Highlight - Phase 5 */}
+      {course.qualifiedScholarship && (
+        <div className="mb-8">
+          <ScholarshipBadge {...course.qualifiedScholarship} />
+        </div>
+      )}
+
       {/* Data Narrative Arc */}
       <div className="space-y-6 mb-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
-            <Coins className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 relative">
+             <Coins className="w-6 h-6" />
+             {course.qualifiedScholarship && <div className="absolute top-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />}
           </div>
           <div>
             <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Total Investment</p>
-            <p className="text-xl font-black text-slate-900">₹{course.totalFeeInr.toLocaleString('en-IN')}</p>
+            <div className="flex items-center gap-2">
+              <p className={`text-xl font-black ${course.qualifiedScholarship ? 'text-slate-400 line-through text-lg' : 'text-slate-900'}`}>
+                ₹{course.totalFeeInr.toLocaleString('en-IN')}
+              </p>
+              {course.qualifiedScholarship && (
+                <p className="text-xl font-black text-emerald-600">
+                  ₹{finalFee.toLocaleString('en-IN')}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -92,7 +120,10 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
             <div className="flex items-center gap-1.5 text-blue-700 text-[10px] font-black uppercase mb-1">
               <Target className="w-3.5 h-3.5" /> ROI
             </div>
-            <p className="text-base font-black text-blue-900">{course.roi}%</p>
+            <div className="flex items-center gap-1">
+              <p className="text-base font-black text-blue-900">{effectiveRoi}%</p>
+              {course.qualifiedScholarship && <Sparkles className="w-3 h-3 text-emerald-400" />}
+            </div>
           </div>
         </div>
 
@@ -103,7 +134,7 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
               <Check className="w-3 h-3 text-blue-600" /> Eligibility Insights
             </p>
             <div className="flex flex-col gap-1.5">
-              {course.admissionConditions.map((cond, idx) => (
+              {course.admissionConditions.map((cond: string, idx: number) => (
                 <p key={idx} className="text-[10px] font-bold text-slate-600 leading-tight">
                   <span className="text-blue-500 mr-1.5">•</span> {cond}
                 </p>
@@ -118,7 +149,7 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/box:translate-x-full transition-transform duration-1000" />
          <p className="text-[10px] text-slate-500 font-bold uppercase mb-1 tracking-widest">8-Year Wealth Projection</p>
          <p className="text-white font-black text-lg">
-           ₹{(course.totalFeeInr / 100000).toFixed(1)}L becomes <span className="text-emerald-400">₹{projectedEarnings}+L</span>
+           ₹{(finalFee / 100000).toFixed(1)}L becomes <span className="text-emerald-400">₹{projectedEarnings}+L</span>
          </p>
       </div>
 

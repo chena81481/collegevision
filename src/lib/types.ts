@@ -22,6 +22,12 @@ export interface CourseMatch {
   confidenceScore: number;     // 0-100, how well the AI understood the intent
   admissionProbability?: number; // 0-100
   admissionConditions?: string[];
+  qualifiedScholarship?: {
+    name: string;
+    discountPercentage: number;
+    amountSaved: number;
+    criteria: string;
+  };
 }
 
 export interface MatchApiRequest {
