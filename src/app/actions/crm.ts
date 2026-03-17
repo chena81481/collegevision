@@ -1,6 +1,6 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from "next/cache";
 import { Resend } from 'resend';
 import { Twilio } from 'twilio';
@@ -10,9 +10,29 @@ const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_T
   ? new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   : null;
 
+// --- LEADS ---
+
+export async function updateLeadStatus(leadId: string, newStatus: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('leads')
+    .update({ status: newStatus })
+    .eq('id', leadId)
+
+  if (error) {
+    console.error("Failed to update status:", error)
+    return { error: "Failed to update status" }
+  }
+
+  revalidatePath('/admin/pipeline')
+  return { success: true }
+}
+
 // --- DEALS ---
 
 export async function fetchDeals() {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("deals")
     .select(`
@@ -30,6 +50,7 @@ export async function fetchDeals() {
 }
 
 export async function updateDealStage(dealId: string, newStage: string) {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("deals")
     .update({ stage: newStage })
@@ -45,6 +66,7 @@ export async function updateDealStage(dealId: string, newStage: string) {
 }
 
 export async function createDeal(deal: any) {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("deals")
     .insert([deal])
@@ -62,6 +84,7 @@ export async function createDeal(deal: any) {
 // --- CONTACTS ---
 
 export async function fetchContacts() {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("contacts")
     .select(`
@@ -78,6 +101,7 @@ export async function fetchContacts() {
 }
 
 export async function fetchContactDetails(contactId: string) {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("contacts")
     .select(`
@@ -104,6 +128,7 @@ export async function createActivity(activity: {
   type: string;
   description: string;
 }) {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("activities")
     .insert([activity])
@@ -172,6 +197,7 @@ export async function sendSMS({ contactId, to, message }: { contactId: string, t
 // --- COMPANIES ---
 
 export async function fetchCompanies() {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("companies")
     .select("*")
