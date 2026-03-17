@@ -19,6 +19,7 @@ export interface CourseMatch {
   roi: number | null;          // Calculated dynamically server-side
   category: string;             // e.g. "online-mba"
   matchScore: number;          // 0-100, higher = better match for the query
+  confidenceScore: number;     // 0-100, how well the AI understood the intent
 }
 
 export interface MatchApiRequest {

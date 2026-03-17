@@ -23,7 +23,7 @@ const NAV_DATA = [
       { label: "Career Guides", href: "/guides", icon: <LifeBuoy className="w-4 h-4" /> },
     ]
   },
-  { label: "Universities", href: "/colleges" },
+  { label: "Universities", href: "/universities" },
   { label: "Resources", href: "/blog" }
 ];
 

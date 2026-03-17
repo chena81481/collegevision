@@ -40,8 +40,15 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
           <h3 className="text-xl font-black text-slate-900 leading-tight">{course.universityName}</h3>
           <p className="text-sm font-bold text-slate-400 mt-1">{course.courseName}</p>
         </div>
-        <div className="h-10 px-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center font-black text-[10px] text-slate-400">
-          {(course.universityName.split(' ')[0] || 'UNI').toUpperCase()}
+        <div className="flex flex-col items-end gap-2">
+          <div className="h-10 px-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center font-black text-[10px] text-slate-400">
+            {(course.universityName.split(' ')[0] || 'UNI').toUpperCase()}
+          </div>
+          {course.confidenceScore >= 90 && (
+            <div className="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm border border-emerald-200">
+              {course.confidenceScore}% Intent Fit
+            </div>
+          )}
         </div>
       </div>
 

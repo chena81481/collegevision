@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/layout/Footer";
 import { CommandPalette } from "@/components/crm/CommandPalette";
-import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import { AnalyticsProvider } from "./providers";
 
 const geistSans = Geist({
@@ -48,7 +47,6 @@ export default function RootLayout({
           <div className="flex-1">
             {children}
           </div>
-          <WhatsAppButton />
           <CommandPalette />
           <Footer />
         </AnalyticsProvider>

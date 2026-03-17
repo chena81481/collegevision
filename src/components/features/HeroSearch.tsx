@@ -16,9 +16,10 @@ interface HeroSearchProps {
   setQuery: (query: string) => void;
   onSearch: (e: React.FormEvent) => void;
   isLoading?: boolean;
+  parsedIntent?: string | null;
 }
 
-export default function HeroSearch({ query, setQuery, onSearch, isLoading }: HeroSearchProps) {
+export default function HeroSearch({ query, setQuery, onSearch, isLoading, parsedIntent }: HeroSearchProps) {
   const posthog = usePostHog();
 
   const handleSuggestionClick = (text: string) => {
@@ -48,6 +49,18 @@ export default function HeroSearch({ query, setQuery, onSearch, isLoading }: Her
       <p className="text-center text-slate-400 text-sm mt-3 font-medium">
         AI understands <span className="text-slate-600">budget</span>, <span className="text-slate-600">timeline</span>, and <span className="text-slate-600">career goals</span>.
       </p>
+
+      {/* Intent Feedback Chip */}
+      {parsedIntent && (
+        <div className="flex justify-center mt-4">
+          <div className="bg-blue-50/80 backdrop-blur-sm border border-blue-100 px-4 py-2 rounded-2xl flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">
+              AI Matching for: <span className="text-slate-900">{parsedIntent}</span>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Quick-Start Conversational Chips */}
       <div className="flex flex-wrap justify-center gap-2 mt-6">

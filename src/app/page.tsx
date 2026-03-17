@@ -41,6 +41,7 @@ const DEFAULT_COURSES: CourseMatch[] = [
     totalFeeInr: 150_000, avgCtcInr: 650_000, hasZeroCostEmi: true,
     approvals: ['UGC-DEB', 'AICTE'], badgeLabel: 'Top ROI',
     roi: 1200, matchScore: 0, category: 'online-mba',
+    confidenceScore: 100,
   },
   {
     id: 'c2', universityName: 'Amity Online', universitySlug: 'amity-online',
@@ -49,6 +50,7 @@ const DEFAULT_COURSES: CourseMatch[] = [
     totalFeeInr: 175_000, avgCtcInr: 850_000, hasZeroCostEmi: true,
     approvals: ['UGC', 'NAAC A+'], badgeLabel: 'High Placement',
     roi: 1357, matchScore: 0, category: 'online-mba',
+    confidenceScore: 100,
   },
   {
     id: 'c3', universityName: 'IIT Patna', universitySlug: 'iit-patna',
@@ -57,6 +59,7 @@ const DEFAULT_COURSES: CourseMatch[] = [
     totalFeeInr: 230_000, avgCtcInr: 1_050_000, hasZeroCostEmi: false,
     approvals: ['UGC', 'Institute of Excellence'], badgeLabel: 'Premium Data',
     roi: 1270, matchScore: 0, category: 'online-degrees',
+    confidenceScore: 100,
   },
 ];
 
@@ -269,6 +272,7 @@ export default function CollegeVision() {
               setQuery={setSearchQuery}
               onSearch={handleSearch}
               isLoading={isLoading}
+              parsedIntent={parsedFilters?.careerGoal || parsedFilters?.degreeKeyword}
             />
             <PrimaryMatchButton 
               onClick={(e) => handleSearch(e as any)}
