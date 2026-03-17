@@ -1,62 +1,152 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { Search, Bell, User, LogOut, Settings } from "lucide-react";
+import React, { useState } from 'react';
+import { ChevronDown, Sparkles, BarChart3, BookOpen, GraduationCap, LifeBuoy, Users, Info, Menu, X } from 'lucide-react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export function Navbar() {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+const NAV_DATA = [
+  {
+    label: "Platform",
+    links: [
+      { label: "Features", href: "/#features", icon: <Sparkles className="w-4 h-4" /> },
+      { label: "How It Works", href: "/how-it-works", icon: <Info className="w-4 h-4" /> },
+      { label: "Pricing", href: "/pricing", icon: <GraduationCap className="w-4 h-4" /> },
+      { label: "Success Stories", href: "/success-stories", icon: <Users className="w-4 h-4" /> },
+    ]
+  },
+  {
+    label: "Tools",
+    links: [
+      { label: "ROI Calculator", href: "/#roi-calculator", icon: <BarChart3 className="w-4 h-4" /> },
+      { label: "Comparison Tool", href: "/compare", icon: <BookOpen className="w-4 h-4" /> },
+      { label: "Career Guides", href: "/guides", icon: <LifeBuoy className="w-4 h-4" /> },
+    ]
+  },
+  { label: "Universities", href: "/colleges" },
+  { label: "Resources", href: "/blog" }
+];
+
+export default function Navbar() {
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-40 w-full glass-panel bg-white/40 dark:bg-zinc-950/40 backdrop-blur-2xl border-b border-white/20 px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-      
-      {/* Left section: Search */}
-      <div className="flex flex-1">
-        <div className="relative w-full max-w-md hidden md:block group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-foreground/50 transition-colors group-focus-within:text-violet-500" />
-          </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-white/10 rounded-xl leading-5 bg-white/5 text-foreground placeholder-foreground/50 focus:outline-none focus:bg-white/10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 sm:text-sm transition-all duration-300"
-            placeholder="Search courses, instructors, lessons..."
-          />
+    <nav className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 h-16 flex items-center">
+      <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+        
+        {/* Logo */}
+        <Link href="/" className="text-xl font-black tracking-tighter text-blue-600 flex items-center gap-1 group">
+          COLLEGE<span className="text-slate-900 group-hover:text-blue-600 transition-colors">VISION</span>
+        </Link>
+
+        {/* Desktop Links */}
+        <div className="hidden lg:flex items-center gap-8">
+          {NAV_DATA.map((item) => (
+            <div 
+              key={item.label}
+              className="relative group h-16 flex items-center"
+              onMouseEnter={() => setActiveDropdown(item.label)}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <div className="flex items-center gap-1 text-sm font-bold text-slate-600 hover:text-blue-600 cursor-pointer transition-colors py-2">
+                {item.href ? <Link href={item.href}>{item.label}</Link> : item.label}
+                {item.links && <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />}
+              </div>
+
+              {/* Mega Dropdown */}
+              <AnimatePresence>
+                {item.links && activeDropdown === item.label && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 w-64 bg-white border border-slate-100 shadow-2xl rounded-2xl p-2 z-50"
+                  >
+                    {item.links.map((link) => (
+                      <Link 
+                        key={link.label} 
+                        href={link.href}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-all group/item"
+                      >
+                        <div className="p-2 bg-slate-50 group-hover/item:bg-white rounded-lg shadow-sm">
+                          {link.icon}
+                        </div>
+                        <span className="text-xs font-bold">{link.label}</span>
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Right section: Icons and Profile */}
-      <div className="flex items-center space-x-4">
-        {/* Notifications */}
-        <button className="p-2 rounded-full text-foreground/70 hover:bg-white/10 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-colors relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-background"></span>
-        </button>
-
-        {/* Profile Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+        {/* Auth Buttons */}
+        <div className="flex items-center gap-4">
+          <Link href="/signin" className="hidden sm:block text-sm font-bold text-slate-600 hover:text-blue-600">
+            Sign In
+          </Link>
+          <Link href="/match" className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 transition-all active:scale-95">
+            Start Free
+          </Link>
+          <button 
+            className="lg:hidden p-2 text-slate-600"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white">
-              <User className="h-4 w-4" />
-            </div>
-            <span className="text-sm font-medium text-foreground hidden sm:block">Jane Doe</span>
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-
-          {/* Dropdown Menu (placeholder styles) */}
-          {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 rounded-xl glass-panel bg-white/80 dark:bg-zinc-900/80 border border-white/20 shadow-lg py-1 ring-1 ring-black ring-opacity-5 animate-fade-in-up origin-top-right">
-              <Link href="/dashboard/settings" className="block px-4 py-2 text-sm text-foreground/80 hover:bg-white/10 hover:text-foreground flex items-center gap-2">
-                <Settings className="h-4 w-4" /> Settings
-              </Link>
-              <Link href="/login" className="block px-4 py-2 text-sm text-red-500/90 hover:bg-red-500/10 hover:text-red-500 flex items-center gap-2">
-                <LogOut className="h-4 w-4" /> Sign out
-              </Link>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 top-16 bg-white z-[90] lg:hidden overflow-y-auto p-6"
+          >
+            <div className="flex flex-col gap-8">
+              {NAV_DATA.map((item) => (
+                <div key={item.label} className="space-y-4">
+                  <div className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    {item.label}
+                  </div>
+                  {item.links ? (
+                    <div className="grid grid-cols-1 gap-2">
+                      {item.links.map((link) => (
+                        <Link 
+                          key={link.label}
+                          href={link.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 text-slate-900 font-bold text-sm"
+                        >
+                          <div className="p-2 bg-white rounded-lg shadow-sm">
+                            {link.icon}
+                          </div>
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <Link 
+                      href={item.href || '#'}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block text-lg font-black text-slate-900"
+                    >
+                      {item.label}
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

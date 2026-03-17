@@ -12,6 +12,18 @@ import { createClient } from '@/utils/supabase/client';
 import AuthModal from '@/components/features/AuthModal';
 import type { CourseMatch, MatchApiResponse, ParsedQuery } from '@/lib/types';
 import MatchCard from '@/components/features/MatchCard';
+import HeroSearch from '@/components/features/HeroSearch';
+import PrimaryMatchButton from '@/components/features/PrimaryMatchButton';
+import DynamicMatchSidebar from '@/components/features/DynamicMatchSidebar';
+import RealDataMatches from '@/components/features/RealDataMatches';
+import TopTrustRibbon from '@/components/layout/TopTrustRibbon';
+import Navbar from '@/components/layout/Navbar';
+import ContextualTrustBadges from '@/components/features/ContextualTrustBadges';
+import PartnerLogos from '@/components/features/PartnerLogos';
+import ExperienceJourney from '@/components/features/ExperienceJourney';
+import FunnelBreadcrumbs from '@/components/features/FunnelBreadcrumbs';
+import ComparisonBar from '@/components/features/ComparisonBar';
+import PersistenceToast from '@/components/ui/PersistenceToast';
 import dynamic from 'next/dynamic';
 import { usePostHog } from 'posthog-js/react';
 
@@ -49,8 +61,6 @@ const DEFAULT_COURSES: CourseMatch[] = [
 ];
 
 export default function CollegeVision() {
-  const [activeNav, setActiveNav] = useState('Features');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mockupPage, setMockupPage] = useState(1);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
@@ -60,8 +70,47 @@ export default function CollegeVision() {
   const [parsedFilters, setParsedFilters] = useState<ParsedQuery | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedForComparison, setSelectedForComparison] = useState<Set<string>>(new Set());
+  const [showPersistenceToast, setShowPersistenceToast] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // Persistence: Hydrate from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('college_vision_session');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.searchQuery) {
+        setShowPersistenceToast(true);
+      }
+    }
+  }, []);
+
+  // Save to localStorage
+  useEffect(() => {
+    const state = {
+      searchQuery,
+      matchResults,
+      currentStep,
+      selectedForComparison: Array.from(selectedForComparison),
+      parsedFilters
+    };
+    localStorage.setItem('college_vision_session', JSON.stringify(state));
+  }, [searchQuery, matchResults, currentStep, selectedForComparison, parsedFilters]);
+
+  const handleResume = () => {
+    const saved = localStorage.getItem('college_vision_session');
+    if (saved) {
+      const data = JSON.parse(saved);
+      setSearchQuery(data.searchQuery || '');
+      setMatchResults(data.matchResults || null);
+      setCurrentStep(data.currentStep || 0);
+      setSelectedForComparison(new Set(data.selectedForComparison || []));
+      setParsedFilters(data.parsedFilters || null);
+    }
+    setShowPersistenceToast(false);
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -100,6 +149,7 @@ export default function CollegeVision() {
 
       if (data.success && data.matches) {
         setMatchResults(data.matches);
+        setCurrentStep(1); // Advance to Matches
         
         // Track Results Performance
         posthog.capture('Match_Results_Viewed', {
@@ -141,15 +191,6 @@ export default function CollegeVision() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Prevent background scrolling when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [isMobileMenuOpen]);
-
   const [savedCourseIds, setSavedCourseIds] = useState<Set<string>>(new Set());
 
   const handleSaveCourse = async (courseId: string) => {
@@ -184,240 +225,74 @@ export default function CollegeVision() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-200 selection:text-blue-900 overflow-x-hidden scroll-smooth transition-opacity duration-500">
+      <div className="fixed top-0 w-full z-[100]">
+        <TopTrustRibbon />
+        <Navbar />
+      </div>
       
-      {/* 0. STICKY NAVBAR (With scroll shadow & hover states) */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white/95 backdrop-blur-md shadow-[0_2px_20px_rgba(0,0,0,0.06)] py-1' : 'bg-white/80 backdrop-blur-sm py-2'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          
-          <div className="font-bold text-xl tracking-tight text-slate-900 cursor-pointer hover:opacity-80 transition-opacity z-50 flex items-center">
-            CollegeVision<span className="text-blue-600">.</span>
-          </div>
-          
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            {['Features', 'Colleges', 'ROI Calculator'].map((item) => (
-              <a 
-                key={item}
-                href={`#${item.toLowerCase().replace(' ', '-')}`}
-                onClick={() => setActiveNav(item)}
-                className={`py-4 border-b-2 transition-all duration-300 hover:text-blue-600 ${
-                  activeNav === item 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-slate-500'
-                }`}
-              >
-                {item}
-              </a>
-            ))}
-          </div>
-          
-          <div className="flex items-center gap-4 text-sm font-medium z-50">
-            {/* Enhanced Sign In Hover */}
-            <button 
-              onClick={() => setIsAuthModalOpen(true)}
-              className="hidden md:flex items-center justify-center px-4 py-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors duration-300"
-            >
-              Sign In
-            </button>
-            {/* Enhanced Start Free Hover (Glow) */}
-            <button className="hidden md:block bg-blue-600 text-white px-6 py-2.5 rounded-full hover:bg-blue-500 shadow-md shadow-blue-600/20 hover:shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-all duration-300 transform hover:-translate-y-0.5">
-              Start Free
-            </button>
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 -mr-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu Overlay */}
-        <div className={`fixed inset-0 bg-white z-40 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden pt-24 px-6`}>
-          <div className="flex flex-col gap-6 text-2xl font-semibold tracking-tight">
-            {['Features', 'Colleges', 'ROI Calculator'].map((item) => (
-              <a 
-                key={item} 
-                href={`#${item.toLowerCase().replace(' ', '-')}`}
-                onClick={() => { setActiveNav(item); setIsMobileMenuOpen(false); }}
-                className="text-slate-900 hover:text-blue-600 transition-colors"
-              >
-                {item}
-              </a>
-            ))}
-            <div className="h-px w-full bg-slate-100 my-4"></div>
-            <a href="#signin" className="text-slate-600 hover:text-blue-600 text-lg transition-colors">Sign In</a>
-            <button className="bg-blue-600 text-white w-full py-4 rounded-xl text-lg mt-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-transform">
-              Start Free
-            </button>
-          </div>
-        </div>
-      </nav>
+      <div className="pt-24 lg:pt-32">
+        <FunnelBreadcrumbs currentStep={currentStep} />
+      </div>
+      
 
       {/* 1. HERO SECTION (Input Border Animation & Glows) */}
-      <section className="max-w-7xl mx-auto px-6 pt-32 lg:pt-40 pb-20 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative">
+      <section className="max-w-7xl mx-auto px-6 pt-16 lg:pt-24 pb-20 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative">
         {/* Subtle Background Gradient */}
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50/30 via-white to-white -z-20 pointer-events-none"></div>
 
         <div className="flex-1 w-full space-y-8 z-10">
           <div className="space-y-6">
-            <h1 className="text-5xl md:text-6xl lg:text-[68px] font-black tracking-tight text-slate-900 leading-[1.05]">
-              Find the right <br className="hidden sm:block" />
-              online degree. <br />
-              <span className="text-slate-400 font-medium">
-                Without the <span className="text-slate-900 font-black relative inline-block">bias.<div className="absolute bottom-1 left-0 w-full h-4 bg-blue-100/80 -z-10 rounded-sm"></div></span>
-              </span>
-            </h1>
+            <div className="flex flex-col items-center mb-6 lg:items-start text-center">
+              {/* The Rating Chip */}
+              <div className="mb-4 flex items-center gap-2 bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 shadow-sm w-fit">
+                <div className="flex text-yellow-500">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3 h-3 fill-current" />
+                  ))}
+                </div>
+                <span className="text-xs font-bold text-slate-700">4.8/5 (50K+ Users)</span>
+              </div>
+
+              <h1 className="text-5xl md:text-6xl lg:text-[68px] font-black tracking-tight text-slate-900 leading-[1.05] text-center lg:text-left">
+                Find the right <br className="hidden sm:block" />
+                online degree. <br />
+                <span className="text-slate-400 font-medium">
+                  Without the <span className="text-slate-900 font-black relative inline-block">bias.<div className="absolute bottom-1 left-0 w-full h-4 bg-blue-100/80 -z-10 rounded-sm"></div></span>
+                </span>
+              </h1>
+            </div>
           </div>
 
           <div className="space-y-4 max-w-xl">
-            {/* Interactive Search Input with growing bottom border effect */}
-            <div className="relative group">
-              <form
-                onSubmit={handleSearch}
-                className="flex flex-col sm:flex-row items-center bg-white border-2 border-slate-200 rounded-2xl sm:rounded-full p-1.5 sm:pl-5 shadow-lg shadow-slate-200/50 transition-all w-full gap-2 sm:gap-0 z-10 relative bg-clip-padding"
-              >
-                <div className="flex items-center w-full sm:w-auto px-4 sm:px-0 py-2 sm:py-0">
-                  <Search className="w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors duration-300 mr-3 sm:mr-0" />
-                  <input 
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Try 'MBA under 1 Lakh with EMI'" 
-                    className="w-full bg-transparent border-none outline-none sm:px-4 text-slate-900 placeholder:text-slate-400 text-base font-medium"
-                  />
-                </div>
-                {/* Button Glow on Hover */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 disabled:opacity-70 text-white px-8 py-3.5 rounded-xl sm:rounded-full text-sm font-bold transition-all duration-300 shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.5)] transform hover:scale-[1.02] flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <span className="animate-pulse">Analyzing...</span>
-                  ) : (
-                    'AI Match Me'
-                  )}
-                </button>
-              </form>
-              {/* The growing border animation line */}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[95%] h-1 bg-blue-500 rounded-b-full opacity-0 group-focus-within:opacity-100 group-focus-within:translate-y-1 transition-all duration-500 ease-out z-0"></div>
-            </div>
+            <HeroSearch 
+              query={searchQuery}
+              setQuery={setSearchQuery}
+              onSearch={handleSearch}
+              isLoading={isLoading}
+            />
+            <PrimaryMatchButton 
+              onClick={(e) => handleSearch(e as any)}
+              isLoading={isLoading}
+            />
+          </div>
             
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 pl-1 sm:pl-5">
-              <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Takes 2 mins. Zero spam.
-              </p>
-              <span className="hidden sm:block text-slate-300">•</span>
-              <a href="#browse" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-all">
-                Browse colleges instead &rarr;
-              </a>
-            </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 pl-1 sm:pl-5">
+            <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Takes 2 mins. AI Powered.
+            </p>
           </div>
 
-          <div className="pt-4 space-y-5 border-t border-slate-100/50 sm:border-none">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 text-sm text-slate-700 font-medium pt-4 sm:pt-0">
-              <span className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100"><ShieldCheck className="w-4 h-4 text-blue-600" /> UGC-DEB Approved</span>
-              <span className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100"><CheckCircle2 className="w-4 h-4 text-green-600" /> 100% Transparent</span>
-              <span className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100"><Lock className="w-4 h-4 text-slate-400" /> 0 Spam Calls</span>
-            </div>
-            
-            {/* Mobile Stacked Social Proof */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-slate-600 bg-blue-50/40 inline-flex px-4 py-2.5 rounded-xl border border-blue-100/50">
-              <div className="flex gap-0.5 mb-1 sm:mb-0">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <span><strong className="text-slate-900">50,000+ students</strong> matched this year</span>
-                <span className="hidden sm:inline text-slate-300 mx-2">•</span> 
-                <span><strong className="text-slate-900">4.8/5</strong> rating</span>
-              </div>
-            </div>
-          </div>
+          <ContextualTrustBadges />
+          <PartnerLogos />
         </div>
 
-        {/* Right: The Transformation Mockup */}
-        <div className="w-full sm:w-[340px] lg:w-auto relative group mt-8 lg:mt-0">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/50 to-slate-50 rounded-[3rem] -rotate-3 scale-105 -z-10 transition-transform duration-700 group-hover:rotate-0 group-hover:scale-100 hidden sm:block"></div>
-          <div className="bg-white border border-slate-100 shadow-2xl rounded-[2.5rem] p-2 w-full sm:max-w-[340px] mx-auto overflow-hidden relative">
-            
-            <div className="bg-slate-50 px-5 pt-5 pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] shadow-[0_0_10px_rgba(37,99,235,0.5)] animate-pulse">AI</div>
-                <div className="text-xs font-medium text-slate-600">Analyzing your profile...</div>
-              </div>
-              <div className="bg-white p-3 rounded-xl border border-slate-100 text-sm text-slate-700 shadow-sm font-medium">
-                "MBA under 2L w/ EMI"
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-5 h-[320px] relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-slate-50 to-transparent z-10"></div>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between items-center mb-2 px-1">
-                  <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Top Match Found</div>
-                  {/* Interactive Mockup Pagination */}
-                  <div className="flex items-center gap-1 bg-white px-1.5 py-1 rounded-full border border-slate-200 shadow-sm">
-                    <button 
-                      onClick={() => setMockupPage(prev => Math.max(1, prev - 1))}
-                      className="p-1 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-900 active:scale-90"
-                    >
-                      <ChevronLeft className="w-3 h-3" />
-                    </button>
-                    <span className="text-[10px] font-bold text-slate-600 w-6 text-center">{mockupPage}/3</span>
-                    <button 
-                      onClick={() => setMockupPage(prev => Math.min(3, prev + 1))}
-                      className="p-1 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-900 active:scale-90"
-                    >
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group/card hover:border-blue-300 transition-all cursor-pointer transform hover:-translate-y-1 duration-300 hover:shadow-lg">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
-                  <div className="flex gap-3 items-center mb-3">
-                    <div className="h-10 px-3 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-xs tracking-wider">
-                      {mockupPage === 1 ? 'MANIPAL' : mockupPage === 2 ? 'SYMBIOSIS' : 'AMITY'}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-slate-900 text-sm">
-                        {mockupPage === 1 ? 'Manipal Online' : mockupPage === 2 ? 'Symbiosis SCDL' : 'Amity Online'}
-                      </div>
-                      <div className="text-[11px] text-slate-500">Online MBA</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
-                    <div>
-                      <div className="text-[10px] text-slate-400 uppercase tracking-wider">Total Fee</div>
-                      <div className="text-sm font-semibold">
-                        {mockupPage === 1 ? '₹1,75,000' : mockupPage === 2 ? '₹1,50,000' : '₹1,80,000'} 
-                        <span className="text-[10px] font-normal text-slate-400 ml-1">(EMI)</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-slate-400 uppercase tracking-wider">Avg. CTC</div>
-                      <div className="text-sm font-semibold text-green-600">
-                        {mockupPage === 1 ? '₹8.5 LPA' : mockupPage === 2 ? '₹6.5 LPA' : '₹9.0 LPA'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Swipe Hint Animation */}
-                <div className="flex flex-col items-center gap-2 mt-6 opacity-60">
-                  <span className="text-[10px] font-medium text-slate-500 flex items-center gap-1 animate-pulse">
-                    <ChevronLeft className="w-3 h-3"/> Swipe to see more <ChevronRight className="w-3 h-3"/>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Right: The Dynamic Results Sidebar */}
+        <div className="w-full sm:w-[400px] lg:w-auto flex-1 relative group mt-8 lg:mt-0">
+          <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/50 to-slate-50 rounded-[4rem] -rotate-3 scale-105 -z-10 transition-transform duration-700 group-hover:rotate-0 group-hover:scale-100 hidden lg:block"></div>
+          <DynamicMatchSidebar 
+            isSearching={isLoading}
+            results={matchResults}
+          />
         </div>
       </section>
 
@@ -463,167 +338,37 @@ export default function CollegeVision() {
         </div>
       </section>
 
-      {/* 3. MATCHES — Dynamic from /api/match */}
-      <section id="colleges" className="py-24 bg-white relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div>
-              <h2 className="text-3xl font-semibold text-slate-900 tracking-tight mb-2">Matches built on real data.</h2>
-              <p className="text-slate-500">{matchResults ? `${matchResults.length} courses ranked for you.` : 'Not just a list. A calculated ROI breakdown.'}</p>
-            </div>
-            <button
-              onClick={() => setIsCompareOpen(true)}
-              className="text-sm font-semibold text-blue-600 hover:text-white hover:bg-blue-600 bg-blue-50 px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 w-full md:w-auto shadow-sm"
-            >
-              Compare these 3 <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+      {/* 3. MATCHES — Outcome-Driven Redesign */}
+      <RealDataMatches 
+        results={matchResults || DEFAULT_COURSES}
+        parsedFilters={parsedFilters}
+        onSelect={(id) => {
+          setSelectedForComparison(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+          });
+        } }
+        selectedIds={selectedForComparison}
+      />
 
-          {/* Filter context banner */}
-          {parsedFilters && (
-            <div className="mb-8 flex flex-wrap items-center gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Filtered by:</span>
-              {parsedFilters.maxBudgetInr && (
-                <span className="bg-white border border-blue-200 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
-                  Budget ≤ ₹{(parsedFilters.maxBudgetInr / 100_000).toFixed(1)}L
-                </span>
-              )}
-              {parsedFilters.degreeKeyword && (
-                <span className="bg-white border border-blue-200 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">{parsedFilters.degreeKeyword}</span>
-              )}
-              {parsedFilters.requiresEmi && (
-                <span className="bg-white border border-blue-200 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">Zero-Cost EMI</span>
-              )}
-              {parsedFilters.requiredApprovals.map(a => (
-                <span key={a} className="bg-white border border-blue-200 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">{a}</span>
-              ))}
-              <button
-                onClick={() => { setMatchResults(null); setParsedFilters(null); setSearchQuery(''); }}
-                className="ml-auto text-xs text-slate-400 hover:text-slate-700 transition-colors"
-              >
-                Clear ×
-              </button>
-            </div>
-          )}
+      <ComparisonBar 
+        selectedCount={selectedForComparison.size}
+        onCompare={() => {
+          setCurrentStep(2); // Advance to Comparison
+          setIsCompareOpen(true);
+        }}
+        onClear={() => setSelectedForComparison(new Set())}
+      />
 
-          {/* Cards */}
-          <div className="grid grid-cols-1 gap-8">
-            {(matchResults ?? []).map((course, idx) => (
-              <MatchCard 
-                key={course.id} 
-                course={course} 
-                isTopMatch={idx === 0} 
-              />
-            ))}
-            
-            {!matchResults && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {DEFAULT_COURSES.map((course, idx) => {
-                  const isTop = idx === 0;
-                  const feeFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(course.totalFeeInr);
-                  const ctcFormatted = course.avgCtcInr ? `₹${(course.avgCtcInr / 100_000).toFixed(1)} LPA` : 'N/A';
-                  return (
-                    <div
-                      key={course.id}
-                      className={`relative bg-gradient-to-b ${course.gradientStart}/80 ${course.gradientEnd} rounded-3xl p-6 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col h-full group
-                        ${isTop ? 'border-2 border-blue-400 shadow-lg shadow-blue-500/10' : 'border border-slate-200'}
-                      `}
-                      onClick={() => router.push(`/${course.category.toLowerCase()}/${course.universitySlug}`)}
-                    >
-                      <div className="flex justify-between items-start mb-8">
-                        <div className="h-10 px-4 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-bold text-xs">
-                          {(course.universityName || 'Uni').toUpperCase()}
-                        </div>
-                      </div>
-                      <h3 className="font-bold text-lg text-slate-900 mb-1">{course.universityName}</h3>
-                      <p className="text-sm text-slate-500 mb-6">{course.courseName}</p>
-                      <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase">Fee</p>
-                          <p className="text-sm font-bold">{feeFormatted}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase">ROI</p>
-                          <p className="text-sm font-bold text-green-600">{course.roi}%</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+      <PersistenceToast 
+        isVisible={showPersistenceToast}
+        onResume={handleResume}
+        onDismiss={() => setShowPersistenceToast(false)}
+      />
 
-          <div className="mt-14 text-center">
-            <a href="#all" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-sm font-semibold text-blue-600 bg-white border border-slate-200 rounded-full hover:bg-slate-50 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 transition-all w-full sm:w-auto">
-              See all {matchResults ? matchResults.length : 15} matches <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. 3-STEP JOURNEY (Responsive Stacking & Arrow rotation) */}
-      <section className="bg-slate-50 py-24 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-3 tracking-tight">3-step journey to your perfect university.</h2>
-            <p className="text-lg text-slate-500">No agents. Just technology.</p>
-          </div>
-          
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 max-w-5xl mx-auto">
-            {/* Step 1 */}
-            <div className="flex-1 text-center space-y-4 group">
-              <div className="relative w-20 h-20 mx-auto">
-                <div className="absolute inset-0 bg-blue-100 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300 ease-out"></div>
-                <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 z-10">
-                  <Search className="w-8 h-8 text-blue-600" />
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center text-sm font-bold border-4 border-slate-50">1</div>
-                </div>
-              </div>
-              <h3 className="font-bold text-lg text-slate-900">Share your goals</h3>
-              <p className="text-sm text-slate-500 max-w-[200px] mx-auto">Tell us your budget, time, and career aspirations.</p>
-            </div>
-            
-            <ArrowRight className="hidden md:block w-8 h-8 text-slate-300" />
-            <ArrowDown className="md:hidden w-8 h-8 text-slate-300 my-4" />
-            
-            {/* Step 2 */}
-            <div className="flex-1 text-center space-y-4 group">
-              <div className="relative w-20 h-20 mx-auto">
-                <div className="absolute inset-0 bg-blue-100 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300 ease-out"></div>
-                <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 z-10">
-                  <Star className="w-8 h-8 text-blue-600" />
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center text-sm font-bold border-4 border-slate-50">2</div>
-                </div>
-              </div>
-              <h3 className="font-bold text-lg text-slate-900">See AI matches</h3>
-              <p className="text-sm text-slate-500 max-w-[200px] mx-auto">Get a clear, unbiased list of universities that fit.</p>
-            </div>
-
-            <ArrowRight className="hidden md:block w-8 h-8 text-slate-300" />
-            <ArrowDown className="md:hidden w-8 h-8 text-slate-300 my-4" />
-
-            {/* Step 3 */}
-            <div className="flex-1 text-center space-y-4 group">
-              <div className="relative w-20 h-20 mx-auto">
-                <div className="absolute inset-0 bg-blue-100 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300 ease-out"></div>
-                <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 z-10">
-                  <GraduationCap className="w-8 h-8 text-blue-600" />
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center text-sm font-bold border-4 border-slate-50">3</div>
-                </div>
-              </div>
-              <h3 className="font-bold text-lg text-slate-900">Apply instantly</h3>
-              <p className="text-sm text-slate-500 max-w-[200px] mx-auto">Zero paperwork. We handle the process start to finish.</p>
-            </div>
-          </div>
-          
-          <div className="mt-16 text-center">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-full text-sm font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
-              Start your journey
-            </button>
-          </div>
-        </div>
-      </section>
+      <ExperienceJourney />
 
       {/* 5. HYPER-SPECIFIC TESTIMONIALS (Card styling & Stars added) */}
       <section className="py-24 bg-white">
