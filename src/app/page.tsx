@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
   Search, ShieldCheck, CheckCircle2, Lock, ArrowRight, Star, 
   GraduationCap, Info, Menu, X, Wallet, Target, Landmark, 
-  ArrowDown, ChevronLeft, ChevronRight, Heart
+  ArrowDown, ChevronLeft, ChevronRight, Heart, Sparkles
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -477,123 +477,138 @@ export default function CollegeVision() {
         </div>
 
         {/* Modal Body: The Data Table */}
-        {/* Modal Body: The Data Table */}
-        <div className="p-0 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <div className="min-w-max md:min-w-0">
+        <div className="p-0 max-h-[75vh] overflow-y-auto custom-scrollbar bg-slate-50/50">
+          <div className="p-4 md:p-8 space-y-8 pb-32">
             
-            {/* Logic for Comparison */}
             {(() => {
               const comparisonSet = (matchResults ?? DEFAULT_COURSES).slice(0, 3);
               const maxROI = Math.max(...comparisonSet.map(c => c.roi ?? 0));
               const minFee = Math.min(...comparisonSet.map(c => c.totalFeeInr));
               const maxCTC = Math.max(...comparisonSet.map(c => c.avgCtcInr ?? 0));
 
+              // Internal Row Component for perfect alignment
+              const ComparisonRow = ({ label, values, highlight = false, isLocked = false }: any) => (
+                <div className={`grid grid-cols-[100px_1fr_1fr] gap-3 items-center py-4 border-b border-slate-100 last:border-0 ${highlight ? 'bg-blue-50/30 -mx-4 px-4 rounded-xl' : ''}`}>
+                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</div>
+                  {values.map((v: any, i: number) => (
+                    <div key={i} className={`text-center transition-all duration-700 ${isLocked ? 'blur-md select-none opacity-50' : ''}`}>
+                      {v}
+                    </div>
+                  ))}
+                </div>
+              );
+
               return (
-                <div className="relative">
-                  {/* Table Headers (Universities) */}
-                  <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 mb-6 sticky top-0 bg-white pt-6 pb-4 z-[30] px-6 border-b border-slate-100 shadow-sm">
-                    <div className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider flex items-end pb-2 sticky left-0 bg-white z-[31]">Metrics</div>
-                    
-                    {comparisonSet.map((course, idx) => {
+                <div className="space-y-8">
+                  {/* STEP 1: Side-by-side Header Cards */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {comparisonSet.slice(0, 2).map((course, idx) => {
                       const isWinner = course.roi === maxROI && maxROI > 0;
                       return (
-                        <div key={course.id} className={`${isWinner ? 'bg-blue-50/50 border-2 border-blue-500' : 'bg-slate-50 border border-slate-200'} p-4 rounded-2xl relative`}>
+                        <div key={course.id} className={`relative p-5 rounded-3xl bg-white transition-all duration-500 shadow-sm border ${isWinner ? 'border-2 border-blue-500 shadow-blue-100' : 'border-slate-100'}`}>
                           {isWinner && (
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase z-[32]">Winner</div>
+                            <span className="absolute -top-3 left-4 bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg flex items-center gap-1 z-10">
+                              🔥 Best ROI Match
+                            </span>
                           )}
-                          <div className="font-bold text-sm md:text-base text-slate-900 text-center line-clamp-2">{course.universityName}</div>
+                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{idx === 0 ? 'Option A' : 'Option B'}</div>
+                          <div className="font-black text-slate-900 leading-tight line-clamp-2 min-h-[2.5rem] tracking-tight">{course.universityName}</div>
                         </div>
                       );
                     })}
-                    
-                    {/* Placeholder for less than 3 courses */}
-                    {Array.from({ length: 3 - comparisonSet.length }).map((_, i) => (
-                      <div key={`empty-${i}`} className="bg-slate-50/30 p-4 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center">
-                        <span className="text-slate-300 text-[10px] italic">Add more</span>
-                      </div>
-                    ))}
                   </div>
 
-                  {/* Data Rows */}
-                  <div className="space-y-0 px-0">
-                    {/* Row 1: Fee */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">Total Fee</div>
-                      {comparisonSet.map(course => {
-                        const isLowest = course.totalFeeInr === minFee;
-                        return (
-                          <div key={course.id} className={`text-center text-sm ${isLowest ? 'font-black text-slate-900' : 'font-bold text-slate-500'}`}>
-                            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(course.totalFeeInr)}
-                            {isLowest && <div className="text-[9px] text-emerald-600 font-black uppercase mt-1">Lowest Fee</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Row 2: CTC */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">Avg. CTC</div>
-                      {comparisonSet.map(course => {
-                        const isHighest = course.avgCtcInr === maxCTC && maxCTC > 0;
-                        const ctcFormatted = course.avgCtcInr ? `₹${(course.avgCtcInr / 100_000).toFixed(1)} LPA` : 'N/A';
-                        return (
-                          <div key={course.id} className={`text-center text-sm ${isHighest ? 'font-black text-emerald-600' : 'font-bold text-slate-500'}`}>
-                            {ctcFormatted}
-                            {isHighest && <div className="text-[9px] text-emerald-600 font-black uppercase mt-1">Highest</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Row 3: TRUE ROI */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-8 border-b border-slate-50 bg-blue-50/50 px-6 items-center relative overflow-hidden group/roi">
-                      <div className="text-[11px] font-black text-blue-600 uppercase tracking-widest sticky left-1/4 md:left-0 z-20 flex items-center gap-1.5 shrink-0 bg-blue-50 md:bg-transparent">
-                         True ROI <Info className="w-3 h-3"/>
+                  {/* PRO-LEVEL UPGRADE: AI Insight */}
+                  {comparisonSet.length >= 2 && (
+                    <div className="bg-blue-600 text-white p-4 rounded-2xl shadow-xl shadow-blue-100 flex items-center gap-4 border border-blue-400">
+                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-6 h-6 text-white" />
                       </div>
-                      
-                      {comparisonSet.map(course => (
-                        <div key={course.id} className={`text-center font-black text-blue-700 text-xl transition-all duration-500 ${!user ? 'blur-md select-none' : ''}`}>
-                          {course.roi ? `${course.roi}%` : 'N/A'}
-                        </div>
-                      ))}
+                      <p className="text-sm font-bold leading-snug">
+                         🔥 {comparisonSet[0].roi! > comparisonSet[1].roi! ? comparisonSet[0].universityName : comparisonSet[1].universityName} provides a 
+                         <span className="text-yellow-300 mx-1">significant financial edge</span> 
+                         with better placement authority.
+                      </p>
+                    </div>
+                  )}
 
-                      {/* Locked Overlay for Unauthenticated Users */}
-                      {!user && (
-                        <div className="absolute inset-0 bg-blue-50/10 backdrop-blur-[2px] flex items-center justify-center z-20 cursor-pointer group-hover/roi:bg-blue-50/30 transition-all" onClick={() => setIsAuthModalOpen(true)}>
-                          <div className="bg-white px-5 py-2.5 rounded-full shadow-xl border border-blue-100 flex items-center gap-2 transform translate-y-1 group-hover/roi:translate-y-0 transition-all">
-                            <Lock className="w-4 h-4 text-blue-600" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Sign in to unlock ROI</span>
+                  {/* STEP 2: Structured Data Rows */}
+                  <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
+                    <ComparisonRow 
+                      label="Total Fee" 
+                      values={comparisonSet.slice(0, 2).map(c => (
+                        <div className="flex flex-col">
+                          <span className="text-lg font-black text-slate-900 tracking-tight">₹{(c.totalFeeInr/100000).toFixed(1)}L</span>
+                          {c.totalFeeInr === minFee && <span className="text-[8px] font-black text-emerald-600 uppercase">Saving Pocket</span>}
+                        </div>
+                      ))} 
+                    />
+
+                    <ComparisonRow 
+                      label="Avg. CTC" 
+                      values={comparisonSet.slice(0, 2).map(c => (
+                        <div className="flex flex-col">
+                          <span className={`text-lg font-black tracking-tight ${c.avgCtcInr === maxCTC ? 'text-emerald-600' : 'text-slate-900'}`}>
+                            ₹{(c.avgCtcInr!/100000).toFixed(1)}L
+                          </span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase">Historical</span>
+                        </div>
+                      ))} 
+                    />
+
+                    <div className="relative group/roi">
+                      <ComparisonRow 
+                        label="True ROI" 
+                        highlight={true}
+                        isLocked={!user}
+                        values={comparisonSet.slice(0, 2).map(c => (
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-black text-blue-700 tracking-tight">{c.roi ? (c.roi/100).toFixed(1) : '0'}x</span>
+                            <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Multiplier</span>
                           </div>
+                        ))} 
+                      />
+                      
+                      {!user && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-blue-50/10 backdrop-blur-[2px] rounded-xl z-20 cursor-pointer" onClick={() => setIsAuthModalOpen(true)}>
+                           <div className="bg-white px-5 py-2.5 rounded-full shadow-2xl border border-blue-100 flex items-center gap-2 transform transition-all hover:scale-105 active:scale-95">
+                              <Lock className="w-4 h-4 text-blue-600" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Unlock ROI Data</span>
+                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Row 4: EMI */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">0-Cost EMI</div>
-                      {comparisonSet.map(course => (
-                        <div key={course.id} className="text-center">
-                          {course.hasZeroCostEmi ? (
-                            <div className="flex flex-col items-center gap-1">
-                               <CheckCircle2 className="w-5 h-5 text-emerald-500"/>
-                               <span className="text-[8px] font-black text-emerald-600 uppercase">Available</span>
+                    <ComparisonRow 
+                      label="EMI Plan" 
+                      values={comparisonSet.slice(0, 2).map(c => (
+                        <div className="flex flex-col items-center gap-1">
+                          {c.hasZeroCostEmi ? (
+                            <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                             </div>
                           ) : (
-                            <X className="w-5 h-5 text-slate-300 mx-auto"/>
+                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
+                              <X className="w-4 h-4 text-slate-400" />
+                            </div>
                           )}
+                          <span className={`text-[8px] font-black uppercase ${c.hasZeroCostEmi ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {c.hasZeroCostEmi ? '0% Interest' : 'Standard'}
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                      ))} 
+                    />
 
-                    {/* Row 5: Approvals */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">Approvals</div>
-                      {comparisonSet.map(course => (
-                        <div key={course.id} className="text-center text-[10px] font-bold text-slate-600 line-clamp-3 leading-relaxed px-2">
-                          {course.approvals.join('\n•\n')}
+                    <ComparisonRow 
+                      label="Grants" 
+                      values={comparisonSet.slice(0, 2).map(c => (
+                        <div className="flex flex-wrap justify-center gap-1">
+                          {c.approvals.slice(0, 2).map(a => (
+                            <span key={a} className="text-[8px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded uppercase">{a}</span>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      ))} 
+                    />
                   </div>
                 </div>
               );
@@ -601,17 +616,17 @@ export default function CollegeVision() {
           </div>
         </div>
 
-        {/* Modal Footer - Replaced sharing/pdf with Apply CTA */}
-        <div className="p-6 border-t border-slate-100 bg-white rounded-b-3xl">
+        {/* STEP 5: Sticky Bottom CTA */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-[80] transition-opacity">
           <button 
             onClick={() => {
               setIsCompareOpen(false);
               setCurrentStep(3); // Advance to Application
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl text-sm font-black transition-all shadow-xl shadow-blue-100 uppercase tracking-[0.15em] flex items-center justify-center gap-3 active:scale-[0.98]"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-[2rem] text-sm font-black transition-all shadow-xl shadow-blue-100 uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-[0.98] animate-in slide-in-from-bottom-5 duration-500"
           >
-            Advance to Application <ArrowRight className="w-5 h-5" />
+            🔥 Get Admission Help Now <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>

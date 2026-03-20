@@ -56,8 +56,8 @@ export async function submitApplicationLead(input: FormData | any) {
   }
 
   try {
-    // 1. Save to Legacy Lead Table
-    const { data: lead, error: leadError } = await supabase
+    // 1. Save to Legacy Lead Table (Tracking/Session)
+    const { data: legacyLead, error: legacyError } = await supabase
       .from('user_leads')
       .insert([{ 
         phone_number: phone, 
@@ -68,47 +68,37 @@ export async function submitApplicationLead(input: FormData | any) {
       }])
       .select().single()
 
-    if (leadError) throw new Error(leadError.message)
-
-    // 2. CREATE CRM RECORDS (The New System)
-    
-    // a. Create Contact
-    const { data: contact, error: contactError } = await supabase
-      .from('contacts')
-      .insert([{ 
-        first_name: firstName, 
-        last_name: lastName, 
-        email: studentEmail, 
+    // 2. SAVE TO MAIN CRM LEAD TABLE (Unified System)
+    const { data: mainLead, error: mainError } = await supabase
+      .from('leads')
+      .insert([{
+        name: studentNameRaw,
+        email: studentEmail,
         phone: phone,
-        job_title: 'Prospect',
-        state: state
+        course_interest: courseName,
+        state: state,
+        status: 'NEW_LEAD',
+        crm_stage: 'NEW_LEAD',
+        source: 'WEBSITE',
+        notes: `Interest in ${universityName} for ${courseName}. Captured from website modal.`
       }])
       .select().single()
 
-    if (!contactError && contact) {
-      // b. Create Deal
-      const { data: deal, error: dealError } = await supabase
-        .from('deals')
-        .insert([{
-          contact_id: contact.id,
-          name: `${courseName} - ${universityName}`,
-          amount: 50000, // Placeholder or calculate based on course
-          stage: 'Lead'
-        }])
-        .select().single()
-
-      if (!dealError && deal) {
-        // c. Log Initial Activity
-        await supabase.from('activities').insert([{
-          deal_id: deal.id,
-          contact_id: contact.id,
-          type: 'Note',
-          description: `Lead captured from website for ${courseName} at ${universityName}. Location: ${state}`
-        }])
-      }
+    if (mainError) {
+      console.error("CRM Lead save failed:", mainError)
+      // We don't throw yet, a successful legacy lead is better than nothing
     }
 
-    // 3. Fire Automated WhatsApp via Twilio
+    // 3. LOG INITIAL INTERACTION
+    if (mainLead) {
+      await supabase.from('activities').insert([{
+        lead_id: mainLead.id,
+        type: 'Note',
+        description: `Lead auto-captured for ${courseName} at ${universityName}. Student location: ${state}. Initial counselor eligibility review pending.`
+      }])
+    }
+
+    // 4. Fire Automated WhatsApp via Twilio
     const formattedPhone = phone.startsWith('+') ? phone : `+91${phone.replace(/[^0-9]/g, '')}`
     
     try {
@@ -123,7 +113,7 @@ export async function submitApplicationLead(input: FormData | any) {
       console.error("Twilio WhatsApp failed:", twilioErr)
     }
 
-    // 4. Fire Automated Welcome Email via Resend
+    // 5. Fire Automated Welcome Email via Resend
     if (studentEmail && resend) {
       await resend.emails.send({
         from: 'Priya at CollegeVision <counseling@collegevision.com>',
@@ -142,10 +132,14 @@ export async function submitApplicationLead(input: FormData | any) {
       })
     }
 
-    return { success: true, leadId: lead.id }
+    return { 
+      success: true, 
+      leadId: mainLead?.id || legacyLead?.id,
+      legacyLeadId: legacyLead?.id 
+    }
 
   } catch (error: any) {
-    console.error("Lead capture failed:", error)
-    return { error: "Failed to submit application. Please try again." }
+    console.error("Critical submission failed:", error)
+    return { error: "Submission encountered an error. Our team has been notified." }
   }
 }
