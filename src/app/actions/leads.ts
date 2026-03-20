@@ -9,19 +9,32 @@ const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_T
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   : null;
 
-export async function submitApplicationLead(formData: FormData) {
-  const phone = formData.get('phone') as string
-  const courseName = formData.get('courseName') as string
-  const universityName = formData.get('universityName') as string
-  const studentNameRaw = formData.get('studentName') as string || 'there'
-  const studentEmail = formData.get('email') as string
-  
-  const nameParts = studentNameRaw.split(' ')
-  const firstName = nameParts[0]
-  const lastName = nameParts.slice(1).join(' ')
+export async function submitApplicationLead(input: FormData | any) {
+  let phone, courseName, universityName, studentNameRaw, studentEmail, state, turnstileToken;
 
-  const supabase = await createClient()
-  const turnstileToken = formData.get('cf-turnstile-response') as string;
+  if (input instanceof FormData) {
+    phone = input.get('phone') as string;
+    courseName = input.get('courseName') as string;
+    universityName = input.get('universityName') as string;
+    studentNameRaw = input.get('studentName') as string || 'there';
+    studentEmail = input.get('email') as string;
+    state = input.get('state') as string || 'Not specified';
+    turnstileToken = input.get('cf-turnstile-response') as string;
+  } else {
+    phone = input.phone;
+    courseName = input.courseName;
+    universityName = input.universityName;
+    studentNameRaw = input.name || input.studentName || 'there';
+    studentEmail = input.email;
+    state = input.state || 'Not specified';
+    turnstileToken = input.turnstileToken;
+  }
+
+  const nameParts = studentNameRaw.split(' ');
+  const firstName = nameParts[0];
+  const lastName = nameParts.slice(1).join(' ');
+
+  const supabase = await createClient();
 
   // 1. Verify Cloudflare Turnstile (Bot Protection)
   if (process.env.NODE_ENV === 'production' || process.env.TURNSTILE_SECRET_KEY) {
@@ -46,7 +59,13 @@ export async function submitApplicationLead(formData: FormData) {
     // 1. Save to Legacy Lead Table
     const { data: lead, error: leadError } = await supabase
       .from('user_leads')
-      .insert([{ phone_number: phone, target_degree: courseName, status: 'New Lead', email: studentEmail }])
+      .insert([{ 
+        phone_number: phone, 
+        target_degree: courseName, 
+        status: 'New Lead', 
+        email: studentEmail,
+        state: state
+      }])
       .select().single()
 
     if (leadError) throw new Error(leadError.message)
@@ -61,7 +80,8 @@ export async function submitApplicationLead(formData: FormData) {
         last_name: lastName, 
         email: studentEmail, 
         phone: phone,
-        job_title: 'Prospect'
+        job_title: 'Prospect',
+        state: state
       }])
       .select().single()
 
@@ -83,7 +103,7 @@ export async function submitApplicationLead(formData: FormData) {
           deal_id: deal.id,
           contact_id: contact.id,
           type: 'Note',
-          description: `Lead captured from website for ${courseName} at ${universityName}`
+          description: `Lead captured from website for ${courseName} at ${universityName}. Location: ${state}`
         }])
       }
     }

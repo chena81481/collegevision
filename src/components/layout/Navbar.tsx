@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Sparkles, BarChart3, BookOpen, GraduationCap, LifeBuoy, Users, Info, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
 
 const NAV_DATA = [
   {
@@ -88,9 +89,13 @@ export default function Navbar() {
           <Link href="/signin" className="hidden sm:block text-sm font-bold text-slate-600 hover:text-blue-600">
             Sign In
           </Link>
-          <Link href="/match" className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 transition-all active:scale-95">
-            Start Free
-          </Link>
+          <LeadCaptureModal 
+            trigger={
+              <button className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 transition-all active:scale-95">
+                Start Free
+              </button>
+            } 
+          />
           <button 
             className="lg:hidden p-2 text-slate-600"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
