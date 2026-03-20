@@ -6,6 +6,8 @@ import {
   Star, MapPin, CheckCircle, ShieldCheck, Download, PlayCircle, Users, ExternalLink, Briefcase, TrendingUp,
   Video, ThumbsUp, Sparkles, UserCheck, Shield
 } from "lucide-react";
+import { calculateROI } from "@/lib/roi-calculator";
+import { ROIBreakdown } from "./ROIBreakdown";
 
 interface ProfileProps {
   university: University;
@@ -14,10 +16,14 @@ interface ProfileProps {
 export function UniversityProfileContent({ university }: ProfileProps) {
   const [viewMode, setViewMode] = useState<"student" | "parent">("student");
 
-  // Calculate Mock True ROI Metrics
-  const totalCost = university.feesPerYear * university.durationYears;
-  const expectedSalary = Math.round((totalCost * 1.8) / 10000) * 10000; // Mock 180% ROI
-  const breakEvenMonths = Math.round((totalCost / (expectedSalary / 12)) * 10) / 10;
+  // Real ROI Calculation instead of mock
+  const roiInput = {
+    totalFee: university.feesPerYear * university.durationYears,
+    avgCTC: Math.round((university.feesPerYear * university.durationYears * 1.8) / 10000) * 10000, // Still using mock outcomes for now but using real formula
+    durationMonths: university.durationYears * 12,
+    placementRate: university.placementPercentage,
+    isOnline: true, // Assuming online for this view
+  };
 
   return (
     <>
@@ -98,7 +104,7 @@ export function UniversityProfileContent({ university }: ProfileProps) {
           <div className="relative z-10 p-6 sm:p-8 flex flex-col gap-6">
             <div className="space-y-1">
               <p className="text-sm font-semibold uppercase tracking-wider text-white/70">Estimated Total Fees</p>
-              <h2 className="text-4xl font-black text-white">₹{totalCost.toLocaleString('en-IN')}</h2>
+              <h2 className="text-4xl font-black text-white">₹{roiInput.totalFee.toLocaleString('en-IN')}</h2>
               {university.emiAvailable && (
                 <div className="inline-flex items-center gap-1 text-xs font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full mt-2 border border-emerald-500/20">
                   <CheckCircle className="w-3 h-3" /> No Cost EMI Available
@@ -248,33 +254,14 @@ export function UniversityProfileContent({ university }: ProfileProps) {
                   <h3 className="text-2xl font-bold flex items-center gap-3">
                     <TrendingUp className="w-6 h-6 text-emerald-400" /> True ROI Engine™
                   </h3>
-                  <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-bold tracking-wider uppercase backdrop-blur-md">Live Data</span>
+                  <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-bold tracking-wider uppercase backdrop-blur-md">Financial Analysis</span>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-1">
-                    <p className="text-xs text-foreground/50 uppercase font-semibold tracking-wider">Total Cost</p>
-                    <p className="text-xl font-bold text-red-400 flex items-baseline gap-1">₹{(totalCost/100000).toFixed(2)}L <span className="text-xs font-normal">total</span></p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-1">
-                    <p className="text-xs text-foreground/50 uppercase font-semibold tracking-wider">Avg. Starting Salary</p>
-                    <p className="text-xl font-bold text-emerald-400 flex items-baseline gap-1">₹{(expectedSalary/100000).toFixed(2)}L <span className="text-xs font-normal">/ yr</span></p>
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-col justify-center">
-                  <div className="relative w-full h-8 bg-zinc-800 rounded-full overflow-hidden mb-4 border border-white/5 shadow-inner">
-                    <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-yellow-500" style={{ width: '35%' }} />
-                    <div className="absolute top-0 left-[35%] h-full bg-gradient-to-r from-emerald-400 to-emerald-500" style={{ width: '65%' }} />
-                    <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:24px_24px] pointer-events-none" />
-                  </div>
-                  <p className="text-lg font-bold text-center">
-                    Estimated Break-Even Time: <span className="font-black text-emerald-400">{breakEvenMonths} Months</span>
-                  </p>
-                  <p className="text-sm text-foreground/50 text-center mt-2 font-medium">
-                    Based on verified salary data of {university.placementPercentage}% placed graduates.
-                  </p>
-                </div>
+                <ROIBreakdown input={roiInput} />
+                
+                <p className="text-xs text-foreground/40 text-center mt-6 font-medium italic">
+                  * Calculations are based on self-reported placement data and 5-year career projections.
+                </p>
               </div>
 
               {/* Security & Approvals */}

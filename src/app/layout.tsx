@@ -4,6 +4,7 @@ import "./globals.css";
 import { Footer } from "@/components/layout/Footer";
 import { CommandPalette } from "@/components/crm/CommandPalette";
 import { AnalyticsProvider } from "./providers";
+import LeadPopup from "@/components/LeadPopup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +25,10 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "CollegeVision",
   },
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -32,6 +37,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
 };
+
 
 export default function RootLayout({
   children,
@@ -47,6 +53,7 @@ export default function RootLayout({
           <div className="flex-1">
             {children}
           </div>
+          <LeadPopup />
           <CommandPalette />
           <Footer />
         </AnalyticsProvider>

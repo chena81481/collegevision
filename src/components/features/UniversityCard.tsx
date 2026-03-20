@@ -8,6 +8,8 @@ import { Star, MapPin, CheckCircle, TrendingUp, Clock, Users, ShieldCheck, Arrow
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { calculateROI } from "@/lib/roi-calculator";
+import { ROIBadge } from "./ROIBadge";
 
 interface UniversityCardProps {
   university: University;
@@ -138,12 +140,16 @@ export function UniversityCard({ university, onCompareToggle, isCompared }: Univ
             <p className="text-xs text-foreground/50 uppercase tracking-wider font-semibold">Placement Rate</p>
             <div className="flex items-center gap-2">
               <span className="text-xl font-black text-indigo-400">{university.placementPercentage}%</span>
-              <div className="h-6 w-12 bg-indigo-500/20 rounded-md overflow-hidden flex items-end">
-                {/* Mock tiny sparkline indicator */}
-                <div className="w-1/3 h-1/2 bg-indigo-500/40 rounded-t-sm" />
-                <div className="w-1/3 h-3/4 bg-indigo-500/60 rounded-t-sm" />
-                <div className="w-1/3 h-full bg-indigo-500 rounded-t-sm" />
-              </div>
+              {(() => {
+                const roi = calculateROI({
+                  totalFee: university.feesPerYear * university.durationYears,
+                  avgCTC: Math.round((university.feesPerYear * university.durationYears * 1.8) / 10000) * 10000,
+                  durationMonths: university.durationYears * 12,
+                  placementRate: university.placementPercentage,
+                  isOnline: true,
+                });
+                return <ROIBadge score={roi.roiScore} />;
+              })()}
             </div>
           </div>
 

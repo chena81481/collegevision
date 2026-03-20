@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { PlayCircle, Clock, BookOpen } from "lucide-react";
+import { ROIBadge } from "./ROIBadge";
 
 interface CourseCardProps {
   id: string;
@@ -12,6 +13,7 @@ interface CourseCardProps {
   progress?: number;
   duration?: string;
   modules?: number;
+  roiScore?: number;
 }
 
 export function CourseCard({
@@ -22,6 +24,7 @@ export function CourseCard({
   progress,
   duration,
   modules,
+  roiScore,
 }: CourseCardProps) {
   return (
     <Link 
@@ -56,6 +59,13 @@ export function CourseCard({
                 className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-r-full" 
                 style={{ width: `${progress}%` }}
               />
+            </div>
+          )}
+
+          {/* ROI Badge */}
+          {roiScore !== undefined && (
+            <div className="absolute top-4 left-4 z-20">
+              <ROIBadge score={roiScore} />
             </div>
           )}
         </div>

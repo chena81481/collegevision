@@ -85,6 +85,8 @@ export async function POST(request: NextRequest) {
       universityId,
       ownerCounselorId,
       programIds = [],
+      course,
+      state,
       notes: initialNotes,
     } = body;
     
@@ -123,6 +125,8 @@ export async function POST(request: NextRequest) {
         priority: priority || 'MEDIUM',
         universityId,
         ownerCounselorId,
+        course_interest: course,
+        notes: state ? `State: ${state}${initialNotes ? ` | ${initialNotes}` : ''}` : initialNotes,
       })
       .select(`
         *,
