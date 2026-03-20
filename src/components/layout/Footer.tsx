@@ -35,31 +35,33 @@ export function Footer() {
         <div className="flex-2 grid grid-cols-2 sm:grid-cols-3 gap-8">
            
            <div className="space-y-4">
-             <h4 className="font-bold tracking-wider text-sm">Platform</h4>
+             <h4 className="font-bold tracking-wider text-sm inline-flex items-center gap-2">PG Programs <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase font-black">Top</span></h4>
              <ul className="space-y-3 text-sm text-foreground/60">
-               <li><Link href="/universities" className="hover:text-violet-400 transition-colors">Directory</Link></li>
-               <li><Link href="/explore" className="hover:text-violet-400 transition-colors">Discovery Match</Link></li>
-               <li><Link href="/student/counseling" className="hover:text-violet-400 transition-colors">Career Experts</Link></li>
-               <li><Link href="#" className="hover:text-violet-400 transition-colors text-emerald-400 flex items-center gap-1">True ROI Engine<span className="px-1.5 bg-white/10 rounded uppercase text-[8px] font-black">Pro</span></Link></li>
+               <li><Link href="/online-mba" className="hover:text-blue-400 transition-colors">Online MBA</Link></li>
+               <li><Link href="/online-mca" className="hover:text-blue-400 transition-colors">Online MCA</Link></li>
+               <li><Link href="/online-mcom" className="hover:text-blue-400 transition-colors">Online M.Com</Link></li>
+               <li><Link href="/online-ma" className="hover:text-blue-400 transition-colors">Online MA</Link></li>
              </ul>
            </div>
 
            <div className="space-y-4">
-             <h4 className="font-bold tracking-wider text-sm">Legal & Trust</h4>
+             <h4 className="font-bold tracking-wider text-sm">UG Programs</h4>
              <ul className="space-y-3 text-sm text-foreground/60">
-               <li><a href="#" className="hover:text-white transition-colors">Verification Process</a></li>
-               <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-               <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-               <li><a href="#" className="hover:text-white transition-colors">Student Guarantee</a></li>
+               <li><Link href="/online-bba" className="hover:text-blue-400 transition-colors">Online BBA</Link></li>
+               <li><Link href="/online-bca" className="hover:text-blue-400 transition-colors">Online BCA</Link></li>
+               <li><Link href="/online-bcom" className="hover:text-blue-400 transition-colors">Online B.Com</Link></li>
+               <li><Link href="/online-ba" className="hover:text-blue-400 transition-colors">Online BA</Link></li>
              </ul>
            </div>
 
-           <div className="space-y-4 col-span-2 sm:col-span-1">
-             <h4 className="font-bold tracking-wider text-sm flex items-center gap-2">Ready? <span className="animate-pulse">🚀</span></h4>
-             <p className="text-sm text-foreground/60">Join 50k+ students verifying their future today.</p>
-             <Link href="/student/dashboard" className="inline-flex w-full items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white text-black font-bold hover:bg-gray-200 transition-colors text-sm shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                Student Hub <ArrowRight className="w-4 h-4" />
-             </Link>
+           <div className="space-y-4">
+             <h4 className="font-bold tracking-wider text-sm">Resources</h4>
+             <ul className="space-y-3 text-sm text-foreground/60">
+               <li><Link href="/universities" className="hover:text-blue-400 transition-colors">All Universities</Link></li>
+               <li><Link href="/compare" className="hover:text-blue-400 transition-colors">Compare Tool</Link></li>
+               <li><Link href="/blog" className="hover:text-blue-400 transition-colors">Career Blog</Link></li>
+               <li><Link href="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
+             </ul>
            </div>
         </div>
       </div>

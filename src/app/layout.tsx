@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CommandPalette } from "@/components/crm/CommandPalette";
 import { AnalyticsProvider } from "./providers";
 import LeadPopup from "@/components/LeadPopup";
+import GlobalSchema from "@/components/seo/GlobalSchema";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,6 +51,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen flex flex-col`}
       >
         <AnalyticsProvider>
+          <GlobalSchema />
           <div className="flex-1">
             {children}
           </div>

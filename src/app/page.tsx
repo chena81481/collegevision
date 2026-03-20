@@ -477,8 +477,9 @@ export default function CollegeVision() {
         </div>
 
         {/* Modal Body: The Data Table */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <div className="min-w-[800px] md:min-w-0"> {/* Forces scroll on mobile */}
+        {/* Modal Body: The Data Table */}
+        <div className="p-0 max-h-[70vh] overflow-y-auto custom-scrollbar">
+          <div className="min-w-max md:min-w-0">
             
             {/* Logic for Comparison */}
             {(() => {
@@ -488,19 +489,19 @@ export default function CollegeVision() {
               const maxCTC = Math.max(...comparisonSet.map(c => c.avgCtcInr ?? 0));
 
               return (
-                <>
+                <div className="relative">
                   {/* Table Headers (Universities) */}
-                  <div className="grid grid-cols-4 gap-4 mb-6 sticky top-0 bg-white pt-2 pb-4 z-10 border-b border-slate-100">
-                    <div className="font-semibold text-slate-400 text-sm uppercase tracking-wider flex items-end pb-2">Metrics</div>
+                  <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 mb-6 sticky top-0 bg-white pt-6 pb-4 z-[30] px-6 border-b border-slate-100 shadow-sm">
+                    <div className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider flex items-end pb-2 sticky left-0 bg-white z-[31]">Metrics</div>
                     
                     {comparisonSet.map((course, idx) => {
                       const isWinner = course.roi === maxROI && maxROI > 0;
                       return (
                         <div key={course.id} className={`${isWinner ? 'bg-blue-50/50 border-2 border-blue-500' : 'bg-slate-50 border border-slate-200'} p-4 rounded-2xl relative`}>
                           {isWinner && (
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Winner</div>
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase z-[32]">Winner</div>
                           )}
-                          <div className="font-bold text-lg text-slate-900 text-center truncate">{course.universityName}</div>
+                          <div className="font-bold text-sm md:text-base text-slate-900 text-center line-clamp-2">{course.universityName}</div>
                         </div>
                       );
                     })}
@@ -508,48 +509,50 @@ export default function CollegeVision() {
                     {/* Placeholder for less than 3 courses */}
                     {Array.from({ length: 3 - comparisonSet.length }).map((_, i) => (
                       <div key={`empty-${i}`} className="bg-slate-50/30 p-4 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center">
-                        <span className="text-slate-300 text-sm italic">Add more to compare</span>
+                        <span className="text-slate-300 text-[10px] italic">Add more</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Data Rows */}
-                  <div className="space-y-2">
+                  <div className="space-y-0 px-0">
                     {/* Row 1: Fee */}
-                    <div className="grid grid-cols-4 gap-4 py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2 items-center">
-                      <div className="text-sm font-medium text-slate-500">Total Fee</div>
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">Total Fee</div>
                       {comparisonSet.map(course => {
                         const isLowest = course.totalFeeInr === minFee;
                         return (
-                          <div key={course.id} className={`text-center ${isLowest ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                          <div key={course.id} className={`text-center text-sm ${isLowest ? 'font-black text-slate-900' : 'font-bold text-slate-500'}`}>
                             {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(course.totalFeeInr)}
-                            {isLowest && <span className="text-[10px] text-green-600 ml-1 bg-green-50 px-2 py-0.5 rounded">Lowest</span>}
+                            {isLowest && <div className="text-[9px] text-emerald-600 font-black uppercase mt-1">Lowest Fee</div>}
                           </div>
                         );
                       })}
                     </div>
 
                     {/* Row 2: CTC */}
-                    <div className="grid grid-cols-4 gap-4 py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2 items-center">
-                      <div className="text-sm font-medium text-slate-500">Average CTC</div>
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">Avg. CTC</div>
                       {comparisonSet.map(course => {
                         const isHighest = course.avgCtcInr === maxCTC && maxCTC > 0;
                         const ctcFormatted = course.avgCtcInr ? `₹${(course.avgCtcInr / 100_000).toFixed(1)} LPA` : 'N/A';
                         return (
-                          <div key={course.id} className={`text-center ${isHighest ? 'font-bold text-green-600' : 'font-medium text-slate-700'}`}>
+                          <div key={course.id} className={`text-center text-sm ${isHighest ? 'font-black text-emerald-600' : 'font-bold text-slate-500'}`}>
                             {ctcFormatted}
-                            {isHighest && <span className="text-[10px] ml-1 bg-green-50 px-2 py-0.5 rounded">Highest</span>}
+                            {isHighest && <div className="text-[9px] text-emerald-600 font-black uppercase mt-1">Highest</div>}
                           </div>
                         );
                       })}
                     </div>
 
                     {/* Row 3: TRUE ROI */}
-                    <div className="grid grid-cols-4 gap-4 py-4 border-b border-slate-50 bg-blue-50/30 rounded-lg px-2 items-center relative overflow-hidden group/roi">
-                      <div className="text-sm font-bold text-slate-900 flex items-center gap-1">True ROI <Info className="w-3 h-3 text-blue-400"/></div>
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-8 border-b border-slate-50 bg-blue-50/50 px-6 items-center relative overflow-hidden group/roi">
+                      <div className="text-[11px] font-black text-blue-600 uppercase tracking-widest sticky left-1/4 md:left-0 z-20 flex items-center gap-1.5 shrink-0 bg-blue-50 md:bg-transparent">
+                         True ROI <Info className="w-3 h-3"/>
+                      </div>
                       
                       {comparisonSet.map(course => (
-                        <div key={course.id} className={`text-center font-bold text-blue-600 text-lg transition-all duration-500 ${!user ? 'blur-md select-none' : ''}`}>
+                        <div key={course.id} className={`text-center font-black text-blue-700 text-xl transition-all duration-500 ${!user ? 'blur-md select-none' : ''}`}>
                           {course.roi ? `${course.roi}%` : 'N/A'}
                         </div>
                       ))}
@@ -557,21 +560,24 @@ export default function CollegeVision() {
                       {/* Locked Overlay for Unauthenticated Users */}
                       {!user && (
                         <div className="absolute inset-0 bg-blue-50/10 backdrop-blur-[2px] flex items-center justify-center z-20 cursor-pointer group-hover/roi:bg-blue-50/30 transition-all" onClick={() => setIsAuthModalOpen(true)}>
-                          <div className="bg-white px-4 py-2 rounded-full shadow-lg border border-blue-100 flex items-center gap-2 transform translate-y-1 group-hover/roi:translate-y-0 transition-transform">
-                            <Lock className="w-3.5 h-3.5 text-blue-600" />
-                            <span className="text-xs font-bold text-slate-900">Sign in to unlock ROI Analysis</span>
+                          <div className="bg-white px-5 py-2.5 rounded-full shadow-xl border border-blue-100 flex items-center gap-2 transform translate-y-1 group-hover/roi:translate-y-0 transition-all">
+                            <Lock className="w-4 h-4 text-blue-600" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Sign in to unlock ROI</span>
                           </div>
                         </div>
                       )}
                     </div>
 
                     {/* Row 4: EMI */}
-                    <div className="grid grid-cols-4 gap-4 py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2 items-center">
-                      <div className="text-sm font-medium text-slate-500">Zero Cost EMI</div>
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">0-Cost EMI</div>
                       {comparisonSet.map(course => (
                         <div key={course.id} className="text-center">
                           {course.hasZeroCostEmi ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto"/>
+                            <div className="flex flex-col items-center gap-1">
+                               <CheckCircle2 className="w-5 h-5 text-emerald-500"/>
+                               <span className="text-[8px] font-black text-emerald-600 uppercase">Available</span>
+                            </div>
                           ) : (
                             <X className="w-5 h-5 text-slate-300 mx-auto"/>
                           )}
@@ -580,28 +586,32 @@ export default function CollegeVision() {
                     </div>
 
                     {/* Row 5: Approvals */}
-                    <div className="grid grid-cols-4 gap-4 py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2 items-center">
-                      <div className="text-sm font-medium text-slate-500">Approvals</div>
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] md:grid-cols-4 gap-4 py-5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors px-6 items-center">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-tight sticky left-0 bg-white md:bg-transparent z-20">Approvals</div>
                       {comparisonSet.map(course => (
-                        <div key={course.id} className="text-center text-xs font-medium text-slate-600 truncate px-1">
-                          {course.approvals.join(', ')}
+                        <div key={course.id} className="text-center text-[10px] font-bold text-slate-600 line-clamp-3 leading-relaxed px-2">
+                          {course.approvals.join('\n•\n')}
                         </div>
                       ))}
                     </div>
                   </div>
-                </>
+                </div>
               );
             })()}
           </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-3xl flex justify-between items-center">
-          <button className="text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2">
-             Share Comparison
-          </button>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all shadow-md">
-            Download PDF Report
+        {/* Modal Footer - Replaced sharing/pdf with Apply CTA */}
+        <div className="p-6 border-t border-slate-100 bg-white rounded-b-3xl">
+          <button 
+            onClick={() => {
+              setIsCompareOpen(false);
+              setCurrentStep(3); // Advance to Application
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl text-sm font-black transition-all shadow-xl shadow-blue-100 uppercase tracking-[0.15em] flex items-center justify-center gap-3 active:scale-[0.98]"
+          >
+            Advance to Application <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>

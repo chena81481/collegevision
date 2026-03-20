@@ -8,24 +8,32 @@ import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
 
 const NAV_DATA = [
   {
-    label: "Platform",
+    label: "PG Programs",
     links: [
-      { label: "Features", href: "/#features", icon: <Sparkles className="w-4 h-4" /> },
-      { label: "How It Works", href: "/how-it-works", icon: <Info className="w-4 h-4" /> },
-      { label: "Pricing", href: "/pricing", icon: <GraduationCap className="w-4 h-4" /> },
-      { label: "Success Stories", href: "/success-stories", icon: <Users className="w-4 h-4" /> },
+      { label: "Online MBA", href: "/online-mba", icon: <GraduationCap className="w-4 h-4" /> },
+      { label: "Online MCA", href: "/online-mca", icon: <GraduationCap className="w-4 h-4" /> },
+      { label: "Online M.Com", href: "/online-mcom", icon: <GraduationCap className="w-4 h-4" /> },
+      { label: "Online MA", href: "/online-ma", icon: <GraduationCap className="w-4 h-4" /> },
+    ]
+  },
+  {
+    label: "UG Programs",
+    links: [
+      { label: "Online BBA", href: "/online-bba", icon: <BookOpen className="w-4 h-4" /> },
+      { label: "Online BCA", href: "/online-bca", icon: <BookOpen className="w-4 h-4" /> },
+      { label: "Online B.Com", href: "/online-bcom", icon: <BookOpen className="w-4 h-4" /> },
+      { label: "Online BA", href: "/online-ba", icon: <BookOpen className="w-4 h-4" /> },
     ]
   },
   {
     label: "Tools",
     links: [
       { label: "ROI Calculator", href: "/#roi-calculator", icon: <BarChart3 className="w-4 h-4" /> },
-      { label: "Comparison Tool", href: "/compare", icon: <BookOpen className="w-4 h-4" /> },
-      { label: "Career Guides", href: "/guides", icon: <LifeBuoy className="w-4 h-4" /> },
+      { label: "Comparison Tool", href: "/compare", icon: <BarChart3 className="w-4 h-4" /> },
+      { label: "Career Guides", href: "/blog", icon: <LifeBuoy className="w-4 h-4" /> },
     ]
   },
-  { label: "Universities", href: "/universities" },
-  { label: "Resources", href: "/blog" }
+  { label: "Universities", href: "/universities" }
 ];
 
 export default function Navbar() {
@@ -109,45 +117,62 @@ export default function Navbar() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 top-16 bg-white z-[90] lg:hidden overflow-y-auto p-6"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed inset-x-0 top-16 bottom-0 bg-white z-[80] lg:hidden overflow-y-auto"
           >
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col p-6 space-y-8">
               {NAV_DATA.map((item) => (
-                <div key={item.label} className="space-y-4">
-                  <div className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                <div key={item.label} className="flex flex-col space-y-4">
+                  <div className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
                     {item.label}
                   </div>
+                  
                   {item.links ? (
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-3">
                       {item.links.map((link) => (
                         <Link 
                           key={link.label}
                           href={link.href}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 text-slate-900 font-bold text-sm"
+                          className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100/50 active:bg-blue-50 transition-colors group"
                         >
-                          <div className="p-2 bg-white rounded-lg shadow-sm">
+                          <div className="p-2.5 bg-white rounded-xl shadow-sm text-blue-600 group-active:scale-95 transition-transform">
                             {link.icon}
                           </div>
-                          {link.label}
+                          <span className="text-sm font-bold text-slate-900">{link.label}</span>
                         </Link>
                       ))}
                     </div>
                   ) : (
                     <Link 
-                      href={item.href || '#'}
+                      href={item.label === "Universities" ? "/universities" : item.label === "Resources" ? "/blog" : "#"}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="block text-lg font-black text-slate-900"
+                      className="text-lg font-black text-slate-900 active:text-blue-600 transition-colors"
                     >
                       {item.label}
                     </Link>
                   )}
                 </div>
               ))}
+              
+              <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
+                <Link 
+                  href="/signin" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full py-4 text-center text-sm font-bold text-slate-600 rounded-2xl bg-slate-50"
+                >
+                  Sign In
+                </Link>
+                <LeadCaptureModal 
+                  trigger={
+                    <button className="w-full py-4 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-xl shadow-slate-200 active:scale-[0.98] transition-all">
+                      Start Free
+                    </button>
+                  } 
+                />
+              </div>
             </div>
           </motion.div>
         )}
