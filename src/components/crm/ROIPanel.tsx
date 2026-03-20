@@ -14,12 +14,13 @@ export function ROIPanel({ application }: { application: any }) {
   const [scholarship, setScholarship] = useState(application.scholarshipAmount || 0);
   const [salary, setSalary] = useState(application.university?.avgStartingSalary || 1200000); // 12L default
 
-  const roi = calculateROI(
-    application.tuitionFee || 2000000, 
-    application.livingCost || 1000000,
-    scholarship,
-    salary
-  );
+  const roi = calculateROI({
+    totalFee: (application.tuitionFee || 2000000) - scholarship,
+    avgCTC: salary,
+    durationMonths: (application.university?.durationYears || 2) * 12,
+    placementRate: application.university?.placementPercentage || 80,
+    isOnline: true,
+  });
 
   return (
     <Card className="rounded-3xl border-slate-200 bg-slate-900 text-white shadow-2xl relative overflow-hidden group">

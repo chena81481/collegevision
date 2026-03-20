@@ -19,6 +19,8 @@ export interface ROIResult {
   riskPenalty: number;
   opportunityCost: number;
   paybackMonths: number;
+  paybackYears: number;
+  totalReturnsFiveYears: number;
 }
 
 export function calculateROI(input: ROIInput): ROIResult {
@@ -65,6 +67,8 @@ export function calculateROI(input: ROIInput): ROIResult {
     riskPenalty,
     opportunityCost,
     paybackMonths,
+    paybackYears: Number((paybackMonths / 12).toFixed(1)),
+    totalReturnsFiveYears: netGain,
   };
 }
 

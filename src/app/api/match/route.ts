@@ -164,7 +164,14 @@ Required JSON format:
         }
 
         // 3. ROI Potential (20%)
-        const roiResult = calculateROI(course.total_fee_inr, 0, 0, course.avg_ctc_inr ?? 0, (course.duration_months ?? 24) / 12);
+        const roiResult = calculateROI({
+          totalFee: course.total_fee_inr,
+          avgCTC: course.avg_ctc_inr ?? 0,
+          currentSalary: 0,
+          durationMonths: course.duration_months ?? 24,
+          placementRate: 70, 
+          isOnline: true,
+        });
         const roiValue = roiResult.totalReturnsFiveYears;
         if (roiValue > 1000000) score += 20; 
         else if (roiValue > 500000) score += 10;
