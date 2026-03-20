@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -54,6 +54,18 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    // Auto-popup logic
+    const hasSeenPopup = sessionStorage.getItem("hasSeenLeadPopup");
+    if (!hasSeenPopup) {
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+        sessionStorage.setItem("hasSeenLeadPopup", "true");
+      }, 1500); // 1.5 second delay for premium feel
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(leadSchema),
@@ -143,35 +155,35 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
               <form onSubmit={handleSubmit(onSubmit)} className="p-5 md:p-8 space-y-4 md:space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" />
                     <Input 
                       {...register("name")}
                       placeholder="Your Name" 
-                      className="pl-11 h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500"
+                      className="pl-11 h-11 md:h-12 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500 relative z-0"
                     />
                     {errors.name && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.name.message as string}</p>}
                   </div>
 
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" />
                     <Input 
                       {...register("email")}
                       placeholder="Your Email" 
-                      className="pl-11 h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500"
+                      className="pl-11 h-11 md:h-12 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500 relative z-0"
                     />
                     {errors.email && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.email.message as string}</p>}
                   </div>
                 </div>
 
                 <div className="relative group">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                  <div className="absolute left-10 top-1/2 -translate-y-1/2 flex items-center gap-1 border-r border-slate-200 dark:border-white/10 pr-2">
-                    <span className="text-xs font-black text-slate-600 dark:text-slate-300">+91</span>
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" />
+                  <div className="absolute left-10 top-1/2 -translate-y-1/2 flex items-center gap-1 border-r border-slate-200 dark:border-white/10 pr-2 z-10">
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-200">+91</span>
                   </div>
                   <Input 
                     {...register("phone")}
                     placeholder="Contact Number" 
-                    className="pl-20 h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500"
+                    className="pl-20 h-11 md:h-12 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500 relative z-0"
                   />
                   {errors.phone && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.phone.message as string}</p>}
                 </div>
@@ -179,7 +191,7 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div className="space-y-1">
                     <Select onValueChange={(val) => setValue("course", val)}>
-                      <SelectTrigger className="h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold">
+                      <SelectTrigger className="h-11 md:h-12 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold">
                          <div className="flex items-center gap-2">
                             <GraduationCap className="w-4 h-4 text-slate-400" />
                             <SelectValue placeholder="Course" />
@@ -198,7 +210,7 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
 
                   <div className="space-y-1">
                     <Select onValueChange={(val) => setValue("state", val)}>
-                      <SelectTrigger className="h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold">
+                      <SelectTrigger className="h-11 md:h-12 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold">
                          <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-slate-400" />
                             <SelectValue placeholder="State" />
@@ -220,14 +232,14 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="w-full h-12 md:h-14 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl md:rounded-[24px] shadow-2xl shadow-blue-500/30 text-base md:text-lg transition-transform active:scale-95 flex items-center justify-center gap-3 group"
+                    className="w-full h-12 md:h-14 !bg-blue-600 hover:!bg-blue-700 !text-white font-black rounded-2xl md:rounded-[24px] shadow-2xl shadow-blue-500/30 text-base md:text-lg transition-transform active:scale-95 flex items-center justify-center gap-3 group border-none"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
+                      <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin text-white" />
                     ) : (
                       <>
                         FIND BEST UNIVERSITY
-                        <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1.5 transition-transform" />
+                        <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1.5 transition-transform text-white" />
                       </>
                     )}
                   </Button>
