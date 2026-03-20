@@ -98,7 +98,7 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
         )}
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none bg-transparent shadow-none">
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none bg-transparent shadow-none w-[95vw] max-h-[95vh] overflow-y-auto custom-scrollbar">
         <AnimatePresence mode="wait">
           {!submitted ? (
             <motion.div 
@@ -106,48 +106,48 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              className="bg-white dark:bg-zinc-950 rounded-[40px] shadow-2xl border border-white/10 overflow-hidden"
+              className="bg-white dark:bg-zinc-950 rounded-3xl md:rounded-[40px] shadow-2xl border border-white/10 overflow-hidden"
             >
-              <div className="relative p-8 text-center bg-slate-50 dark:bg-zinc-900/50 border-b border-white/5">
+              <div className="relative p-6 md:p-8 text-center bg-slate-50 dark:bg-zinc-900/50 border-b border-white/5">
                 <div className="absolute top-0 right-0 p-4">
-                   <Sparkles className="w-6 h-6 text-yellow-500 animate-pulse" />
+                   <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-yellow-500 animate-pulse" />
                 </div>
                 
-                <DialogTitle className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+                <DialogTitle className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
                    Compare & Select from <span className="text-blue-600">100+</span>
                 </DialogTitle>
-                <DialogDescription className="font-bold text-slate-500 dark:text-slate-400">
+                <DialogDescription className="text-sm md:text-base font-bold text-slate-500 dark:text-slate-400">
                    Best University for your Top Online Course
                 </DialogDescription>
 
-                <div className="flex justify-center items-center gap-6 mt-6 opacity-80 group">
+                <div className="flex justify-center items-center gap-4 md:gap-6 mt-4 md:mt-6 opacity-80 group">
                    {PARTNER_LOGOS.map((logo) => (
                      <div key={logo.name} className="flex flex-col items-center">
-                        <div className={`text-[10px] font-black tracking-tighter ${logo.color} bg-white dark:bg-zinc-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm transition-transform hover:scale-110`}>
+                        <div className={`text-[9px] md:text-[10px] font-black tracking-tighter ${logo.color} bg-white dark:bg-zinc-800 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm transition-transform hover:scale-110`}>
                            {logo.name}
                         </div>
                      </div>
                    ))}
                 </div>
 
-                <div className="flex justify-center gap-4 mt-6">
-                   <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3" /> No-Cost EMI
+                <div className="flex justify-center gap-2 md:gap-4 mt-4 md:mt-6">
+                   <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-500/10 px-2 md:px-3 py-1 rounded-full border border-emerald-500/20 whitespace-nowrap">
+                      <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" /> No-Cost EMI
                    </div>
-                   <div className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
-                      <CheckCircle2 className="w-3 h-3" /> 100% Placement
+                   <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-500/10 px-2 md:px-3 py-1 rounded-full border border-blue-500/20 whitespace-nowrap">
+                      <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" /> 100% Placement
                    </div>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="p-5 md:p-8 space-y-4 md:space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                     <Input 
                       {...register("name")}
                       placeholder="Your Name" 
-                      className="pl-11 h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold focus-visible:ring-blue-500"
+                      className="pl-11 h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500"
                     />
                     {errors.name && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.name.message as string}</p>}
                   </div>
@@ -157,7 +157,7 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
                     <Input 
                       {...register("email")}
                       placeholder="Your Email" 
-                      className="pl-11 h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold focus-visible:ring-blue-500"
+                      className="pl-11 h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500"
                     />
                     {errors.email && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.email.message as string}</p>}
                   </div>
@@ -165,27 +165,29 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
 
                 <div className="relative group">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                  <span className="absolute left-10 top-1/2 -translate-y-1/2 text-xs font-black text-slate-500">+91</span>
+                  <div className="absolute left-10 top-1/2 -translate-y-1/2 flex items-center gap-1 border-r border-slate-200 dark:border-white/10 pr-2">
+                    <span className="text-xs font-black text-slate-600 dark:text-slate-300">+91</span>
+                  </div>
                   <Input 
                     {...register("phone")}
                     placeholder="Contact Number" 
-                    className="pl-20 h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold focus-visible:ring-blue-500"
+                    className="pl-20 h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold focus-visible:ring-blue-500"
                   />
                   {errors.phone && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.phone.message as string}</p>}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div className="space-y-1">
                     <Select onValueChange={(val) => setValue("course", val)}>
-                      <SelectTrigger className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold">
+                      <SelectTrigger className="h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold">
                          <div className="flex items-center gap-2">
                             <GraduationCap className="w-4 h-4 text-slate-400" />
                             <SelectValue placeholder="Course" />
                          </div>
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-white/10 bg-slate-900 text-white max-h-[300px]">
+                      <SelectContent className="rounded-2xl border-white/10 bg-slate-900 text-white max-h-[250px]">
                         {ONLINE_COURSES.map(course => (
-                          <SelectItem key={course} value={course} className="font-bold py-3 transition-colors">
+                          <SelectItem key={course} value={course} className="font-bold py-2 md:py-3 transition-colors">
                             {course}
                           </SelectItem>
                         ))}
@@ -196,15 +198,15 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
 
                   <div className="space-y-1">
                     <Select onValueChange={(val) => setValue("state", val)}>
-                      <SelectTrigger className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-2xl font-bold">
+                      <SelectTrigger className="h-11 md:h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl font-bold">
                          <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-slate-400" />
                             <SelectValue placeholder="State" />
                          </div>
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-white/10 bg-slate-900 text-white max-h-[300px]">
+                      <SelectContent className="rounded-2xl border-white/10 bg-slate-900 text-white max-h-[250px]">
                         {INDIAN_STATES.map(state => (
-                          <SelectItem key={state} value={state} className="font-bold py-3 transition-colors">
+                          <SelectItem key={state} value={state} className="font-bold py-2 md:py-3 transition-colors">
                             {state}
                           </SelectItem>
                         ))}
@@ -218,29 +220,29 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-[24px] shadow-2xl shadow-blue-500/30 text-lg transition-transform active:scale-95 flex items-center justify-center gap-3 group"
+                    className="w-full h-12 md:h-14 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl md:rounded-[24px] shadow-2xl shadow-blue-500/30 text-base md:text-lg transition-transform active:scale-95 flex items-center justify-center gap-3 group"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
                     ) : (
                       <>
                         FIND BEST UNIVERSITY
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+                        <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1.5 transition-transform" />
                       </>
                     )}
                   </Button>
                 </div>
 
-                <div className="flex flex-col items-center gap-4 py-4 border-t border-slate-100 dark:border-white/5">
-                   <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center gap-3 md:gap-4 py-3 md:py-4 border-t border-slate-100 dark:border-white/5">
+                   <div className="flex items-center gap-3 md:gap-4">
                       <div className="flex -space-x-2">
                          {[11, 12, 13].map((i) => (
-                           <div key={i} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white dark:border-zinc-950 overflow-hidden ring-1 ring-slate-100">
+                           <div key={i} className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-200 border-2 border-white dark:border-zinc-950 overflow-hidden ring-1 ring-slate-100">
                              <img src={`https://i.pravatar.cc/100?u=${i}`} alt="avatar" />
                            </div>
                          ))}
                       </div>
-                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-tight">
+                      <div className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-tight">
                          Connect with <span className="text-blue-500">Top Experts</span>
                          <div className="flex items-center gap-1 mt-0.5">
                             {[1, 2, 3, 4, 5].map((s) => <Star key={s} className="w-2.5 h-2.5 fill-yellow-500 text-yellow-500 border-none" />)}
@@ -248,8 +250,8 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
                       </div>
                    </div>
                    
-                   <p className="text-[9px] font-bold text-emerald-600 flex items-center gap-1 opacity-80 uppercase tracking-tighter">
-                      <ShieldCheck className="w-3 h-3" /> Your personal information is 100% secure with us
+                   <p className="text-[8px] md:text-[9px] font-bold text-emerald-600 flex items-center gap-1 opacity-80 uppercase tracking-tighter">
+                      <ShieldCheck className="w-3 h-3" /> Your personal information is secure with us
                    </p>
                 </div>
               </form>
