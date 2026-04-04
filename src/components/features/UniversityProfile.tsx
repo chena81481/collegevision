@@ -210,7 +210,10 @@ export default function UniversityProfile({ initialData, competitors }: { initia
         .sort((a: any, b: any) => b.discount_percentage - a.discount_percentage)[0]
     : null;
 
-  const savings = qualifiedS && course ? Math.round(course.total_fee_inr * (qualifiedS.discount_percentage / 100)) : 0;
+  const savings = (qualifiedS && course)
+    ? Math.round(course.total_fee_inr * (qualifiedS.discount_percentage / 100))
+    : 0;
+
   const finalFee = course ? course.total_fee_inr - savings : 0;
 
   const { data: chartData, monthly, breakEvenMonth } = buildChartData(finalFee, avgCtc);
