@@ -200,27 +200,29 @@ export default function UniversityProfile({ initialData, competitors }: { initia
   }
 
   // ── Calculation logic ─────────────────────────────────────────────────────
-  const course = selectedCourse ?? university?.courses[0];
-  const avgCtc = course?.avg_ctc_inr ?? 0;
+  if (!university) return null;
+  const uni = university;
+  const cur = selectedCourse ?? uni.courses[0];
+  if (!cur) return null;
+
+  const avgCtc = cur.avg_ctc_inr ?? 0;
   
   // Calculate specific course scholarship
-  const qualifiedS = studentScore && course?.scholarships
-    ? course.scholarships
+  const qualifiedS = (studentScore !== null && cur.scholarships)
+    ? cur.scholarships
         .filter((s: any) => studentScore >= s.min_score)
         .sort((a: any, b: any) => b.discount_percentage - a.discount_percentage)[0]
     : null;
 
-  const savings = (qualifiedS && course)
-    ? Math.round(course.total_fee_inr * (qualifiedS.discount_percentage / 100))
+  const savings = (qualifiedS && cur)
+    ? Math.round(cur.total_fee_inr * (qualifiedS.discount_percentage / 100))
     : 0;
 
-  const finalFee = course ? course.total_fee_inr - savings : 0;
+  const finalFee = cur.total_fee_inr - savings;
 
   const { data: chartData, monthly, breakEvenMonth } = buildChartData(finalFee, avgCtc);
-  const baseRoi = avgCtc && (course?.total_fee_inr ?? 1) ? Math.round(((avgCtc * 3 - (course?.total_fee_inr ?? 1)) / (course?.total_fee_inr ?? 1)) * 100) : 0;
+  const baseRoi = avgCtc && cur.total_fee_inr ? Math.round(((avgCtc * 3 - cur.total_fee_inr) / cur.total_fee_inr) * 100) : 0;
   const roi = qualifiedS ? Math.round(baseRoi * (1 + (qualifiedS.discount_percentage / 100))) : baseRoi;
-
-  if (!university) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-teal-200 selection:text-teal-900">
@@ -233,7 +235,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
             <ChevronRight className="w-3 h-3" />
             <Link href="/universities" className="hover:text-blue-600 transition-colors">Universities</Link>
             <ChevronRight className="w-3 h-3" />
-            <span className="text-slate-900 font-semibold">{university.name}</span>
+            <span className="text-slate-900 font-semibold">{uni.name}</span>
           </div>
           <button
             onClick={handleShare}
@@ -253,19 +255,19 @@ export default function UniversityProfile({ initialData, competitors }: { initia
 
           <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
             <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-teal-900 font-black text-xl text-center leading-tight shadow-lg border-4 border-white/10 shrink-0 px-2">
-              {university.name.split(' ').map(w => w[0]).slice(0, 3).join('')}
+              {uni.name.split(' ').map(w => w[0]).slice(0, 3).join('')}
             </div>
 
             <div className="flex-1 space-y-4">
               <div className="flex flex-wrap items-center gap-3">
-                {university.is_premium && (
+                {uni.is_premium && (
                   <span className="bg-teal-500/20 border border-teal-400/30 text-teal-300 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-sm">
                     Premium Partner
                   </span>
                 )}
-                {course?.badge_label && (
+                {cur.badge_label && (
                   <span className="bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
-                    {course.badge_label}
+                    {cur.badge_label}
                   </span>
                 )}
                 {qualifiedS && (
@@ -275,11 +277,11 @@ export default function UniversityProfile({ initialData, competitors }: { initia
                 )}
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{university.name}</h1>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{uni.name}</h1>
 
-              {university.courses.length > 1 && (
+              {uni.courses.length > 1 && (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {university.courses.map(c => (
+                  {uni.courses.map(c => (
                     <button
                       key={c.id}
                       onClick={() => setSelectedCourse(c)}
@@ -297,7 +299,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
 
               {course && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {course.approvals.map(a => (
+                  {cur.approvals.map((a: string) => (
                     <span key={a} className="flex items-center gap-1 text-sm font-medium text-slate-200 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
                       <ShieldCheck className="w-4 h-4 text-teal-400" /> {a}
                     </span>
@@ -323,7 +325,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
             {[
-              { icon: <Clock className="w-5 h-5 text-blue-600" />, label: 'Duration', value: `${Math.round((course?.duration_months ?? 24) / 12)} Years`, bg: 'bg-slate-50', border: 'border-slate-100' },
+              { icon: <Clock className="w-5 h-5 text-blue-600" />, label: 'Duration', value: `${Math.round((cur.duration_months ?? 24) / 12)} Years`, bg: 'bg-slate-50', border: 'border-slate-100' },
               { icon: <IndianRupee className="w-5 h-5 text-blue-600" />, label: 'Total Fee', value: formatINR(finalFee), bg: qualifiedS ? 'bg-emerald-50' : 'bg-slate-50', border: qualifiedS ? 'border-emerald-100' : 'border-slate-100', valueClass: qualifiedS ? 'text-emerald-700 font-black' : '' },
               { icon: <Briefcase className="w-5 h-5 text-green-600" />, label: 'Avg. CTC', value: avgCtc ? formatINR(avgCtc) : 'N/A', bg: 'bg-green-50', border: 'border-green-100', valueClass: 'text-green-700' },
               { icon: <TrendingUp className="w-5 h-5 text-purple-600" />, label: '3-Yr ROI', value: roi !== null ? `${roi}%` : 'N/A', bg: 'bg-purple-50', border: 'border-purple-100', valueClass: 'text-purple-700' },
@@ -376,7 +378,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
               <h2 className="text-xl font-bold text-slate-900 mb-5 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-blue-600" /> Regulatory Approvals</h2>
               <div className="flex flex-wrap gap-3">
-                {course.approvals.map(a => (
+                {cur.approvals.map((a: string) => (
                   <div key={a} className="flex items-center gap-2 px-5 py-3 bg-green-50 border border-green-100 rounded-xl text-sm font-bold text-green-800">
                     <CheckCircle2 className="w-4 h-4 text-green-600" /> {a}
                   </div>
@@ -396,13 +398,13 @@ export default function UniversityProfile({ initialData, competitors }: { initia
             </div>
           </div>
 
-          {course?.has_zero_cost_emi && (
+          {cur.has_zero_cost_emi && (
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-blue-500/20">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0"><IndianRupee className="w-6 h-6 text-white" /></div>
                 <div>
                   <h3 className="text-xl font-bold mb-1">Zero-Cost EMI Available</h3>
-                  <p className="text-blue-100 text-sm leading-relaxed">Pay {formatINR(Math.round(finalFee / (course.duration_months)))} per month with 0% interest.</p>
+                  <p className="text-blue-100 text-sm leading-relaxed">Pay {formatINR(Math.round(finalFee / (cur.duration_months)))} per month with 0% interest.</p>
                 </div>
               </div>
             </div>
@@ -418,7 +420,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
                 <h2 className="text-2xl font-black text-slate-900 tracking-tight">Competitive <span className="text-blue-600">Comparison</span></h2>
                 </div>
                 
-                <p className="text-slate-500 font-medium mb-8">How does {university.name} stack up against other top-tier online universities in India?</p>
+                <p className="text-slate-500 font-medium mb-8">How does {uni.name} stack up against other top-tier online universities in India?</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {competitors.map((comp) => {
@@ -429,7 +431,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
                     <div key={comp.slug} className="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-blue-500/30 transition-all group">
                         <div className="flex justify-between items-center mb-4">
                         <h3 className="font-extrabold text-slate-900 group-hover:text-blue-600">{comp.name}</h3>
-                        <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded border border-blue-100">VS {university.name}</div>
+                        <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded border border-blue-100">VS {uni.name}</div>
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-sm mb-6">
                         <div>
@@ -442,7 +444,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
                         </div>
                         </div>
                         <Link 
-                        href={`/compare/${university.slug}-vs-${comp.slug}`}
+                        href={`/compare/${uni.slug}-vs-${comp.slug}`}
                         className="flex items-center justify-center gap-2 w-full py-3 bg-white hover:bg-blue-600 hover:text-white border border-slate-200 rounded-xl text-xs font-black transition-all shadow-sm"
                         >
                         HEAD-TO-HEAD COMPARE <ArrowRight className="w-3.5 h-3.5" />
