@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { createAdminClient } from '@/utils/supabase/admin';
-import UniversityProfile from './UniversityProfile';
+import UniversityProfile from '@/components/features/UniversityProfile';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
