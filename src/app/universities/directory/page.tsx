@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       "itemListElement": uni.courses?.map((c: any) => ({
         "@type": "Course",
         "name": c.name,
-        "description": `${c.name} program.`,
+        "description": `${c.name} program with ${c.avg_ctc_inr / 100000}LPA average placement.`,
         "provider": { "@type": "EducationalOrganization", "name": uni.name }
       }))
     }
@@ -35,8 +35,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   return {
     title: `${uni.name} | Online Degree ROI & Admission`,
     description: `Detailed analysis of ${uni.name} online programs. See break-even timeline, placement partners, and verified UGC-DEB status.`,
-    alternates: {
-        canonical: `https://collegevision.in/universities/${uni.slug}`
+    other: {
+      'script:ld+json': JSON.stringify(jsonLd)
     }
   };
 }
