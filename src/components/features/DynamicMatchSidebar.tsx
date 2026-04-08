@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, BarChart3, TrendingUp, CheckCircle, Info, Filter } from 'lucide-react';
+import { Sparkles, BarChart3, TrendingUp, CheckCircle, Info, Filter, Search, BadgeIndianRupee, ShieldCheck } from 'lucide-react';
 import { usePostHog } from 'posthog-js/react';
 import type { CourseMatch } from '@/lib/types';
 
@@ -13,6 +13,7 @@ interface DynamicMatchSidebarProps {
 
 export default function DynamicMatchSidebar({ isSearching, results }: DynamicMatchSidebarProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const posthog = usePostHog();
 
   // Reset index when fresh results arrive
@@ -26,7 +27,27 @@ export default function DynamicMatchSidebar({ isSearching, results }: DynamicMat
     }
   }, [results, posthog]);
 
+  useEffect(() => {
+    if (isSearching || (results && results.length > 0)) return;
+
+    const timer = window.setInterval(() => {
+      setPreviewIndex((current) => (current + 1) % 3);
+    }, 2800);
+
+    return () => window.clearInterval(timer);
+  }, [isSearching, results]);
+
   const activeResults = results || [];
+  const previewPrompts = [
+    'online mba under 2 lakh with emi',
+    'online mca with strong placements in tech',
+    'bba degree with scholarship support',
+  ];
+  const previewCards = [
+    { name: 'Amity Online', fit: '94% fit', detail: 'High ROI and zero-cost EMI support', accent: 'bg-emerald-500' },
+    { name: 'Jain Online', fit: '91% fit', detail: 'Balanced fee, approvals, and flexibility', accent: 'bg-sky-500' },
+    { name: 'LPU Online', fit: '89% fit', detail: 'Budget-safe with faster admission flow', accent: 'bg-violet-500' },
+  ];
 
   return (
     <div className="w-full h-full min-h-[450px] bg-slate-50 rounded-[3rem] border border-slate-200 shadow-inner p-6 flex flex-col overflow-hidden relative">
@@ -39,13 +60,84 @@ export default function DynamicMatchSidebar({ isSearching, results }: DynamicMat
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center h-full text-center space-y-4"
+            className="flex flex-col h-full"
           >
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-              <Sparkles className="w-8 h-8" />
+            <div className="rounded-[2.5rem] border border-slate-200 bg-white shadow-xl overflow-hidden flex-1 flex flex-col">
+              <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-blue-200">AI Match Preview</p>
+                    <h3 className="mt-1 text-lg font-black">Tell CollegeVision what matters</h3>
+                  </div>
+                  <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-blue-200" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    <Search className="w-3.5 h-3.5" />
+                    Example Search
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={previewPrompts[previewIndex]}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.35 }}
+                      className="mt-2 text-sm font-bold text-slate-800"
+                    >
+                      {previewPrompts[previewIndex]}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {previewCards.map((card, index) => (
+                    <motion.div
+                      key={card.name}
+                      animate={{
+                        scale: previewIndex === index ? 1 : 0.97,
+                        opacity: previewIndex === index ? 1 : 0.58,
+                        y: previewIndex === index ? 0 : 4,
+                      }}
+                      transition={{ duration: 0.35 }}
+                      className="rounded-2xl border border-slate-200 bg-white p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900">{card.name}</h4>
+                          <p className="mt-1 text-xs text-slate-500">{card.detail}</p>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black text-white ${card.accent}`}>
+                          {card.fit}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="mt-auto pt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                      <BadgeIndianRupee className="w-3.5 h-3.5" />
+                      Budget Logic
+                    </div>
+                    <p className="mt-2 text-xs font-bold text-slate-800">Fees and EMI scored before ranking.</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Trust Layer
+                    </div>
+                    <p className="mt-2 text-xs font-bold text-slate-800">Approvals and fit reasons appear instantly.</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h3 className="font-bold text-slate-800">Your AI-Profile is empty</h3>
-            <p className="text-sm text-slate-500 max-w-[200px]">Enter your goals on the left to see matches with 98% ROI accuracy.</p>
           </motion.div>
         )}
 

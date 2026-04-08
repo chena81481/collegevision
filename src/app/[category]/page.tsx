@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { 
   ArrowRight, ShieldCheck, TrendingUp, 
-  Users, Star, MapPin, Search
+  Users, Star, MapPin, Search, CheckCircle2, Wallet, Briefcase
 } from 'lucide-react';
 import { createAdminClient } from '@/utils/supabase/admin';
 import Navbar from '@/components/layout/Navbar';
@@ -38,7 +38,24 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const title = `Top 10 ${categoryName} Colleges in India (2026) - Fees & ROI Compared`;
   const description = `Find and compare the best ${categoryName} programs from top universities in India. Verified UGC-DEB approvals, fee structure, placement data, and ROI analysis.`;
 
-  return { title, description };
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/${category}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `https://collegevision.in/${category}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function CategoryLandingPage({ params }: CategoryPageProps) {
@@ -89,12 +106,68 @@ export default async function CategoryLandingPage({ params }: CategoryPageProps)
       }
     }))
   };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://collegevision.in"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": categoryName,
+        "item": `https://collegevision.in/${category}`
+      }
+    ]
+  };
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": `How does CollegeVision rank ${categoryName} programs?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `CollegeVision ranks ${categoryName} programs using verified fee data, approvals, average salary indicators, ROI logic and affordability signals like EMI availability.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": `Are these ${categoryName} universities UGC-DEB approved?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `The listed universities are surfaced from verified records and approval data so students can compare safer online degree options.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": `Can I apply directly after comparing ${categoryName} options?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Students can open a full university profile, review fees and ROI context, and then move into the guided application flow."
+        }
+      }
+    ]
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       
       <TopTrustRibbon />
@@ -128,6 +201,55 @@ export default async function CategoryLandingPage({ params }: CategoryPageProps)
                <TrendingUp className="w-5 h-5 text-blue-500" /> High ROI Matches
             </div>
           </div>
+
+          <section className="mb-14 rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">How to choose the right {categoryName} program</h2>
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
+                  A good {categoryName} choice is not just about brand name. Students usually need a balance between fee comfort,
+                  recognized approvals, flexible schedule, salary upside and a clean admission path. CollegeVision structures this
+                  page to help you compare those tradeoffs quickly instead of bouncing across random aggregator lists.
+                </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                    <Wallet className="h-5 w-5 text-blue-600" />
+                    <p className="mt-3 text-sm font-black text-slate-900">Check fee realism</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-500">Compare headline fees with EMI support and scholarship chances.</p>
+                  </div>
+                  <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                    <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                    <p className="mt-3 text-sm font-black text-slate-900">Verify approvals</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-500">Use approval visibility to avoid risky or vague degree options.</p>
+                  </div>
+                  <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                    <Briefcase className="h-5 w-5 text-violet-600" />
+                    <p className="mt-3 text-sm font-black text-slate-900">Judge ROI properly</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-500">Look at salary direction and break-even, not just admission hype.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-[2rem] border border-blue-100 bg-blue-50/70 p-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-blue-500">Popular next clicks</p>
+                <div className="mt-4 space-y-3">
+                  <Link href="/universities" className="flex items-center justify-between rounded-2xl border border-white bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm transition-colors hover:bg-slate-50">
+                    Explore all verified universities <ArrowRight className="h-4 w-4 text-blue-600" />
+                  </Link>
+                  <Link href="/" className="flex items-center justify-between rounded-2xl border border-white bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm transition-colors hover:bg-slate-50">
+                    Run AI matching for this category <ArrowRight className="h-4 w-4 text-blue-600" />
+                  </Link>
+                  <div className="rounded-2xl border border-blue-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">What this page helps with</p>
+                    <ul className="mt-3 space-y-2 text-xs font-bold text-slate-600">
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> faster fee and ROI comparison</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> safer approval-first filtering</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> direct profile and apply routes</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* Results Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -201,6 +323,31 @@ export default async function CategoryLandingPage({ params }: CategoryPageProps)
                <Link href="/" className="inline-block mt-8 text-blue-600 font-bold hover:underline">Explore All Colleges</Link>
             </div>
           )}
+
+          <section className="mt-16 rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Questions students ask before choosing {categoryName}</h2>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  q: `Which ${categoryName} program is best for ROI?`,
+                  a: "Usually the right answer depends on total fee, salary direction, and how quickly the investment breaks even.",
+                },
+                {
+                  q: `Should I prefer approvals or lower fees first?`,
+                  a: "Approvals should be the first filter, then compare fee comfort and career upside inside the safe set.",
+                },
+                {
+                  q: `Can I shortlist and apply from here?`,
+                  a: "Yes. Each university route gives you detail context and a direct guided lead/application path.",
+                },
+              ].map((item) => (
+                <div key={item.q} className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                  <p className="text-sm font-black text-slate-900">{item.q}</p>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
         </div>
       </main>

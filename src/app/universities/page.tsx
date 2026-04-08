@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
 import { 
   GraduationCap, ShieldCheck, Star, 
-  MapPin, ArrowRight, Filter, Search 
+  MapPin, ArrowRight, Filter, Search, CheckCircle2, Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,19 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "University Directory | Compare Top Online Degrees in India",
   description: "Browse 100% verified UGC-DEB online and distance universities. Compare ROI, Fee, and Placements across India's top institutions.",
+  alternates: {
+    canonical: "/universities",
+  },
   openGraph: {
     title: "India's Most Trusted Online University Directory",
     description: "Verified UGC-DEB partner universities for Online MBA, MCA, BBA and more.",
+    url: "https://collegevision.in/universities",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "University Directory | Compare Top Online Degrees in India",
+    description: "Browse verified online universities, fees, ROI and placements across India's top institutions.",
   }
 };
 
@@ -33,9 +43,57 @@ async function getUniversities() {
 
 export default async function UniversityDirectoryPage() {
   const universities = await getUniversities();
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://collegevision.in"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Universities",
+        "item": "https://collegevision.in/universities"
+      }
+    ]
+  };
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What can I compare in the CollegeVision university directory?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Students can compare verified online universities, fees, approvals, ROI direction and profile detail pages from the directory."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the directory include only online universities?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The directory focuses on verified online and distance-friendly university options that are relevant to CollegeVision's comparison experience."
+        }
+      }
+    ]
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       {/* Hero Section */}
       <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-white/10 pt-32 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -71,6 +129,31 @@ export default async function UniversityDirectoryPage() {
 
       {/* Directory Grid */}
       <div className="container mx-auto px-4 py-16 max-w-6xl">
+        <section className="mb-10 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Why this directory matters</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Search engines and students both need clearer destinations than a generic homepage. This directory is where
+                CollegeVision groups verified universities into a browsable research layer, so students can move from brand discovery
+                to detailed ROI and admission evaluation without relying on marketing-heavy aggregator pages.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                <p className="mt-3 text-sm font-black text-slate-900">Verified profile pages</p>
+                <p className="mt-1 text-xs leading-6 text-slate-500">Each university card leads into a detailed profile with application context.</p>
+              </div>
+              <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                <Sparkles className="h-5 w-5 text-blue-600" />
+                <p className="mt-3 text-sm font-black text-slate-900">Better discovery paths</p>
+                <p className="mt-1 text-xs leading-6 text-slate-500">This page creates more useful sitelink candidates for branded Google searches.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {universities.map((uni) => (
             <Link 
@@ -110,6 +193,42 @@ export default async function UniversityDirectoryPage() {
             </Link>
           ))}
         </div>
+
+        <section className="mt-12 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Common questions about online universities in India</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                q: "How do I judge if an online university is trustworthy?",
+                a: "Start with approvals, then compare fee transparency, course outcomes and whether the profile page clearly explains the program.",
+              },
+              {
+                q: "Should I begin with directory browsing or AI match search?",
+                a: "Directory browsing is better for brand-led research, while AI matching is better when you already know your budget and goal.",
+              },
+              {
+                q: "Can I move from a university page to application help directly?",
+                a: "Yes. The detailed profile routes are designed to move students into guided shortlisting and application intent capture.",
+              },
+            ].map((item) => (
+              <div key={item.q} className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                <p className="text-sm font-black text-slate-900">{item.q}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/online-mba" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black text-slate-700">
+              <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" /> Online MBA pages
+            </Link>
+            <Link href="/online-mca" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black text-slate-700">
+              <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" /> Online MCA pages
+            </Link>
+            <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black text-slate-700">
+              <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" /> AI search homepage
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );

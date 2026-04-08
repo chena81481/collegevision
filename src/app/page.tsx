@@ -325,6 +325,65 @@ export default function CollegeVision() {
         </div>
       </section>
 
+      <section className="bg-white py-14 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-8">
+            <div className="max-w-3xl">
+              <p className="text-[11px] font-black uppercase tracking-[0.24em] text-blue-600 mb-3">Popular Research Paths</p>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">Start from the page that matches your research intent.</h2>
+              <p className="mt-4 text-sm md:text-base leading-relaxed text-slate-600">
+                These pages are designed to become strong next-click destinations for students, parents, and search engines looking for clearer program and university journeys.
+              </p>
+            </div>
+            <Link href="/universities" className="inline-flex items-center gap-2 text-sm font-black text-blue-600 hover:text-blue-700">
+              Open university directory <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                href: "/universities",
+                title: "University Directory",
+                body: "Browse verified university profile pages with cleaner detail routes.",
+              },
+              {
+                href: "/online-mba",
+                title: "Online MBA Comparison",
+                body: "Open one of the most competitive high-intent program category pages.",
+              },
+              {
+                href: "/online-mca",
+                title: "Online MCA Programs",
+                body: "Compare technical programs with fee and career context built in.",
+              },
+              {
+                href: "/explore",
+                title: "Explore More Matches",
+                body: "Use broader discovery when you want to go beyond one category or budget view.",
+              },
+              {
+                href: "/blog",
+                title: "Career Guides",
+                body: "Read decision guides on approvals, ROI, MBA, MCA and working-professional choices.",
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:bg-white hover:shadow-xl"
+              >
+                <p className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{item.body}</p>
+                <div className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+                  Open page <ArrowRight className="w-4 h-4" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 2. THE BRAINS (Staggered hover effects, colored borders) */}
       <section id="features" className="bg-slate-50 pt-20 pb-16 border-y border-slate-100 relative">
         <div className="max-w-7xl mx-auto px-6">

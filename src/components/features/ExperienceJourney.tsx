@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Sparkles, Rocket, Clock, PlayCircle } from 'lucide-react';
+import { Rocket, Clock, Search, Sparkles, BadgeIndianRupee, CheckCircle2 } from 'lucide-react';
 
 const JOURNEY_STEPS = [
   {
@@ -35,7 +35,44 @@ const JOURNEY_STEPS = [
   }
 ];
 
+const DEMO_FRAMES = [
+  {
+    id: 'search',
+    label: 'Step 1',
+    title: 'Student shares goals',
+    subtitle: 'Budget, course, and weekly study time',
+    accent: 'from-sky-500 to-cyan-400',
+    chip: 'AI Intake',
+  },
+  {
+    id: 'matches',
+    label: 'Step 2',
+    title: 'CollegeVision ranks best-fit options',
+    subtitle: 'ROI, approvals, EMI, and decision reasons',
+    accent: 'from-emerald-500 to-teal-400',
+    chip: 'Verified Matches',
+  },
+  {
+    id: 'apply',
+    label: 'Step 3',
+    title: 'Counselor-ready application flow',
+    subtitle: 'Shortlist, documents, and fee planning in one path',
+    accent: 'from-violet-500 to-fuchsia-400',
+    chip: 'Apply Faster',
+  },
+];
+
 export default function ExperienceJourney() {
+  const [activeFrame, setActiveFrame] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveFrame((current) => (current + 1) % DEMO_FRAMES.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <section className="py-24 bg-slate-50 relative overflow-hidden border-y border-slate-100">
       {/* Background Decorative Element */}
@@ -103,16 +140,111 @@ export default function ExperienceJourney() {
              className="relative"
           >
             <div className="aspect-video bg-slate-900 rounded-[2rem] shadow-2xl border-[8px] border-slate-800 overflow-hidden relative group">
-              {/* This would be your GIF or Video of the UI in action */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/40 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4 text-white">
-                  <PlayCircle className="w-16 h-16 text-blue-500 group-hover:scale-110 transition-transform cursor-pointer" />
-                  <span className="font-bold text-sm tracking-widest uppercase">Watch 15-Sec Demo</span>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.2),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.22),transparent_30%)]" />
+
+              <div className="absolute inset-0 p-4 md:p-5 text-white">
+                <div className="h-full rounded-[1.35rem] border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">15 sec live flow</div>
+                  </div>
+
+                  <div className="grid h-[calc(100%-57px)] grid-cols-[1.05fr_0.95fr]">
+                    <div className="border-r border-white/10 bg-slate-950/40 p-4 md:p-5">
+                      <div className="text-[10px] font-black uppercase tracking-[0.24em] text-sky-300/80">Student Query</div>
+                      <motion.div
+                        key={DEMO_FRAMES[activeFrame].id}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="mt-4 rounded-2xl border border-white/10 bg-white/10 p-4"
+                      >
+                        <div className="flex items-center gap-2 text-sm font-bold">
+                          <Search className="w-4 h-4 text-sky-300" />
+                          Need an online MBA under Rs 2 lakh
+                        </div>
+                        <p className="mt-3 text-sm text-white/70">Working professional, wants EMI, strong ROI, and recognized approvals.</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {["Budget aware", "EMI needed", "Career growth"].map((tag) => (
+                            <span key={tag} className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold text-white/75">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </motion.div>
+
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        {DEMO_FRAMES.map((frame, index) => (
+                          <button
+                            key={frame.id}
+                            onClick={() => setActiveFrame(index)}
+                            className={`rounded-2xl border px-3 py-2 text-left transition-all ${
+                              activeFrame === index
+                                ? "border-white/25 bg-white/15"
+                                : "border-white/10 bg-white/5 hover:bg-white/10"
+                            }`}
+                          >
+                            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">{frame.label}</div>
+                            <div className="mt-1 text-xs font-bold text-white/80">{frame.chip}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-slate-900/70 via-slate-950 to-slate-900 p-4 md:p-5">
+                      <motion.div
+                        key={`${DEMO_FRAMES[activeFrame].id}-panel`}
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.45 }}
+                        className="h-full rounded-[1.25rem] border border-white/10 bg-black/20 p-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-300/85">Demo Output</div>
+                            <h3 className="mt-2 text-lg font-black leading-tight">{DEMO_FRAMES[activeFrame].title}</h3>
+                          </div>
+                          <div className={`rounded-full bg-gradient-to-r px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white ${DEMO_FRAMES[activeFrame].accent}`}>
+                            {DEMO_FRAMES[activeFrame].chip}
+                          </div>
+                        </div>
+
+                        <p className="mt-3 text-sm text-white/65">{DEMO_FRAMES[activeFrame].subtitle}</p>
+
+                        <div className="mt-5 space-y-3">
+                          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm font-bold">
+                                <Sparkles className="w-4 h-4 text-emerald-300" />
+                                Amity Online MBA
+                              </div>
+                              <span className="text-[11px] font-black text-emerald-300">94% fit</span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-4 text-[11px] text-white/70">
+                              <span className="flex items-center gap-1"><BadgeIndianRupee className="w-3.5 h-3.5" /> 1.8L total fee</span>
+                              <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" /> EMI available</span>
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">Why it matched</div>
+                            <ul className="mt-2 space-y-2 text-xs text-white/70">
+                              <li>Strong ROI for a budget-capped MBA search</li>
+                              <li>Recognized approval stack for safer selection</li>
+                              <li>Fee plan supports working professionals</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              {/* Fake UI Overlay to make it feel real */}
               <div className="absolute bottom-4 left-4 right-4 h-1 bg-white/20 rounded-full overflow-hidden">
                 <motion.div 
                   animate={{ width: ["0%", "100%"] }} 

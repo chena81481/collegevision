@@ -40,7 +40,18 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     description: `Detailed analysis of ${uni.name} online programs. See break-even timeline, placement partners, and verified UGC-DEB status.`,
     alternates: {
         canonical: `https://collegevision.in/universities/${uni.slug}`
-    }
+    },
+    openGraph: {
+      title: `${uni.name} | Online Degree ROI & Admission`,
+      description: `Detailed analysis of ${uni.name} online programs. See break-even timeline, placement partners, and verified UGC-DEB status.`,
+      url: `https://collegevision.in/universities/${uni.slug}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${uni.name} | Online Degree ROI & Admission`,
+      description: `Detailed analysis of ${uni.name} online programs. See break-even timeline, placement partners, and verified UGC-DEB status.`,
+    },
   };
 }
 
@@ -77,6 +88,30 @@ export default async function Page({ params }: { params: { slug: string } }) {
     .limit(2);
 
   const primaryCourse = university.courses?.[0];
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://collegevision.in"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Universities",
+        "item": "https://collegevision.in/universities"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": university.name,
+        "item": `https://collegevision.in/universities/${university.slug}`
+      }
+    ]
+  };
 
   await trackStudentActivity({
     user,
@@ -110,9 +145,15 @@ export default async function Page({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <UniversityProfile 
-      initialData={university} 
-      competitors={competitors || []} 
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <UniversityProfile 
+        initialData={university} 
+        competitors={competitors || []} 
+      />
+    </>
   );
 }

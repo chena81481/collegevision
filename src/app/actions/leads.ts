@@ -27,6 +27,36 @@ interface LeadSubmissionResult {
   };
 }
 
+async function logLeadActivityCompat(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+  leadId: string,
+  description: string,
+  metadata: Record<string, unknown>
+) {
+  const candidatePayloads = [
+    { lead_id: leadId, type: 'NOTE', description, metadata },
+    { lead_id: leadId, type: 'NOTE', description },
+    { lead_id: leadId, activity_type: 'NOTE', description },
+    { lead_id: leadId, description },
+    { description },
+  ];
+
+  let lastError: any = null;
+
+  for (const payload of candidatePayloads) {
+    const { error } = await adminSupabase.from('lead_activities').insert([payload]);
+    if (!error) {
+      return { success: true as const };
+    }
+    lastError = error;
+  }
+
+  return {
+    success: false as const,
+    error: lastError,
+  };
+}
+
 export async function submitApplicationLead(input: FormData | any): Promise<LeadSubmissionResult> {
   let phone, courseName, universityName, studentNameRaw, studentEmail, state, turnstileToken;
 
@@ -51,11 +81,18 @@ export async function submitApplicationLead(input: FormData | any): Promise<Lead
   const nameParts = studentNameRaw.split(' ');
   const firstName = nameParts[0];
 
-  const supabase = await createClient();
   const adminSupabase = createAdminClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    user = authUser;
+  } catch (authError) {
+    console.warn("Lead submission proceeding without request-scoped auth user:", authError);
+  }
 
   try {
     // Verify Cloudflare Turnstile only when the backend secret is configured.
@@ -139,20 +176,21 @@ export async function submitApplicationLead(input: FormData | any): Promise<Lead
     // 3. Log initial interaction in the unified activity table when available
     let activityLogged = false;
     if (mainLead) {
-      const { error: activityError } = await adminSupabase.from('lead_activities').insert([{
-        lead_id: mainLead.id,
-        type: 'NOTE',
-        description: `Lead auto-captured for ${courseName} at ${universityName}. Student location: ${state}. Initial counselor eligibility review pending.`,
-        metadata: {
+      const activityDescription = `Lead auto-captured for ${courseName} at ${universityName}. Student location: ${state}. Initial counselor eligibility review pending.`;
+      const activityResult = await logLeadActivityCompat(
+        adminSupabase,
+        mainLead.id,
+        activityDescription,
+        {
           source: 'website_form',
           state,
           university_name: universityName,
           course_name: courseName,
-        },
-      }])
+        }
+      );
 
-      if (activityError) {
-        console.error("Lead activity log failed:", activityError)
+      if (!activityResult.success) {
+        console.error("Lead activity log failed:", activityResult.error)
       } else {
         activityLogged = true;
       }

@@ -34,7 +34,24 @@ export async function generateMetadata({ params }: ComparePageProps): Promise<Me
   const title = `${uni1.name} vs ${uni2.name} - Detailed Fees, ROI & Placement Comparison`;
   const description = `Compare ${uni1.name} vs ${uni2.name} for online degrees. Side-by-side review of total fees, 3-year ROI, regulatory approvals, and top hiring partners. Which is better for your career?`;
 
-  return { title, description };
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/compare/${slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `https://collegevision.in/compare/${slug}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function CompareUniversities({ params }: ComparePageProps) {
@@ -104,9 +121,32 @@ export default async function CompareUniversities({ params }: ComparePageProps) 
     { label: 'EMI Available', val1: u1Course.has_zero_cost_emi, val2: u2Course.has_zero_cost_emi, type: 'boolean' },
     { label: 'NAAC A+ Grade', val1: u1Course.approvals?.includes('NAAC A+'), val2: u2Course.approvals?.includes('NAAC A+'), type: 'boolean' },
   ];
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://collegevision.in"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Compare Universities",
+        "item": `https://collegevision.in/compare/${slug}`
+      }
+    ]
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 pt-24 pb-12 font-sans">
+      <Script
+        id="compare-breadcrumb-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <div className="max-w-6xl mx-auto px-6">
         
         {/* Header */}

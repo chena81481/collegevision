@@ -16,6 +16,41 @@ interface OutcomeCardProps {
 
 function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
   const router = useRouter();
+
+  const handleViewDetails = async () => {
+    const sessionId =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('college_vision_journey_id') || crypto.randomUUID()
+        : null;
+
+    if (typeof window !== 'undefined' && sessionId) {
+      localStorage.setItem('college_vision_journey_id', sessionId);
+    }
+
+    try {
+      await fetch('/api/student/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          eventType: 'DETAIL_VIEW',
+          eventName: 'UNIVERSITY_DETAILS_OPENED',
+          pagePath: `/${course.category.toLowerCase()}/${course.universitySlug}`,
+          metadata: {
+            course_id: course.id,
+            university_slug: course.universitySlug,
+            university_name: course.universityName,
+            course_name: course.courseName,
+            source: 'homepage_match_card',
+          },
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to track university detail view:', error);
+    }
+
+    router.push(`/${course.category.toLowerCase()}/${course.universitySlug}`);
+  };
   
   // Financial Adjustment: scholarship reduction
   const finalFee = course.qualifiedScholarship 
@@ -220,7 +255,7 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
           <BarChart2 className="w-4 h-4" /> {isSelected ? 'Selected' : 'Compare'}
         </button>
         <button 
-          onClick={() => router.push(`/${course.category.toLowerCase()}/${course.universitySlug}`)}
+          onClick={handleViewDetails}
           className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
         >
           View Details <ArrowRight className="w-4 h-4" />

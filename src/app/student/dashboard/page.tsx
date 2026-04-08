@@ -23,6 +23,7 @@ import {
   Video,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { deleteStudentAccount } from "@/app/actions/delete-account";
 import { createClient } from "@/utils/supabase/client";
 import JourneyTimeline from "@/components/features/JourneyTimeline";
@@ -66,6 +67,7 @@ const counselorMoments = [
 ];
 
 export default function StudentDashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTab>("saved");
   const [user, setUser] = useState<{
     id: string;
@@ -158,6 +160,42 @@ export default function StudentDashboard() {
     } else {
       toast.error(result.error || "Failed to submit application");
     }
+  };
+
+  const handleViewDetails = async (match: any) => {
+    const universitySlug = match.course?.universities?.slug;
+    if (!universitySlug) return;
+
+    const categorySlug = match.course?.name?.toLowerCase().includes("mba")
+      ? "online-mba"
+      : match.course?.name?.toLowerCase().includes("mca")
+        ? "online-mca"
+        : match.course?.name?.toLowerCase().includes("bba")
+          ? "online-bba"
+          : "online-degrees";
+
+    try {
+      await fetch('/api/student/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: 'DETAIL_VIEW',
+          eventName: 'STUDENT_SAVED_MATCH_OPENED',
+          pagePath: `/${categorySlug}/${universitySlug}`,
+          metadata: {
+            course_id: match.course_id,
+            university_slug: universitySlug,
+            university_name: match.course?.universities?.name,
+            course_name: match.course?.name,
+            source: 'student_saved_matches',
+          },
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to track saved match detail view:', error);
+    }
+
+    router.push(`/${categorySlug}/${universitySlug}`);
   };
 
   if (loading && !user) {
@@ -457,7 +495,10 @@ export default function StudentDashboard() {
                         </button>
                       )}
 
-                      <button className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-center">
+                      <button
+                        onClick={() => handleViewDetails(match)}
+                        className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-center"
+                      >
                         View Details
                       </button>
                     </div>

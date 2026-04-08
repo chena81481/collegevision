@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import Link from 'next/link';
 import type { MatcherInput, MatchResult } from '@/utils/matcher';
 import { findVectorMatches } from '@/app/actions/match';
 import { Sparkles, Loader2, Trophy } from 'lucide-react';
@@ -88,7 +89,9 @@ async function AlternativesStream({ input }: { input: MatcherInput }) {
           <h4 className="font-bold text-slate-900 mb-4">{match.universityName}</h4>
           <div className="flex justify-between items-center text-sm font-bold">
              <span className="text-slate-500">ROI: {match.roiScore}x</span>
-             <span className="text-blue-600">View Details</span>
+             <Link href="/universities" className="text-blue-600 hover:underline">
+               View Details
+             </Link>
           </div>
         </div>
       ))}
