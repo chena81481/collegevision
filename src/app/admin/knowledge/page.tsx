@@ -1,6 +1,7 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { KnowledgeBase } from "@/components/crm/KnowledgeBase";
-import { BookOpen, Sparkles, Plus } from "lucide-react";
+import { BookOpen, Sparkles, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function KnowledgeBasePage() {
@@ -18,6 +19,11 @@ export default function KnowledgeBasePage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+             <Link href="/admin/leads/debug">
+               <Button variant="secondary" className="rounded-xl font-bold text-xs px-6 h-11 shadow-lg shadow-slate-900/10">
+                  <Search className="h-4 w-4 mr-2" /> Lead Debug
+               </Button>
+             </Link>
              <Button variant="secondary" className="rounded-xl font-bold text-xs px-6 h-11 shadow-lg shadow-slate-900/10">
                 <Plus className="h-4 w-4 mr-2" /> New Resource
              </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -54,18 +54,8 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    // Auto-popup logic
-    const hasSeenPopup = sessionStorage.getItem("hasSeenLeadPopup");
-    if (!hasSeenPopup) {
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-        sessionStorage.setItem("hasSeenLeadPopup", "true");
-      }, 1500); // 1.5 second delay for premium feel
-      return () => clearTimeout(timer);
-    }
-  }, []);
+  const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
+  const [submissionTone, setSubmissionTone] = useState<"success" | "warning">("success");
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(leadSchema),
@@ -73,6 +63,7 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
+    setSubmissionMessage(null);
     try {
       const formData = new FormData();
       formData.append("studentName", data.name);
@@ -84,10 +75,18 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
 
       const res = await submitApplicationLead(formData);
       if (res.success) {
+        setSubmissionTone(res.status === "PARTIAL" ? "warning" : "success");
+        setSubmissionMessage(
+          res.message ||
+            (res.status === "PARTIAL"
+              ? "Your form was received, but our CRM sync needs a quick retry from our side."
+              : "Your details are safely stored and our counselor can now follow up.")
+        );
         setSubmitted(true);
         setTimeout(() => {
            setIsOpen(false);
            setSubmitted(false);
+           setSubmissionMessage(null);
         }, 5000);
       } else {
         alert(res.error || "Submission failed");
@@ -280,10 +279,15 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
               </div>
               <h2 className="text-3xl font-black mb-4">Application Received!</h2>
               <p className="text-slate-500 dark:text-slate-400 font-medium mb-8">
-                Our senior counselor will call you within 24 hours to discuss your ROI analysis and admission steps.
+                {submissionMessage || "Our senior counselor will call you within 24 hours to discuss your ROI analysis and admission steps."}
               </p>
-              <div className="bg-slate-50 dark:bg-white/5 p-6 rounded-3xl border border-slate-100 dark:border-white/10 text-sm font-bold text-slate-700 dark:text-white flex items-center gap-3 justify-center">
-                 <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Preference saved successfully.
+              <div className={`p-6 rounded-3xl border text-sm font-bold flex items-center gap-3 justify-center ${
+                submissionTone === "warning"
+                  ? "bg-amber-50 border-amber-100 text-amber-800"
+                  : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10 text-slate-700 dark:text-white"
+              }`}>
+                 <CheckCircle2 className={`w-5 h-5 ${submissionTone === "warning" ? "text-amber-500" : "text-emerald-500"}`} />
+                 {submissionTone === "warning" ? "Form captured. CRM sync pending retry." : "Preference saved successfully."}
               </div>
             </motion.div>
           )}

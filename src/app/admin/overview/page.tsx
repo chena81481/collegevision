@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { 
   Users, TrendingUp, Search, Bell, 
@@ -62,21 +63,24 @@ export default function AdminOverview() {
           <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 transition-colors text-sm font-medium">
             <LayoutDashboard className="w-4 h-4" /> Overview
           </div>
-          <a href="/admin/pipeline" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+          <Link href="/admin/pipeline" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <Users className="w-4 h-4" /> Lead Pipeline
-          </a>
-          <a href="/admin/reports" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+          </Link>
+          <Link href="/admin/reports" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <BarChart3 className="w-4 h-4" /> Advanced Reports
-          </a>
+          </Link>
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <GraduationCap className="w-4 h-4" /> Universities
           </button>
-          <a href="/admin/knowledge" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+          <Link href="/admin/knowledge" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <BookOpen className="w-4 h-4" /> Knowledge Base
-          </a>
-          <a href="/admin/settings/counselors" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium border-t border-slate-100 pt-4 mt-2">
+          </Link>
+          <Link href="/admin/leads/debug" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+            <Search className="w-4 h-4" /> Lead Debug
+          </Link>
+          <Link href="/admin/settings/counselors" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium border-t border-slate-100 pt-4 mt-2">
             <ShieldCheck className="w-4 h-4" /> Staff Governance
-          </a>
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           <button 

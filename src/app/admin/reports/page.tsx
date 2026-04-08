@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ReportingDashboard } from "@/components/crm/ReportingDashboard";
 import { 
   LayoutDashboard, Users, GraduationCap, 
@@ -35,6 +36,9 @@ export default function AdminReports() {
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <GraduationCap className="w-4 h-4" /> Universities
           </button>
+          <Link href="/admin/leads/debug" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+            <Search className="w-4 h-4" /> Lead Debug
+          </Link>
         </div>
 
         <div className="p-4 border-t border-slate-800 mt-auto">
@@ -80,9 +84,4 @@ export default function AdminReports() {
       <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
-}
-
-// Helper Link placeholder since next/link might not be fully configured in snippets
-function Link({ href, children, className }: any) {
-  return <a href={href} className={className}>{children}</a>;
 }

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { Resend } from 'resend'
 import twilio from 'twilio'
 import { syncStudentProfile, trackStudentActivity } from '@/lib/student-journey'
@@ -10,7 +11,23 @@ const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_T
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   : null;
 
-export async function submitApplicationLead(input: FormData | any) {
+type LeadSubmissionStatus = "FULL" | "PARTIAL" | "FAILED";
+
+interface LeadSubmissionResult {
+  success?: boolean;
+  status?: LeadSubmissionStatus;
+  leadId?: string;
+  legacyLeadId?: string;
+  message?: string;
+  error?: string;
+  storage?: {
+    legacyLeadSaved: boolean;
+    crmLeadSaved: boolean;
+    activityLogged: boolean;
+  };
+}
+
+export async function submitApplicationLead(input: FormData | any): Promise<LeadSubmissionResult> {
   let phone, courseName, universityName, studentNameRaw, studentEmail, state, turnstileToken;
 
   if (input instanceof FormData) {
@@ -33,9 +50,9 @@ export async function submitApplicationLead(input: FormData | any) {
 
   const nameParts = studentNameRaw.split(' ');
   const firstName = nameParts[0];
-  const lastName = nameParts.slice(1).join(' ');
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -60,46 +77,65 @@ export async function submitApplicationLead(input: FormData | any) {
   }
 
   try {
-    // 1. Save to Legacy Lead Table (Tracking/Session)
-    const { data: legacyLead, error: legacyError } = await supabase
+    // 1. Save to Legacy Lead Table using the actual schema columns
+    const { data: legacyLead, error: legacyError } = await adminSupabase
       .from('user_leads')
       .insert([{ 
+        user_id: user?.id ?? null,
         phone_number: phone, 
         target_degree: courseName, 
         status: 'New Lead', 
         email: studentEmail,
-        state: state
+        search_query: `${courseName} | ${universityName} | ${state}`
       }])
       .select().single()
 
-    // 2. SAVE TO MAIN CRM LEAD TABLE (Unified System)
-    const { data: mainLead, error: mainError } = await supabase
+    if (legacyError) {
+      console.error("Legacy lead save failed:", legacyError)
+    }
+
+    // 2. Save to the main CRM lead table through the admin client
+    const { data: mainLead, error: mainError } = await adminSupabase
       .from('leads')
       .insert([{
         name: studentNameRaw,
         email: studentEmail,
         phone: phone,
         course_interest: courseName,
-        state: state,
         status: 'NEW_LEAD',
-        crm_stage: 'NEW_LEAD',
         source: 'WEBSITE',
-        notes: `Interest in ${universityName} for ${courseName}. Captured from website modal.`
+        notes: `Interest in ${universityName} for ${courseName}. State: ${state}. Captured from website form.`
       }])
       .select().single()
 
     if (mainError) {
       console.error("CRM Lead save failed:", mainError)
-      // We don't throw yet, a successful legacy lead is better than nothing
     }
 
-    // 3. LOG INITIAL INTERACTION
+    if (!mainLead && !legacyLead) {
+      throw new Error("Lead could not be stored in Supabase.")
+    }
+
+    // 3. Log initial interaction in the unified activity table when available
+    let activityLogged = false;
     if (mainLead) {
-      await supabase.from('activities').insert([{
+      const { error: activityError } = await adminSupabase.from('lead_activities').insert([{
         lead_id: mainLead.id,
-        type: 'Note',
-        description: `Lead auto-captured for ${courseName} at ${universityName}. Student location: ${state}. Initial counselor eligibility review pending.`
+        type: 'NOTE',
+        description: `Lead auto-captured for ${courseName} at ${universityName}. Student location: ${state}. Initial counselor eligibility review pending.`,
+        metadata: {
+          source: 'website_form',
+          state,
+          university_name: universityName,
+          course_name: courseName,
+        },
       }])
+
+      if (activityError) {
+        console.error("Lead activity log failed:", activityError)
+      } else {
+        activityLogged = true;
+      }
     }
 
     await trackStudentActivity({
@@ -161,14 +197,35 @@ export async function submitApplicationLead(input: FormData | any) {
       })
     }
 
+    const storage = {
+      legacyLeadSaved: Boolean(legacyLead),
+      crmLeadSaved: Boolean(mainLead),
+      activityLogged,
+    };
+
     return { 
-      success: true, 
+      success: true,
+      status: storage.legacyLeadSaved && storage.crmLeadSaved ? "FULL" : "PARTIAL",
       leadId: mainLead?.id || legacyLead?.id,
-      legacyLeadId: legacyLead?.id 
+      legacyLeadId: legacyLead?.id,
+      message:
+        storage.legacyLeadSaved && storage.crmLeadSaved
+          ? "Your details were saved successfully and our team can now follow up."
+          : "Your request was captured, but part of the CRM sync needs a retry from our side.",
+      storage,
     }
 
   } catch (error: any) {
     console.error("Critical submission failed:", error)
-    return { error: "Submission encountered an error. Our team has been notified." }
+    return {
+      success: false,
+      status: "FAILED",
+      error: "Submission encountered an error. Our team has been notified.",
+      storage: {
+        legacyLeadSaved: false,
+        crmLeadSaved: false,
+        activityLogged: false,
+      },
+    }
   }
 }

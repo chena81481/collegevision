@@ -38,6 +38,8 @@ export default function LeadCaptureForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string>('');
+  const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
+  const [submissionTone, setSubmissionTone] = useState<"success" | "warning">("success");
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(leadSchema),
@@ -56,6 +58,7 @@ export default function LeadCaptureForm({
       return;
     }
     setIsSubmitting(true);
+    setSubmissionMessage(null);
     try {
       const res = await submitApplicationLead({
         ...data,
@@ -64,6 +67,14 @@ export default function LeadCaptureForm({
         turnstileToken
       });
       if (res.success) {
+        setSubmissionTone(res.status === "PARTIAL" ? "warning" : "success");
+        setSubmissionMessage(
+          res.message ||
+            (res.status === "PARTIAL"
+              ? "Your request was captured, but our CRM sync needs a retry from our side."
+              : "Your details are saved successfully."
+            )
+        );
         setSubmitted(true);
         posthog.capture('Lead_Captured', {
           university: universityName,
@@ -90,12 +101,18 @@ export default function LeadCaptureForm({
         </div>
         <h3 className="text-xl font-bold text-slate-900">Application Received!</h3>
         <p className="text-sm text-slate-500">
-          Our senior counselor will call you within 24 hours to discuss your ROI analysis and admission steps.
+          {submissionMessage || "Our senior counselor will call you within 24 hours to discuss your ROI analysis and admission steps."}
         </p>
         <div className="pt-4">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Next Step</div>
-          <div className="bg-slate-50 p-4 rounded-2xl text-sm font-medium text-slate-700">
-            Check your email for the detailed brochure.
+          <div className={`p-4 rounded-2xl text-sm font-medium ${
+            submissionTone === "warning"
+              ? "bg-amber-50 text-amber-800 border border-amber-100"
+              : "bg-slate-50 text-slate-700"
+          }`}>
+            {submissionTone === "warning"
+              ? "Form captured. We will retry the CRM sync and still follow up with you."
+              : "Check your email for the detailed brochure."}
           </div>
         </div>
       </div>

@@ -1,14 +1,25 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { StudentSidebar } from "@/components/layout/StudentSidebar";
-import { Menu, X, Bell, Search, GraduationCap } from "lucide-react";
+import { Menu, X, Bell, Search, GraduationCap, LayoutDashboard, Sparkles, FolderLock, Route, Video } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [studentName, setStudentName] = React.useState("Student");
   const supabase = createClient();
+  const pathname = usePathname();
+
+  const navItems = [
+    { name: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
+    { name: "Matches", href: "/student/matches", icon: Sparkles },
+    { name: "Documents", href: "/student/documents", icon: FolderLock },
+    { name: "Applications", href: "/student/applications", icon: Route },
+    { name: "Counseling", href: "/student/counseling", icon: Video },
+  ];
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -18,7 +29,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       }
     };
     fetchUser();
-  }, []);
+  }, [supabase]);
+
+  React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
@@ -61,7 +76,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+        <div className="flex-1 p-4 pb-24 md:p-8 md:pb-8 overflow-y-auto">
           {children}
         </div>
 
@@ -69,15 +84,55 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-3xl pt-20 px-4 flex flex-col">
-           {/* Re-use StudentSidebar logic slightly tweaked for mobile, or just placeholder links for now */}
-           <div className="space-y-4">
-              <div className="w-full p-4 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/20 font-bold text-center">My Hub</div>
-              <div className="w-full p-4 rounded-xl bg-white/5 text-foreground/70 font-bold text-center">Smart Vault (OCR)</div>
-              <div className="w-full p-4 rounded-xl bg-white/5 text-foreground/70 font-bold text-center">Live Counseling</div>
-           </div>
+        <div className="md:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-3xl pt-20 px-4 pb-6 flex flex-col">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-4 mb-5">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-400 mb-2">Student Space</p>
+            <p className="text-lg font-black">Hi, {studentName}</p>
+            <p className="text-sm text-foreground/60">Navigate your dashboard, documents, and counseling from here.</p>
+          </div>
+          <div className="space-y-3">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-4 font-bold transition-all ${
+                    isActive
+                      ? "border-violet-500/30 bg-violet-600/20 text-violet-300"
+                      : "border-white/10 bg-white/5 text-foreground/75"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
+
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-background/95 backdrop-blur-2xl px-2 py-2">
+        <div className="grid grid-cols-5 gap-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[10px] font-black transition-all ${
+                  isActive ? "bg-violet-600/20 text-violet-400" : "text-foreground/60"
+                }`}
+              >
+                <Icon className="mb-1 h-4 w-4" />
+                <span className="truncate">{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

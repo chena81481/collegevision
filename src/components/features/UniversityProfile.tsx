@@ -112,6 +112,8 @@ export default function UniversityProfile({
   const [phone, setPhone] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
+  const [applyMessage, setApplyMessage] = useState<string | null>(null);
+  const [applyTone, setApplyTone] = useState<"success" | "warning">("success");
   const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<{ email?: string; user_metadata?: { full_name?: string } } | null>(null);
   const [studentScore, setStudentScore] = useState<number | null>(null);
@@ -163,6 +165,7 @@ export default function UniversityProfile({
     e.preventDefault();
     if (!phone.trim() || phone.length < 10) return;
     setIsApplying(true);
+    setApplyMessage(null);
     try {
       const formData = new FormData();
       formData.append('phone', `+91${phone}`);
@@ -177,13 +180,21 @@ export default function UniversityProfile({
       const result = await submitApplicationLead(formData);
       
       if (result.success) {
+        setApplyTone(result.status === "PARTIAL" ? "warning" : "success");
+        setApplyMessage(
+          result.message ||
+            (result.status === "PARTIAL"
+              ? "Your callback request was captured, but our CRM sync needs a retry from our side."
+              : "Your callback request is saved successfully.")
+        );
         setApplySuccess(true);
       } else {
         throw new Error(result.error);
       }
     } catch (err) {
       console.error("Lead submission error:", err);
-      setApplySuccess(true);
+      setApplyTone("warning");
+      setApplyMessage("We could not confirm the save. Please try again in a moment.");
     } finally {
       setIsApplying(false);
     }
@@ -493,9 +504,9 @@ export default function UniversityProfile({
           <div className="sticky top-24 bg-white rounded-3xl p-6 shadow-xl border border-slate-200 space-y-6">
             {applySuccess ? (
               <div className="text-center py-8 space-y-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto"><CheckCircle2 className="w-8 h-8 text-green-600" /></div>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${applyTone === "warning" ? "bg-amber-100" : "bg-green-100"}`}><CheckCircle2 className={`w-8 h-8 ${applyTone === "warning" ? "text-amber-600" : "text-green-600"}`} /></div>
                 <h3 className="text-xl font-bold text-slate-900">You&apos;re on the list!</h3>
-                <p className="text-slate-500 text-sm">Our counselor will call you shortly.</p>
+                <p className={`text-sm ${applyTone === "warning" ? "text-amber-700" : "text-slate-500"}`}>{applyMessage || "Our counselor will call you shortly."}</p>
               </div>
             ) : (
               <>

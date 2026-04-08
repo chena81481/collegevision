@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Users, GraduationCap, Settings, 
@@ -59,18 +60,21 @@ export default function AdminPipeline() {
         
         <div className="p-4 flex-1 space-y-1">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 mt-4 px-2">Counselor Desk</div>
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+          <Link href="/admin/overview" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <LayoutDashboard className="w-4 h-4" /> Overview
-          </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 transition-colors text-sm font-medium">
+          </Link>
+          <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 transition-colors text-sm font-medium">
             <Users className="w-4 h-4" /> Lead Pipeline
-          </button>
-          <a href="/admin/reports" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+          </div>
+          <Link href="/admin/reports" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <BarChart3 className="w-4 h-4" /> Advanced Reports
-          </a>
+          </Link>
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
             <GraduationCap className="w-4 h-4" /> Universities
           </button>
+          <Link href="/admin/leads/debug" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
+            <Search className="w-4 h-4" /> Lead Debug
+          </Link>
         </div>
 
         <div className="p-4 border-t border-slate-800 mt-auto">
