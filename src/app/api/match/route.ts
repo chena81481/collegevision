@@ -1,17 +1,66 @@
 import { NextResponse } from "next/server";
 import { getMatchesForQuery } from "@/lib/match-engine";
+import { trackSearchEvent, trackRoiCalculation } from "@/lib/student-journey";
+import { createClient } from "@/utils/supabase/server";
+import { calculateROI } from "@/lib/roi-calculator";
 
 export async function POST(request: Request) {
   try {
-    const { query } = await request.json();
+    const { query, sessionId } = await request.json();
 
     if (!query || typeof query !== "string" || !query.trim()) {
       return NextResponse.json({ error: "Search query is required" }, { status: 400 });
     }
 
-    const authHeader = request.headers.get("Authorization") || "";
-    const authToken = authHeader.replace("Bearer ", "").trim() || undefined;
+    const supabase = await createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const authToken = session?.access_token;
+
     const { matches, parsedIntent } = await getMatchesForQuery(query, authToken);
+    const topMatchIds = matches.map((match) => match.id);
+
+    await trackSearchEvent({
+      user,
+      sessionId,
+      query,
+      parsedIntent: parsedIntent as unknown as Record<string, unknown>,
+      matchCourseIds: topMatchIds,
+      resultCount: matches.length,
+    });
+
+    await Promise.all(
+      matches.map((match) =>
+        trackRoiCalculation({
+          user,
+          sessionId,
+          universitySlug: match.universitySlug,
+          courseId: match.id,
+          roiInput: {
+            totalFee: match.totalFeeInr,
+            avgCTC: match.avgCtcInr ?? 0,
+            currentSalary: 0,
+            durationMonths: match.durationMonths,
+            placementRate: Math.max(55, match.admissionProbability ?? 72),
+            loanInterestRate: match.hasZeroCostEmi ? 0 : 9,
+            isOnline: true,
+          },
+          roiOutput: calculateROI({
+            totalFee: match.totalFeeInr,
+            avgCTC: match.avgCtcInr ?? 0,
+            currentSalary: 0,
+            durationMonths: match.durationMonths,
+            placementRate: Math.max(55, match.admissionProbability ?? 72),
+            loanInterestRate: match.hasZeroCostEmi ? 0 : 9,
+            isOnline: true,
+          }),
+        })
+      )
+    );
 
     return NextResponse.json({
       success: true,

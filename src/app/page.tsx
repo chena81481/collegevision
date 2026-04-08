@@ -78,6 +78,13 @@ export default function CollegeVision() {
   const [showPersistenceToast, setShowPersistenceToast] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const getJourneySessionId = () => {
+    const existing = localStorage.getItem('college_vision_journey_id');
+    if (existing) return existing;
+    const created = crypto.randomUUID();
+    localStorage.setItem('college_vision_journey_id', created);
+    return created;
+  };
 
   // Persistence: Hydrate from localStorage
   useEffect(() => {
@@ -146,7 +153,7 @@ export default function CollegeVision() {
       const res = await fetch('/api/match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery }),
+        body: JSON.stringify({ query: searchQuery, sessionId: getJourneySessionId() }),
       });
       const data = await res.json();
 
@@ -359,7 +366,29 @@ export default function CollegeVision() {
 
       <ComparisonBar 
         selectedCount={selectedForComparison.size}
-        onCompare={() => {
+        onCompare={async () => {
+          const comparisonSet = (matchResults ?? DEFAULT_COURSES)
+            .filter((course) => selectedForComparison.has(course.id))
+            .slice(0, 2);
+
+          if (comparisonSet.length === 2) {
+            await fetch('/api/student/activity', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'comparison',
+                sessionId: getJourneySessionId(),
+                primaryUniversitySlug: comparisonSet[0].universitySlug,
+                comparedUniversitySlug: comparisonSet[1].universitySlug,
+                queryContext: searchQuery,
+                comparedCourseIds: comparisonSet.map((course) => course.id),
+                metadata: {
+                  source: 'homepage_compare_modal',
+                },
+              }),
+            });
+          }
+
           setCurrentStep(2); // Advance to Comparison
           setIsCompareOpen(true);
         }}

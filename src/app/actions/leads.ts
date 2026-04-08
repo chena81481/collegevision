@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { Resend } from 'resend'
 import twilio from 'twilio'
+import { syncStudentProfile, trackStudentActivity } from '@/lib/student-journey'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
@@ -35,6 +36,9 @@ export async function submitApplicationLead(input: FormData | any) {
   const lastName = nameParts.slice(1).join(' ');
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // 1. Verify Cloudflare Turnstile (Bot Protection)
   if (process.env.NODE_ENV === 'production' || process.env.TURNSTILE_SECRET_KEY) {
@@ -97,6 +101,31 @@ export async function submitApplicationLead(input: FormData | any) {
         description: `Lead auto-captured for ${courseName} at ${universityName}. Student location: ${state}. Initial counselor eligibility review pending.`
       }])
     }
+
+    await trackStudentActivity({
+      user,
+      eventType: 'FORM',
+      eventName: 'APPLICATION_LEAD_SUBMITTED',
+      pagePath: '/universities',
+      metadata: {
+        lead_id: mainLead?.id || legacyLead?.id,
+        university_name: universityName,
+        course_name: courseName,
+        state,
+      },
+    })
+
+    await syncStudentProfile({
+      user,
+      source: 'APPLICATION',
+      profile: {
+        full_name: studentNameRaw,
+        email: studentEmail,
+        phone_number: phone,
+        preferred_degree: courseName,
+        state,
+      },
+    })
 
     // 4. Fire Automated WhatsApp via Twilio
     const formattedPhone = phone.startsWith('+') ? phone : `+91${phone.replace(/[^0-9]/g, '')}`

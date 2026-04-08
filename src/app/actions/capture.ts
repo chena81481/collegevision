@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { syncStudentProfile, trackStudentActivity } from '@/lib/student-journey'
 
 export async function captureModalLead(formData: FormData) {
   try {
@@ -13,6 +14,9 @@ export async function captureModalLead(formData: FormData) {
 
     // 1. Initialize Supabase
     const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     // 2. Insert directly into the Supabase 'leads' table
     const { data: newLead, error: leadError } = await supabase
@@ -43,6 +47,32 @@ export async function captureModalLead(formData: FormData) {
       }])
 
     if (activityError) console.error("Activity log failed:", activityError)
+
+    await trackStudentActivity({
+      user,
+      eventType: 'FORM',
+      eventName: 'EXIT_INTENT_LEAD_CAPTURED',
+      pagePath: '/',
+      metadata: {
+        lead_id: newLead.id,
+        email,
+        phone,
+        course,
+        state,
+      },
+    })
+
+    await syncStudentProfile({
+      user,
+      source: 'LEAD_FORM',
+      profile: {
+        full_name: name,
+        email,
+        phone_number: phone,
+        preferred_degree: course,
+        state,
+      },
+    })
 
     // 4. Tell Next.js to refresh the CRM Kanban board in the background
     revalidatePath('/admin/pipeline')

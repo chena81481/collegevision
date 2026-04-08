@@ -3,7 +3,6 @@ import "./globals.css";
 import { Footer } from "@/components/layout/Footer";
 import { CommandPalette } from "@/components/crm/CommandPalette";
 import { AnalyticsProvider } from "./providers";
-import LeadPopup from "@/components/LeadPopup";
 import GlobalSchema from "@/components/seo/GlobalSchema";
 
 export const metadata: Metadata = {
@@ -43,7 +42,6 @@ export default function RootLayout({
           <div className="flex-1">
             {children}
           </div>
-          <LeadPopup />
           <CommandPalette />
           <Footer />
         </AnalyticsProvider>

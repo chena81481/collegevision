@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { 
+import {
   CheckCircle2, XCircle, TrendingUp, 
   Briefcase, IndianRupee, ShieldCheck,
   ChevronRight, ArrowRight, Scale
@@ -10,6 +10,9 @@ import {
 import { createAdminClient, getCachedUniversityData } from '@/utils/supabase/admin';
 import { formatINR } from '@/app/[category]/[slug]/utils';
 import Script from 'next/script';
+import { createClient } from '@/utils/supabase/server';
+import { trackUniversityComparison } from '@/lib/student-journey';
+import { calculateROI } from '@/lib/roi-calculator';
 
 export const revalidate = 86400;
 
@@ -52,18 +55,52 @@ export default async function CompareUniversities({ params }: ComparePageProps) 
   const u1Course = uni1.courses?.[0] || {};
   const u2Course = uni2.courses?.[0] || {};
 
-  const u1ROI = u1Course.avg_ctc_inr && u1Course.total_fee_inr 
-    ? Math.round(((u1Course.avg_ctc_inr * 3 - u1Course.total_fee_inr) / u1Course.total_fee_inr) * 100) 
-    : 0;
-  const u2ROI = u2Course.avg_ctc_inr && u2Course.total_fee_inr 
-    ? Math.round(((u2Course.avg_ctc_inr * 3 - u2Course.total_fee_inr) / u2Course.total_fee_inr) * 100) 
-    : 0;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  await trackUniversityComparison({
+    user,
+    primaryUniversitySlug: uni1.slug,
+    comparedUniversitySlug: uni2.slug,
+    comparedCourseIds: [u1Course.id, u2Course.id].filter(Boolean),
+    metadata: {
+      source: 'compare_page',
+    },
+  });
+
+  const u1ROIModel = u1Course.avg_ctc_inr && u1Course.total_fee_inr
+    ? calculateROI({
+        totalFee: u1Course.total_fee_inr,
+        avgCTC: u1Course.avg_ctc_inr,
+        currentSalary: 0,
+        durationMonths: u1Course.duration_months ?? 24,
+        placementRate: 78,
+        loanInterestRate: u1Course.has_zero_cost_emi ? 0 : 9,
+        isOnline: true,
+      })
+    : null;
+  const u2ROIModel = u2Course.avg_ctc_inr && u2Course.total_fee_inr
+    ? calculateROI({
+        totalFee: u2Course.total_fee_inr,
+        avgCTC: u2Course.avg_ctc_inr,
+        currentSalary: 0,
+        durationMonths: u2Course.duration_months ?? 24,
+        placementRate: 78,
+        loanInterestRate: u2Course.has_zero_cost_emi ? 0 : 9,
+        isOnline: true,
+      })
+    : null;
+  const u1ROI = u1ROIModel ? Math.round((u1ROIModel.totalReturnsFiveYears / u1ROIModel.totalCost) * 100) : 0;
+  const u2ROI = u2ROIModel ? Math.round((u2ROIModel.totalReturnsFiveYears / u2ROIModel.totalCost) * 100) : 0;
 
   const comparisonItems = [
     { label: 'UGC-DEB Approved', val1: u1Course.approvals?.includes('UGC-DEB'), val2: u2Course.approvals?.includes('UGC-DEB'), type: 'boolean' },
     { label: 'Total Fee', val1: u1Course.total_fee_inr, val2: u2Course.total_fee_inr, type: 'currency', better: 'lower' },
-    { label: '3-Year ROI', val1: u1ROI, val2: u2ROI, type: 'percentage', better: 'higher' },
+    { label: '5-Year ROI', val1: u1ROI, val2: u2ROI, type: 'percentage', better: 'higher' },
     { label: 'Avg. CTC', val1: u1Course.avg_ctc_inr, val2: u2Course.avg_ctc_inr, type: 'currency', better: 'higher' },
+    { label: 'Break-even', val1: u1ROIModel?.breakEvenYear ?? 0, val2: u2ROIModel?.breakEvenYear ?? 0, type: 'years', better: 'lower' },
     { label: 'EMI Available', val1: u1Course.has_zero_cost_emi, val2: u2Course.has_zero_cost_emi, type: 'boolean' },
     { label: 'NAAC A+ Grade', val1: u1Course.approvals?.includes('NAAC A+'), val2: u2Course.approvals?.includes('NAAC A+'), type: 'boolean' },
   ];
@@ -159,6 +196,9 @@ function renderValue(val: any, type: string) {
   }
   if (type === 'percentage') {
     return `${val}%`;
+  }
+  if (type === 'years') {
+    return `${val} yrs`;
   }
   return val;
 }

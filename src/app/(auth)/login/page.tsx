@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { Chrome } from "lucide-react"; // Using Chrome icon as a proxy for Google if no better icon exists
 
+function getJourneySessionId() {
+  const existing = window.localStorage.getItem("college_vision_journey_id");
+  if (existing) return existing;
+  const created = crypto.randomUUID();
+  window.localStorage.setItem("college_vision_journey_id", created);
+  return created;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,6 +36,16 @@ export default function LoginPage() {
       });
 
       if (authError) throw authError;
+
+      await fetch("/api/student/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "profile_sync",
+          source: "LOGIN",
+          sessionId: getJourneySessionId(),
+        }),
+      });
 
       router.push("/student/dashboard");
     } catch (err: any) {

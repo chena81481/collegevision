@@ -2,6 +2,9 @@ import { Metadata } from 'next';
 import { createAdminClient } from '@/utils/supabase/admin';
 import UniversityProfile from '@/components/features/UniversityProfile';
 import { notFound } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
+import { trackRoiCalculation, trackStudentActivity } from '@/lib/student-journey';
+import { calculateROI } from '@/lib/roi-calculator';
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const supabase = createAdminClient();
@@ -43,6 +46,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function Page({ params }: { params: { slug: string } }) {
   const supabase = createAdminClient();
+  const sessionClient = await createClient();
   
   // Fetch primary university data
   const { data: university } = await supabase
@@ -61,12 +65,49 @@ export default async function Page({ params }: { params: { slug: string } }) {
     notFound();
   }
 
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser();
+
   // Fetch 2 competitors for the "Competitive Comparison" section
   const { data: competitors } = await supabase
     .from('universities')
     .select('name, slug, logo_url, courses(avg_ctc_inr, total_fee_inr)')
     .neq('slug', params.slug)
     .limit(2);
+
+  const primaryCourse = university.courses?.[0];
+
+  await trackStudentActivity({
+    user,
+    eventType: 'UNIVERSITY',
+    eventName: 'UNIVERSITY_PROFILE_VIEWED',
+    pagePath: `/universities/${params.slug}`,
+    metadata: {
+      university_slug: params.slug,
+      course_count: university.courses?.length ?? 0,
+    },
+  });
+
+  if (primaryCourse?.total_fee_inr && primaryCourse?.avg_ctc_inr) {
+    const roiInput = {
+      totalFee: primaryCourse.total_fee_inr,
+      avgCTC: primaryCourse.avg_ctc_inr,
+      currentSalary: 0,
+      durationMonths: primaryCourse.duration_months ?? 24,
+      placementRate: 80,
+      loanInterestRate: primaryCourse.has_zero_cost_emi ? 0 : 9,
+      isOnline: true,
+    };
+
+    await trackRoiCalculation({
+      user,
+      universitySlug: university.slug,
+      courseId: primaryCourse.id,
+      roiInput,
+      roiOutput: calculateROI(roiInput),
+    });
+  }
 
   return (
     <UniversityProfile 

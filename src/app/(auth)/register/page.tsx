@@ -8,6 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
+function getJourneySessionId() {
+  const existing = window.localStorage.getItem("college_vision_journey_id");
+  if (existing) return existing;
+  const created = crypto.randomUUID();
+  window.localStorage.setItem("college_vision_journey_id", created);
+  return created;
+}
+
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -39,6 +47,21 @@ export default function RegisterPage() {
       });
 
       if (authError) throw authError;
+
+      await fetch("/api/student/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "profile_sync",
+          source: "REGISTER",
+          sessionId: getJourneySessionId(),
+          profile: {
+            first_name: firstName,
+            last_name: lastName,
+            full_name: `${firstName} ${lastName}`.trim(),
+          },
+        }),
+      });
 
       // Note: If email confirmation is enabled, the user might stay on this page with a "Check your email" message.
       // For now, let's assume auto-confirm or redirect to success.

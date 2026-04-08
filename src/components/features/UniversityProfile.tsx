@@ -13,6 +13,7 @@ import { createClient as createJSClient } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supabase/client';
 import { submitApplicationLead } from '@/app/actions/leads';
 import ScholarshipBadge from '@/components/features/ScholarshipBadge';
+import { calculateROI } from '@/lib/roi-calculator';
 
 // Dynamically import recharts — MUST be ssr:false or it crashes on the server
 const ROIChart = dynamic(() => import('@/components/ui/roi-chart'), {
@@ -242,8 +243,18 @@ export default function UniversityProfile({
   const finalFee = cur.total_fee_inr - savings;
 
   const { data: chartData, monthly, breakEvenMonth } = buildChartData(finalFee, avgCtc);
-  const baseRoi = avgCtc && cur.total_fee_inr ? Math.round(((avgCtc * 3 - cur.total_fee_inr) / cur.total_fee_inr) * 100) : 0;
-  const roi = qualifiedS ? Math.round(baseRoi * (1 + (qualifiedS.discount_percentage / 100))) : baseRoi;
+  const roiModel = calculateROI({
+    totalFee: cur.total_fee_inr,
+    scholarshipAmount: savings,
+    avgCTC: avgCtc,
+    currentSalary: 0,
+    durationMonths: cur.duration_months ?? 24,
+    placementRate: uni.is_premium ? 86 : 74,
+    loanInterestRate: cur.has_zero_cost_emi ? 0 : 9,
+    salaryGrowthRate: 9,
+    isOnline: true,
+  });
+  const roi = roiModel.totalCost > 0 ? Math.round((roiModel.totalReturnsFiveYears / roiModel.totalCost) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-teal-200 selection:text-teal-900">
@@ -372,7 +383,7 @@ export default function UniversityProfile({
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Break-Even</div>
-                  <div className="text-3xl font-black text-teal-600">{breakEvenMonth} <span className="text-base font-semibold">months</span></div>
+                  <div className="text-3xl font-black text-teal-600">{Math.round(roiModel.paybackMonths || breakEvenMonth)} <span className="text-base font-semibold">months</span></div>
                 </div>
               </div>
 
@@ -382,9 +393,9 @@ export default function UniversityProfile({
 
               <div className="mt-6 grid grid-cols-3 gap-4 relative z-10">
                 {[
-                  { label: 'Year 1 Earnings', value: formatINR(avgCtc) },
-                  { label: 'Year 3 Total', value: formatINR(avgCtc * 3) },
-                  { label: 'Net Profit (3yr)', value: formatINR(avgCtc * 3 - finalFee) },
+                  { label: '5-Year Salary', value: formatINR(roiModel.expectedFiveYearSalary) },
+                  { label: 'Net Present Value', value: formatINR(roiModel.netPresentValue) },
+                  { label: 'Affordability', value: `${roiModel.affordabilityIndex}/100` },
                 ].map(s => (
                   <div key={s.label} className="bg-teal-50 rounded-xl p-4 border border-teal-100 text-center">
                     <div className="text-xs font-bold text-teal-600/80 uppercase tracking-wider mb-1">{s.label}</div>
