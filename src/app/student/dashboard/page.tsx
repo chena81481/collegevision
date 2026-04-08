@@ -14,6 +14,13 @@ import {
   Settings,
   ShieldAlert,
   Sparkles,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  FileCheck,
+  Landmark,
+  MessageCircle,
+  Video,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { deleteStudentAccount } from "@/app/actions/delete-account";
@@ -24,6 +31,39 @@ import { getStudentDashboardData, submitApplication } from "@/app/actions/applic
 import { toast } from "sonner";
 
 type ActiveTab = "saved" | "applications" | "documents" | "settings";
+
+const counselorMoments = [
+  {
+    id: "shortlist",
+    step: "Step 01",
+    title: "Shortlist your best-fit universities",
+    description: "Get a sharper list based on budget, eligibility, placement quality, and scholarship chances.",
+    image:
+      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
+    icon: CheckCircle2,
+    metric: "3-5 final choices",
+  },
+  {
+    id: "docs",
+    step: "Step 02",
+    title: "Fix documents before the review queue",
+    description: "We catch transcript, ID, and experience gaps early so your admission flow does not stall later.",
+    image:
+      "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80",
+    icon: FileCheck,
+    metric: "48-hour readiness",
+  },
+  {
+    id: "closure",
+    step: "Step 03",
+    title: "Lock offer, EMI, and final admission",
+    description: "Once the offer comes in, counselor support carries it through payment planning and enrollment closure.",
+    image:
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+    icon: Landmark,
+    metric: "One guided flow",
+  },
+];
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("saved");
@@ -39,6 +79,7 @@ export default function StudentDashboard() {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+  const [activeMoment, setActiveMoment] = useState(0);
 
   const supabase = createClient();
 
@@ -97,6 +138,14 @@ export default function StudentDashboard() {
     fetchUser();
   }, [supabase]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveMoment((current) => (current + 1) % counselorMoments.length);
+    }, 4200);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   const handleApply = async (courseId: string, universityId: string) => {
     setIsSubmitting(courseId);
     const result = await submitApplication(courseId, universityId);
@@ -122,6 +171,9 @@ export default function StudentDashboard() {
   if (!user) {
     return null;
   }
+
+  const activeCounselorMoment = counselorMoments[activeMoment];
+  const ActiveMomentIcon = activeCounselorMoment.icon;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-blue-200 selection:text-blue-900">
@@ -224,25 +276,93 @@ export default function StudentDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 mt-6 md:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         <div className="lg:col-span-1 space-y-6 order-first lg:order-none">
-          <div className="bg-slate-900 text-white rounded-3xl p-5 md:p-6 shadow-xl relative overflow-hidden">
-            <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/20 blur-2xl rounded-full" />
-            <div className="text-blue-400 text-[10px] font-bold tracking-widest uppercase mb-4">Your Dedicated Counselor</div>
+          <div className="bg-slate-950 text-white rounded-3xl shadow-xl relative overflow-hidden border border-slate-800">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.2),transparent_36%)]" />
 
-            <div className="flex items-center gap-4 mb-6 relative z-10">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-full border-2 border-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
-                <User className="w-6 h-6 text-slate-400" />
+            <div className="relative aspect-[4/4.4] overflow-hidden">
+              <img
+                src={activeCounselorMoment.image}
+                alt={activeCounselorMoment.title}
+                className="h-full w-full object-cover opacity-60 transition-all duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
+
+              <div className="absolute left-5 top-5 right-5 flex items-start justify-between gap-3">
+                <div className="rounded-full border border-white/10 bg-black/25 px-3 py-1.5 backdrop-blur-md">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-sky-300">
+                    Your Dedicated Counselor
+                  </p>
+                </div>
+                <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
+                  {activeCounselorMoment.step}
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg">Priya Desai</h3>
-                <p className="text-xs text-slate-400">Senior Admissions Expert</p>
+
+              <div className="absolute left-5 right-5 bottom-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
+                    <ActiveMomentIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg leading-tight">Priya Desai</h3>
+                    <p className="text-xs text-white/65">Senior Admissions Expert</p>
+                  </div>
+                </div>
+
+                <h4 className="text-2xl font-black leading-tight tracking-tight">
+                  {activeCounselorMoment.title}
+                </h4>
+                <p className="mt-3 text-sm leading-6 text-white/72">
+                  {activeCounselorMoment.description}
+                </p>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90">
+                    {activeCounselorMoment.metric}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        setActiveMoment((current) => (current - 1 + counselorMoments.length) % counselorMoments.length)
+                      }
+                      className="rounded-full border border-white/10 bg-white/10 p-2.5 text-white transition-colors hover:bg-white/15"
+                      aria-label="Previous counselor stage"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setActiveMoment((current) => (current + 1) % counselorMoments.length)}
+                      className="rounded-full border border-white/10 bg-white/10 p-2.5 text-white transition-colors hover:bg-white/15"
+                      aria-label="Next counselor stage"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3 relative z-10">
-              <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-sm shadow-blue-600/20">
-                Schedule Video Call
+            <div className="relative z-10 border-t border-white/10 p-5 space-y-3">
+              <div className="flex gap-2">
+                {counselorMoments.map((moment, index) => (
+                  <button
+                    key={moment.id}
+                    onClick={() => setActiveMoment(index)}
+                    className={`h-1.5 flex-1 rounded-full transition-all ${
+                      index === activeMoment ? "bg-white" : "bg-white/20"
+                    }`}
+                    aria-label={`Show ${moment.step}`}
+                  />
+                ))}
+              </div>
+
+              <button className="w-full bg-white text-slate-900 font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <Video className="w-4 h-4" />
+                Book Strategy Call
+                <ArrowRight className="w-4 h-4" />
               </button>
               <button className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/10 font-medium py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+                <MessageCircle className="w-4 h-4" />
                 Chat on WhatsApp
               </button>
             </div>

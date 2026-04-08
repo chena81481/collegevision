@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { 
   ShieldCheck, ArrowRight, Loader2, Sparkles, 
   User, Mail, Phone, MapPin, GraduationCap, 
@@ -50,18 +51,46 @@ const PARTNER_LOGOS = [
   { name: "Online MANIPAL", color: "text-red-700" }
 ];
 
-export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
+export function LeadCaptureModal({
+  trigger,
+  autoOpen = false,
+}: {
+  trigger?: React.ReactNode;
+  autoOpen?: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
   const [submissionTone, setSubmissionTone] = useState<"success" | "warning">("success");
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(leadSchema),
   });
 
+  useEffect(() => {
+    if (!autoOpen || typeof window === "undefined") return;
+
+    const seenKey = "collegevision_lead_popup_seen";
+    const hasSeenPopup = window.sessionStorage.getItem(seenKey);
+
+    if (hasSeenPopup) return;
+
+    const timer = window.setTimeout(() => {
+      setIsOpen(true);
+      window.sessionStorage.setItem(seenKey, "true");
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [autoOpen]);
+
   const onSubmit = async (data: any) => {
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY && !turnstileToken) {
+      alert("Please complete the security check.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmissionMessage(null);
     try {
@@ -72,6 +101,9 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
       formData.append("courseName", data.course);
       formData.append("state", data.state);
       formData.append("universityName", "General Interest"); 
+      if (turnstileToken) {
+        formData.append("cf-turnstile-response", turnstileToken);
+      }
 
       const res = await submitApplicationLead(formData);
       if (res.success) {
@@ -87,6 +119,7 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
            setIsOpen(false);
            setSubmitted(false);
            setSubmissionMessage(null);
+           setTurnstileToken("");
         }, 5000);
       } else {
         alert(res.error || "Submission failed");
@@ -101,15 +134,17 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-6 py-6 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-            Find Best University <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      ) : null}
       
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none bg-transparent shadow-none w-[95vw] max-h-[95vh] overflow-y-auto custom-scrollbar">
+      <DialogContent
+        onPointerDownOutside={() => setIsOpen(false)}
+        onInteractOutside={() => setIsOpen(false)}
+        className="sm:max-w-[500px] p-0 overflow-hidden border-none bg-transparent shadow-none w-[95vw] max-h-[95vh] overflow-y-auto custom-scrollbar"
+      >
         <AnimatePresence mode="wait">
           {!submitted ? (
             <motion.div 
@@ -228,6 +263,15 @@ export function LeadCaptureModal({ trigger }: { trigger?: React.ReactNode }) {
                 </div>
 
                 <div className="pt-2">
+                  {process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ? (
+                    <div className="flex justify-center pb-1">
+                      <Turnstile
+                        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY}
+                        onSuccess={(token) => setTurnstileToken(token)}
+                      />
+                    </div>
+                  ) : null}
+
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}

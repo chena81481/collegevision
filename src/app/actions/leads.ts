@@ -57,26 +57,46 @@ export async function submitApplicationLead(input: FormData | any): Promise<Lead
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 1. Verify Cloudflare Turnstile (Bot Protection)
-  if (process.env.NODE_ENV === 'production' || process.env.TURNSTILE_SECRET_KEY) {
-    if (!turnstileToken) throw new Error("Bot verification failed. Please try again.");
-    
-    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: process.env.TURNSTILE_SECRET_KEY,
-        response: turnstileToken,
-      }),
-    });
-
-    const verifyData = await verifyRes.json();
-    if (!verifyData.success) {
-      throw new Error("Security check failed. Please refresh the page.");
-    }
-  }
-
   try {
+    // Verify Cloudflare Turnstile only when the backend secret is configured.
+    if (process.env.TURNSTILE_SECRET_KEY) {
+      if (!turnstileToken) {
+        return {
+          success: false,
+          status: "FAILED",
+          error: "Please complete the security check and try again.",
+          storage: {
+            legacyLeadSaved: false,
+            crmLeadSaved: false,
+            activityLogged: false,
+          },
+        };
+      }
+
+      const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          secret: process.env.TURNSTILE_SECRET_KEY,
+          response: turnstileToken,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        return {
+          success: false,
+          status: "FAILED",
+          error: "Security check failed. Please refresh the page and try again.",
+          storage: {
+            legacyLeadSaved: false,
+            crmLeadSaved: false,
+            activityLogged: false,
+          },
+        };
+      }
+    }
+
     // 1. Save to Legacy Lead Table using the actual schema columns
     const { data: legacyLead, error: legacyError } = await adminSupabase
       .from('user_leads')
@@ -220,7 +240,7 @@ export async function submitApplicationLead(input: FormData | any): Promise<Lead
     return {
       success: false,
       status: "FAILED",
-      error: "Submission encountered an error. Our team has been notified.",
+      error: error?.message || "Submission encountered an error. Our team has been notified.",
       storage: {
         legacyLeadSaved: false,
         crmLeadSaved: false,

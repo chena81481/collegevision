@@ -24,6 +24,7 @@ import ExperienceJourney from '@/components/features/ExperienceJourney';
 import FunnelBreadcrumbs from '@/components/features/FunnelBreadcrumbs';
 import ComparisonBar from '@/components/features/ComparisonBar';
 import PersistenceToast from '@/components/ui/PersistenceToast';
+import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
 import dynamic from 'next/dynamic';
 import { usePostHog } from 'posthog-js/react';
 
@@ -254,6 +255,8 @@ export default function CollegeVision() {
         <TopTrustRibbon />
         <Navbar />
       </div>
+
+      <LeadCaptureModal autoOpen />
       
       <div className="pt-24 lg:pt-32">
         <FunnelBreadcrumbs currentStep={currentStep} />
