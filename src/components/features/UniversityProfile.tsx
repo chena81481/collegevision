@@ -41,7 +41,12 @@ interface Course {
   has_zero_cost_emi: boolean;
   approvals: string[];
   badge_label: string | null;
-  scholarships?: any[];
+  scholarships?: Array<{
+    name: string;
+    min_score: number;
+    discount_percentage: number;
+    eligibility_criteria: string;
+  }>;
 }
 
 interface University {
@@ -53,6 +58,16 @@ interface University {
   gradient_end: string;
   is_premium: boolean;
   courses: Course[];
+}
+
+interface CompetitorUniversity {
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  courses?: Array<{
+    avg_ctc_inr: number | null;
+    total_fee_inr: number;
+  }>;
 }
 
 // ─── Placement partners (will come from DB in production) ────────────────────
@@ -79,7 +94,13 @@ function buildChartData(totalFee: number, avgCtcAnnual: number) {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function UniversityProfile({ initialData, competitors }: { initialData?: any, competitors?: any[] }) {
+export default function UniversityProfile({
+  initialData,
+  competitors,
+}: {
+  initialData?: University;
+  competitors?: CompetitorUniversity[];
+}) {
   const params = useParams();
   const slug = (params?.slug as string) || initialData?.slug;
 
@@ -91,7 +112,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
   const [isApplying, setIsApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ email?: string; user_metadata?: { full_name?: string } } | null>(null);
   const [studentScore, setStudentScore] = useState<number | null>(null);
   const supabase = createClient();
 
@@ -159,7 +180,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
       } else {
         throw new Error(result.error);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Lead submission error:", err);
       setApplySuccess(true);
     } finally {
@@ -210,8 +231,8 @@ export default function UniversityProfile({ initialData, competitors }: { initia
   // Calculate specific course scholarship
   const qualifiedS = (studentScore !== null && cur.scholarships)
     ? cur.scholarships
-        .filter((s: any) => studentScore >= s.min_score)
-        .sort((a: any, b: any) => b.discount_percentage - a.discount_percentage)[0]
+        .filter((s) => studentScore >= s.min_score)
+        .sort((a, b) => b.discount_percentage - a.discount_percentage)[0]
     : null;
 
   const savings = (qualifiedS && cur)
@@ -297,7 +318,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
                 </div>
               )}
 
-              {course && (
+              {cur && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   {cur.approvals.map((a: string) => (
                     <span key={a} className="flex items-center gap-1 text-sm font-medium text-slate-200 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
@@ -374,7 +395,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
             </div>
           )}
 
-          {course && (
+          {cur && (
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
               <h2 className="text-xl font-bold text-slate-900 mb-5 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-blue-600" /> Regulatory Approvals</h2>
               <div className="flex flex-wrap gap-3">

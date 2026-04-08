@@ -1,11 +1,10 @@
 import React, { Suspense } from 'react';
-import { MatchResult } from '@/utils/matcher';
+import type { MatcherInput, MatchResult } from '@/utils/matcher';
 import { findVectorMatches } from '@/app/actions/match';
-import { ComparisonCard } from './ComparisonCard'; // Assuming a high-premium card exists
 import { Sparkles, Loader2, Trophy } from 'lucide-react';
 
 interface DiscoveryResultProps {
-  input: any;
+  input: MatcherInput;
 }
 
 export default function DiscoveryResult({ input }: DiscoveryResultProps) {
@@ -31,7 +30,7 @@ export default function DiscoveryResult({ input }: DiscoveryResultProps) {
   );
 }
 
-async function WinnerStream({ input }: { input: any }) {
+async function WinnerStream({ input }: { input: MatcherInput }) {
   const result = await findVectorMatches(input);
   if (!result.success || !result.matches?.length) return <NoResults />;
   
@@ -76,14 +75,14 @@ async function WinnerStream({ input }: { input: any }) {
   );
 }
 
-async function AlternativesStream({ input }: { input: any }) {
+async function AlternativesStream({ input }: { input: MatcherInput }) {
   const result = await findVectorMatches(input);
   if (!result.success || (result.matches?.length || 0) <= 1) return null;
   
   const alternatives = result.matches.slice(1, 3);
   return (
     <div className="space-y-6">
-      {alternatives.map((match) => (
+      {alternatives.map((match: MatchResult) => (
         <div key={match.courseId} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:border-blue-500/30 transition-all">
           <div className="text-[10px] font-black text-slate-400 uppercase mb-1">Strong Match - {match.matchScore}%</div>
           <h4 className="font-bold text-slate-900 mb-4">{match.universityName}</h4>

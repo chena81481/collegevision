@@ -201,6 +201,7 @@ export default function UniversityProfile({ initialData, competitors }: { initia
 
   // ── Calculation logic ─────────────────────────────────────────────────────
   const course = selectedCourse ?? university?.courses[0];
+  if (!course) return null;
   const avgCtc = course?.avg_ctc_inr ?? 0;
   
   // Calculate specific course scholarship
