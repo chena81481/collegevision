@@ -28,6 +28,11 @@ export interface CourseMatch {
     amountSaved: number;
     criteria: string;
   };
+  matchReasons?: string[];
+  cautionFlags?: string[];
+  monthlyEmiEstimate?: number | null;
+  decisionSummary?: string;
+  recommendedFor?: string;
 }
 
 export interface MatchApiRequest {

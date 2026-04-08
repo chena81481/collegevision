@@ -329,6 +329,23 @@ function getAdmissionConditions(course: CatalogCourse) {
   return ["Eligibility varies by university and specialization."];
 }
 
+function buildDecisionSummary(course: CatalogCourse, intent: MatchIntent, finalFee: number) {
+  const parts = [
+    `${course.university.name} keeps your projected investment around INR ${Math.round(finalFee / 1000)}k`,
+    course.hasZeroCostEmi ? "supports zero-cost EMI" : "leans on upfront fee planning",
+  ];
+
+  if (intent.careerGoal) {
+    parts.push(`and aligns best with ${intent.careerGoal.toLowerCase()} outcomes`);
+  } else if (intent.degreeType) {
+    parts.push(`for students prioritizing ${intent.degreeType.toUpperCase()} progression`);
+  } else {
+    parts.push("for students optimizing affordability and outcomes together");
+  }
+
+  return `${parts[0]}, ${parts[1]}, ${parts[2]}.`;
+}
+
 function findQualifiedScholarship(
   scholarships: CatalogScholarship[] | undefined,
   studentScore: number | null,
@@ -417,10 +434,46 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
     studentScore,
     course.totalFeeInr
   );
+  const finalFee = qualifiedScholarship
+    ? course.totalFeeInr - qualifiedScholarship.amountSaved
+    : course.totalFeeInr;
+  const monthlyEmiEstimate = course.hasZeroCostEmi
+    ? Math.round(finalFee / Math.max(course.durationMonths, 1))
+    : null;
 
   if (qualifiedScholarship) {
     score += 6;
   }
+
+  const cautionFlags: string[] = [];
+  if (intent.maxBudgetINR && course.totalFeeInr > intent.maxBudgetINR) {
+    cautionFlags.push("Sits above your stated budget, so treat this as a stretch option.");
+  }
+  if (intent.requiredApproval && !course.approvals.includes(intent.requiredApproval)) {
+    cautionFlags.push(`Does not explicitly show the ${intent.requiredApproval} approval you asked for.`);
+  }
+  if (intent.needsEMI && !course.hasZeroCostEmi) {
+    cautionFlags.push("No zero-cost EMI signal detected, so monthly affordability may be tighter.");
+  }
+  if ((course.avgCtcInr ?? 0) < 600000) {
+    cautionFlags.push("Outcome potential looks steadier than breakout, so compare this against higher-earning options.");
+  }
+
+  const matchReasons = [
+    intent.maxBudgetINR
+      ? finalFee <= intent.maxBudgetINR
+        ? "Fits within your current budget band."
+        : "Still viable if you can stretch your budget."
+      : "Balanced fee-to-outcome profile.",
+    isCareerMatch && intent.careerGoal
+      ? `Strong fit for ${intent.careerGoal.toLowerCase()}-oriented roles.`
+      : intent.degreeType
+        ? `Directly aligned with your ${intent.degreeType.toUpperCase()} search intent.`
+        : "Good general-purpose option across employability and ROI.",
+    course.hasZeroCostEmi
+      ? "Zero-cost EMI can smooth the payment burden."
+      : "Best suited for students comfortable with upfront or standard financing.",
+  ];
 
   const normalizedScore = Math.max(
     35,
@@ -450,6 +503,11 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
       admissionProbability: getAdmissionProbability(intent.admissionReadiness),
       admissionConditions: getAdmissionConditions(course),
       ...(qualifiedScholarship ? { qualifiedScholarship } : {}),
+      matchReasons,
+      cautionFlags,
+      monthlyEmiEstimate,
+      recommendedFor: intent.careerGoal ?? intent.degreeType ?? "ROI-first learners",
+      decisionSummary: buildDecisionSummary(course, intent, finalFee),
     } satisfies CourseMatch,
     isCareerMatch,
   };

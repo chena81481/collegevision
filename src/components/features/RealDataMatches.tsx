@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, TrendingUp, Coins, Target, ArrowRight, BarChart2, Check, Sparkles } from 'lucide-react';
+import { Clock, TrendingUp, Coins, Target, ArrowRight, BarChart2, Check, Sparkles, AlertTriangle, WalletCards, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { CourseMatch } from '@/lib/types';
 import ScholarshipBadge from './ScholarshipBadge';
@@ -76,6 +76,13 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
 
       {/* Data Narrative Arc */}
       <div className="space-y-6 mb-10">
+        {course.decisionSummary && (
+          <div className="rounded-[2rem] border border-blue-100 bg-blue-50/70 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-500 mb-2">Decision Brief</p>
+            <p className="text-sm font-semibold leading-relaxed text-slate-700">{course.decisionSummary}</p>
+          </div>
+        )}
+
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 relative">
              <Coins className="w-6 h-6" />
@@ -142,6 +149,55 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
             </div>
           </div>
         )}
+
+        {course.matchReasons && course.matchReasons.length > 0 && (
+          <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 p-4">
+            <p className="mb-3 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-700">
+              <ShieldCheck className="h-3 w-3" /> Why This Match Works
+            </p>
+            <div className="flex flex-col gap-2">
+              {course.matchReasons.slice(0, 3).map((reason) => (
+                <p key={reason} className="text-[11px] font-bold leading-snug text-emerald-900">
+                  <span className="mr-1.5 text-emerald-500">•</span>{reason}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+            <p className="mb-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500">
+              <WalletCards className="h-3 w-3" /> Affordability Signal
+            </p>
+            <p className="text-sm font-black text-slate-900">
+              {course.monthlyEmiEstimate
+                ? `Approx. INR ${course.monthlyEmiEstimate.toLocaleString('en-IN')} / month on zero-cost EMI`
+                : "No zero-cost EMI estimate surfaced for this option"}
+            </p>
+          </div>
+          <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+            <p className="mb-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500">
+              <Target className="h-3 w-3" /> Best For
+            </p>
+            <p className="text-sm font-black text-slate-900">{course.recommendedFor || "Outcome-focused learners"}</p>
+          </div>
+        </div>
+
+        {course.cautionFlags && course.cautionFlags.length > 0 && (
+          <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4">
+            <p className="mb-3 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-amber-700">
+              <AlertTriangle className="h-3 w-3" /> Watch-outs Before You Apply
+            </p>
+            <div className="flex flex-col gap-2">
+              {course.cautionFlags.slice(0, 2).map((flag) => (
+                <p key={flag} className="text-[11px] font-bold leading-snug text-amber-900">
+                  <span className="mr-1.5 text-amber-500">•</span>{flag}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* The "Earnings Multiple" Narrative */}
@@ -176,7 +232,11 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
 
 interface RealDataMatchesProps {
   results: CourseMatch[] | null;
-  parsedFilters: any | null;
+  parsedFilters: {
+    maxBudgetInr?: number | null;
+    degreeKeyword?: string | null;
+    careerGoal?: string | null;
+  } | null;
   onSelect: (id: string) => void;
   selectedIds: Set<string>;
 }
@@ -197,6 +257,9 @@ export default function RealDataMatches({ results, parsedFilters, onSelect, sele
             <Target className="w-4 h-4 text-blue-600 animate-pulse" />
             Based on 15,000+ graduate outcomes tracked since 2020
           </div>
+          <p className="mt-5 text-sm font-medium text-slate-500 max-w-3xl mx-auto leading-relaxed">
+            Each recommendation now explains why it fits, what could block it, and how affordability changes under EMI or scholarship scenarios.
+          </p>
         </div>
 
         {/* Filter context banner (if any) */}
@@ -210,6 +273,11 @@ export default function RealDataMatches({ results, parsedFilters, onSelect, sele
               {parsedFilters.degreeKeyword && (
                 <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-full">
                   {parsedFilters.degreeKeyword}
+                </span>
+              )}
+              {parsedFilters.careerGoal && (
+                <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-full">
+                  Goal: {parsedFilters.careerGoal}
                 </span>
               )}
           </div>

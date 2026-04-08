@@ -42,6 +42,11 @@ const DEFAULT_COURSES: CourseMatch[] = [
     approvals: ['UGC-DEB', 'AICTE'], badgeLabel: 'Top ROI',
     roi: 1200, matchScore: 0, category: 'online-mba',
     confidenceScore: 100,
+    matchReasons: ['Fits a mid-budget MBA search.', 'Strong ROI profile for working professionals.', 'EMI support lowers entry friction.'],
+    cautionFlags: ['Brand pull is moderate versus premium MBA alternatives.'],
+    monthlyEmiEstimate: 6250,
+    recommendedFor: 'ROI-focused MBA upskillers',
+    decisionSummary: 'Symbiosis SCDL offers one of the cleaner ROI-led MBA paths for students prioritizing affordability and flexible payments.',
   },
   {
     id: 'c2', universityName: 'Amity Online', universitySlug: 'amity-online',
@@ -51,6 +56,11 @@ const DEFAULT_COURSES: CourseMatch[] = [
     approvals: ['UGC', 'NAAC A+'], badgeLabel: 'High Placement',
     roi: 1357, matchScore: 0, category: 'online-mba',
     confidenceScore: 100,
+    matchReasons: ['Strong salary upside relative to fee.', 'Good fit for finance and management tracks.', 'EMI support keeps cash flow manageable.'],
+    cautionFlags: ['Total fee is higher than strict budget-first options.'],
+    monthlyEmiEstimate: 7292,
+    recommendedFor: 'Career accelerators targeting stronger placements',
+    decisionSummary: 'Amity Online balances brand familiarity, salary upside, and financing flexibility for students who can stretch slightly for better outcomes.',
   },
   {
     id: 'c3', universityName: 'IIT Patna', universitySlug: 'iit-patna',
@@ -60,6 +70,11 @@ const DEFAULT_COURSES: CourseMatch[] = [
     approvals: ['UGC', 'Institute of Excellence'], badgeLabel: 'Premium Data',
     roi: 1270, matchScore: 0, category: 'online-degrees',
     confidenceScore: 100,
+    matchReasons: ['Excellent upside for data-oriented careers.', 'Premium signaling can help outcome quality.', 'Strong salary potential versus general degrees.'],
+    cautionFlags: ['No zero-cost EMI indicator surfaced.', 'Fee is on the premium side for budget-first applicants.'],
+    monthlyEmiEstimate: null,
+    recommendedFor: 'Students optimizing for data science upside',
+    decisionSummary: 'IIT Patna is the premium upside play here, best when long-term salary growth matters more than near-term affordability.',
   },
 ];
 
@@ -349,6 +364,41 @@ export default function CollegeVision() {
         </div>
       </section>
 
+      <section className="bg-white py-16 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="rounded-[2.5rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-8 md:p-10 text-white shadow-2xl">
+            <div className="max-w-3xl">
+              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-blue-300 mb-3">Production Upgrade</p>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Decision intelligence, not just a comparison list.</h2>
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                CollegeVision now explains why a university fits, warns where it misses your constraints, estimates monthly affordability, and surfaces application-readiness context before you talk to a counselor.
+              </p>
+            </div>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                {
+                  title: 'Transparent Match Logic',
+                  body: 'Each result now shows why it matched your intent instead of asking you to trust a hidden score.',
+                },
+                {
+                  title: 'Risk & Caution Flags',
+                  body: 'Budget stretch, missing approvals, and EMI gaps are surfaced before a student makes the wrong move.',
+                },
+                {
+                  title: 'Affordability Layer',
+                  body: 'EMI and scholarship-adjusted views make the shortlist more actionable for real families.',
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+                  <h3 className="text-lg font-black text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-slate-300 leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 3. MATCHES — Outcome-Driven Redesign */}
       <RealDataMatches 
         results={matchResults || DEFAULT_COURSES}
@@ -510,7 +560,13 @@ export default function CollegeVision() {
           <div className="p-4 md:p-8 space-y-8 pb-32">
             
             {(() => {
-              const comparisonSet = (matchResults ?? DEFAULT_COURSES).slice(0, 3);
+              const manuallySelected = (matchResults ?? DEFAULT_COURSES).filter((course) =>
+                selectedForComparison.has(course.id)
+              );
+              const comparisonSet = (manuallySelected.length >= 2
+                ? manuallySelected
+                : (matchResults ?? DEFAULT_COURSES)
+              ).slice(0, 3);
               const maxROI = Math.max(...comparisonSet.map(c => c.roi ?? 0));
               const minFee = Math.min(...comparisonSet.map(c => c.totalFeeInr));
               const maxCTC = Math.max(...comparisonSet.map(c => c.avgCtcInr ?? 0));
