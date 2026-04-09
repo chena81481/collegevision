@@ -26,6 +26,8 @@ export const metadata: Metadata = {
 };
 
 export default function BlogHubPage() {
+  const featuredArticles = blogArticles.slice(0, 2);
+  const moreArticles = blogArticles.slice(2);
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -90,12 +92,12 @@ export default function BlogHubPage() {
           </div>
         </section>
 
-        <section className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {blogArticles.map((article) => (
+        <section className="mt-10 grid gap-6 md:grid-cols-2">
+          {featuredArticles.map((article) => (
             <Link
               key={article.slug}
               href={`/blog/${article.slug}`}
-              className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+              className="group rounded-[2rem] border border-slate-200 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
@@ -115,6 +117,39 @@ export default function BlogHubPage() {
               </div>
             </Link>
           ))}
+        </section>
+
+        <section className="mt-10">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">More decision guides</h2>
+            <p className="text-sm font-bold text-slate-400">{moreArticles.length} additional articles</p>
+          </div>
+          <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {moreArticles.map((article) => (
+              <Link
+                key={article.slug}
+                href={`/blog/${article.slug}`}
+                className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
+                    {article.category}
+                  </span>
+                  <BookOpen className="h-4 w-4 text-slate-300 group-hover:text-blue-600" />
+                </div>
+                <h3 className="mt-4 text-xl font-black leading-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+                  {article.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{article.description}</p>
+                <div className="mt-5 flex items-center justify-between text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                  <span>{article.readTime}</span>
+                  <span className="inline-flex items-center gap-2 text-blue-600">
+                    Read guide <ArrowRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="mt-12 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">

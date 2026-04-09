@@ -104,8 +104,9 @@ export default function CollegeVision() {
 
   // Persistence: Hydrate from localStorage
   useEffect(() => {
+    const leadCompleted = localStorage.getItem('collegevision_lead_completed');
     const saved = localStorage.getItem('college_vision_session');
-    if (saved) {
+    if (saved && !leadCompleted) {
       const data = JSON.parse(saved);
       if (data.searchQuery) {
         setShowPersistenceToast(true);
@@ -157,6 +158,8 @@ export default function CollegeVision() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+
+    localStorage.removeItem('collegevision_lead_completed');
     
     // Track Funnel Start
     posthog.capture('AI_Match_Started', {
@@ -256,7 +259,17 @@ export default function CollegeVision() {
         <Navbar />
       </div>
 
-      <LeadCaptureModal autoOpen />
+      <LeadCaptureModal
+        autoOpen
+        onSubmitted={() => {
+          setShowPersistenceToast(false);
+          setSearchQuery('');
+          setMatchResults(null);
+          setParsedFilters(null);
+          setSelectedForComparison(new Set());
+          setCurrentStep(0);
+        }}
+      />
       
       <div className="pt-24 lg:pt-32">
         <FunnelBreadcrumbs currentStep={currentStep} />

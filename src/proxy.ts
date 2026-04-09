@@ -12,22 +12,19 @@ const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_R
     })
   : null;
 
-const ratelimit = redis 
+const ratelimit = redis
   ? new Ratelimit({
-      redis: redis,
+      redis,
       limiter: Ratelimit.slidingWindow(10, "60 s"), // 10 requests per 60 seconds
       analytics: true,
       prefix: "@upstash/ratelimit",
     })
   : null;
 
-export async function middleware(request: NextRequest) {
-  // 1. Target sensitive AI and matching routes
+export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/match') || request.nextUrl.pathname.startsWith('/api/cron')) {
-    
-    // Skip ratelimit in development if no Redis is configured
     if (!ratelimit) {
-      console.warn('[Middleware] Rate limiting skipped: Upstash Redis not configured.');
+      console.warn('[Proxy] Rate limiting skipped: Upstash Redis not configured.');
       return NextResponse.next();
     }
 
@@ -36,19 +33,19 @@ export async function middleware(request: NextRequest) {
 
     if (!success) {
       return NextResponse.json(
-        { 
+        {
           error: "Too many matching requests. Please wait a minute.",
           limit,
           remaining,
-          reset 
+          reset,
         },
-        { 
+        {
           status: 429,
           headers: {
             'X-RateLimit-Limit': limit.toString(),
             'X-RateLimit-Remaining': remaining.toString(),
             'X-RateLimit-Reset': reset.toString(),
-          }
+          },
         }
       );
     }
@@ -57,7 +54,6 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
   matcher: ['/api/match/:path*', '/api/cron/:path*'],
 };

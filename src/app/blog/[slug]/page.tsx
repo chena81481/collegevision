@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, CalendarDays, Clock3 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Clock3, Sparkles, UserCircle2 } from "lucide-react";
 import { blogArticles, getBlogArticle } from "@/lib/content/blog";
 
 export function generateStaticParams() {
@@ -91,6 +91,10 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
     : null;
 
   const relatedArticles = blogArticles.filter((entry) => entry.slug !== article.slug).slice(0, 3);
+  const author = {
+    name: "CollegeVision Editorial Team",
+    role: "Research and Decision Content",
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -121,20 +125,42 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
             <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-900 md:text-5xl">{article.title}</h1>
             <p className="mt-5 text-base leading-8 text-slate-600">{article.description}</p>
 
-            <div className="mt-6 flex flex-wrap gap-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-              <span className="inline-flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                {article.publishedAt}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Clock3 className="h-4 w-4" />
-                {article.readTime}
-              </span>
+            <div className="mt-6 flex flex-col gap-4 rounded-[2rem] border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
+                  <UserCircle2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900">{author.name}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{author.role}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                <span className="inline-flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  {article.publishedAt}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Clock3 className="h-4 w-4" />
+                  {article.readTime}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="mt-10 rounded-[2rem] border border-blue-100 bg-blue-50/70 p-6">
-            <p className="text-sm leading-8 text-slate-700">{article.sectionIntro}</p>
+          <div className="mt-10 rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-slate-50 p-6">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-blue-600">
+              <Sparkles className="h-4 w-4" />
+              Quick Read Summary
+            </div>
+            <p className="mt-4 text-sm leading-8 text-slate-700">{article.sectionIntro}</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {article.keywords.slice(0, 4).map((keyword) => (
+                <span key={keyword} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-black text-slate-500">
+                  {keyword}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="mt-10 space-y-10">

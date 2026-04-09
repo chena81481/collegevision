@@ -54,9 +54,11 @@ const PARTNER_LOGOS = [
 export function LeadCaptureModal({
   trigger,
   autoOpen = false,
+  onSubmitted,
 }: {
   trigger?: React.ReactNode;
   autoOpen?: boolean;
+  onSubmitted?: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,6 +109,11 @@ export function LeadCaptureModal({
 
       const res = await submitApplicationLead(formData);
       if (res.success) {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("collegevision_lead_completed", "true");
+          window.localStorage.removeItem("college_vision_session");
+        }
+
         setSubmissionTone(res.status === "PARTIAL" ? "warning" : "success");
         setSubmissionMessage(
           res.message ||
@@ -115,6 +122,7 @@ export function LeadCaptureModal({
               : "Your details are safely stored and our counselor can now follow up.")
         );
         setSubmitted(true);
+        onSubmitted?.();
         setTimeout(() => {
            setIsOpen(false);
            setSubmitted(false);

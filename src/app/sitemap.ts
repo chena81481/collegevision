@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { blogArticles } from "@/lib/content/blog";
+import { pillarPages } from "@/lib/content/pillars";
 
 const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 const siteUrl =
@@ -14,6 +15,8 @@ const staticRoutes = [
   "/universities",
   "/explore",
   "/blog",
+  "/faq",
+  "/rankings",
   "/privacy",
   "/online-mba",
   "/online-mca",
@@ -94,6 +97,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(article.updatedAt),
         changeFrequency: "monthly" as const,
         priority: 0.72,
+      })),
+      ...pillarPages.map((page) => ({
+        url: `${siteUrl}/rankings/${page.slug}`,
+        lastModified: now,
+        changeFrequency: "monthly" as const,
+        priority: 0.74,
       })),
       ...categoryEntries,
       ...genericUniversityEntries,

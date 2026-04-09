@@ -32,7 +32,7 @@ export function Footer() {
         </div>
 
         {/* Links Area */}
-        <div className="flex-2 grid grid-cols-2 sm:grid-cols-3 gap-8">
+        <div className="flex-2 grid grid-cols-2 sm:grid-cols-4 gap-8">
            
            <div className="space-y-4">
              <h4 className="font-bold tracking-wider text-sm inline-flex items-center gap-2">PG Programs <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase font-black">Top</span></h4>
@@ -60,7 +60,28 @@ export function Footer() {
                <li><Link href="/universities" className="hover:text-blue-400 transition-colors">All Universities</Link></li>
                <li><Link href="/compare" className="hover:text-blue-400 transition-colors">Compare Tool</Link></li>
                <li><Link href="/blog" className="hover:text-blue-400 transition-colors">Career Blog</Link></li>
-               <li><Link href="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
+               <li><Link href="/faq" className="hover:text-blue-400 transition-colors">FAQ</Link></li>
+                <li><Link href="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
+              </ul>
+           </div>
+
+           <div className="space-y-4">
+             <h4 className="font-bold tracking-wider text-sm">Top Guides</h4>
+             <ul className="space-y-3 text-sm text-foreground/60">
+               <li><Link href="/blog/how-to-choose-an-online-mba-in-india" className="hover:text-blue-400 transition-colors">Choose an Online MBA</Link></li>
+               <li><Link href="/blog/ugc-deb-approved-online-universities-guide" className="hover:text-blue-400 transition-colors">UGC-DEB Guide</Link></li>
+               <li><Link href="/blog/online-mca-vs-online-mba-career-outcomes" className="hover:text-blue-400 transition-colors">MCA vs MBA</Link></li>
+               <li><Link href="/blog/best-online-degree-for-working-professionals" className="hover:text-blue-400 transition-colors">Working Professionals</Link></li>
+             </ul>
+           </div>
+
+           <div className="space-y-4">
+             <h4 className="font-bold tracking-wider text-sm">2026 Rankings</h4>
+             <ul className="space-y-3 text-sm text-foreground/60">
+               <li><Link href="/rankings/best-online-mba-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online MBA</Link></li>
+               <li><Link href="/rankings/best-online-mca-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online MCA</Link></li>
+               <li><Link href="/rankings/best-online-bba-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online BBA</Link></li>
+               <li><Link href="/rankings/best-online-bca-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online BCA</Link></li>
              </ul>
            </div>
         </div>
