@@ -4,9 +4,27 @@ import { trackSearchEvent, trackRoiCalculation } from "@/lib/student-journey";
 import { createClient } from "@/utils/supabase/server";
 import { calculateROI } from "@/lib/roi-calculator";
 
+function safeError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack?.split("\n").slice(0, 3).join("\n"),
+    };
+  }
+  return { message: String(error) };
+}
+
 export async function POST(request: Request) {
   try {
-    const { query, sessionId } = await request.json();
+    const body = await request.json();
+    const { query, sessionId } = body;
+
+    console.log("[/api/match] Route called", {
+      hasQuery: Boolean(query),
+      queryLength: query?.length || 0,
+      sessionId,
+    });
 
     if (!query || typeof query !== "string" || !query.trim()) {
       return NextResponse.json({ error: "Search query is required" }, { status: 400 });
@@ -21,7 +39,21 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     const authToken = session?.access_token;
 
-    const { matches, parsedIntent, source } = await getMatchesForQuery(query, authToken);
+    const result = await getMatchesForQuery(query, authToken);
+    const { matches, parsedIntent, source } = result;
+
+    if (source === "gemini_unavailable" || matches.length === 0) {
+      console.error("[/api/match] Gemini recommendations unavailable for query", { query });
+      return NextResponse.json(
+        { 
+          error: "AI recommendations temporarily unavailable", 
+          code: "GEMINI_DISCOVERY_FAILED",
+          message: "Could not fetch AI results. This usually means the API key is missing or the quota has been exceeded."
+        }, 
+        { status: 502 }
+      );
+    }
+
     const topMatchIds = matches.map((match) => match.id);
 
     try {
@@ -63,7 +95,7 @@ export async function POST(request: Request) {
         )
       );
     } catch (trackingError) {
-      console.error("[/api/match] Tracking failed without blocking Gemini results:", trackingError);
+      console.error("[/api/match] Tracking failed without blocking results:", safeError(trackingError));
     }
 
     return NextResponse.json({
@@ -71,13 +103,13 @@ export async function POST(request: Request) {
       parsedIntent,
       matches,
       source,
-      message:
-        source === "gemini_unavailable"
-          ? "Gemini did not return AI recommendations. Check the production Gemini key: GEMINI_API_KEY, GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or NEXT_PUBLIC_GEMINI_API_KEY."
-          : undefined,
     });
   } catch (error) {
-    console.error("[/api/match] Error:", error);
-    return NextResponse.json({ error: "AI Matching Engine error" }, { status: 500 });
+    const info = safeError(error);
+    console.error("[/api/match] Fatal error:", info);
+    return NextResponse.json(
+      { error: "Internal server error", code: "MATCH_ROUTE_FATAL", details: info.message }, 
+      { status: 500 }
+    );
   }
 }

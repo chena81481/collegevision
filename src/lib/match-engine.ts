@@ -64,13 +64,18 @@ function getGeminiApiKey() {
     ""
   ).trim();
   
-  if (!key) {
-    console.error("[match-engine] CRITICAL: No Gemini API Key found in environment variables.");
-  } else {
-    console.log("[match-engine] API Key found (ends with ...%s)", key.slice(-4));
-  }
-  
   return key;
+}
+
+function safeError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack?.split("\n").slice(0, 3).join("\n"),
+    };
+  }
+  return { message: String(error) };
 }
 
 const STRICT_BUDGET_PATTERN =
@@ -455,9 +460,16 @@ Parsed Intent: ${JSON.stringify(intent)}
       { name: "gemini-1.5-flash", grounded: false },
     ];
 
+    const attemptErrors: any[] = [];
+
     for (const modelInfo of modelsToTry) {
       try {
-        console.log(`[match-engine] Attempting match discovery with ${modelInfo.name} (grounded: ${modelInfo.grounded})...`);
+        console.log("[match-engine] Trying Gemini model", { 
+          model: modelInfo.name, 
+          grounded: modelInfo.grounded,
+          hasApiKey: Boolean(apiKey)
+        });
+        
         const tools = modelInfo.grounded ? [{ googleSearch: {} } as any] : undefined;
         
         result = await ai.models.generateContent({
@@ -467,17 +479,24 @@ Parsed Intent: ${JSON.stringify(intent)}
         });
         
         if (result.text) {
-          console.log(`[match-engine] Successfully received results from ${modelInfo.name}`);
+          console.log("[match-engine] Gemini success", { model: modelInfo.name });
           break;
         }
       } catch (error) {
-        console.warn(`[match-engine] Call to ${modelInfo.name} failed:`, error);
+        const info = safeError(error);
+        attemptErrors.push({ model: modelInfo.name, ...info });
+        console.error("[match-engine] Gemini model failed", {
+          model: modelInfo.name,
+          ...info,
+        });
         continue;
       }
     }
 
     if (!result || !result.text) {
-      console.error("[match-engine] ALL Gemini model attempts failed. Returning empty matches.");
+      console.error("[match-engine] ALL Gemini model attempts failed", {
+        attempts: attemptErrors,
+      });
       return null;
     }
 
