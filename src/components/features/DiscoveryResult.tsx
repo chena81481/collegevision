@@ -33,9 +33,10 @@ export default function DiscoveryResult({ input }: DiscoveryResultProps) {
 
 async function WinnerStream({ input }: { input: MatcherInput }) {
   const result = await findVectorMatches(input);
-  if (!result.success || !result.matches?.length) return <NoResults />;
+  const matches = result.matches;
+  if (!result.success || !matches || matches.length === 0) return <NoResults />;
   
-  const winner = result.matches[0];
+  const winner = matches[0];
   return (
     <div className="lg:col-span-2 relative group">
        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[40px] blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
@@ -78,9 +79,10 @@ async function WinnerStream({ input }: { input: MatcherInput }) {
 
 async function AlternativesStream({ input }: { input: MatcherInput }) {
   const result = await findVectorMatches(input);
-  if (!result.success || (result.matches?.length || 0) <= 1) return null;
+  const matches = result.matches;
+  if (!result.success || !matches || matches.length <= 1) return null;
   
-  const alternatives = result.matches.slice(1, 3);
+  const alternatives = matches.slice(1, 3);
   return (
     <div className="space-y-6">
       {alternatives.map((match: MatchResult) => (
