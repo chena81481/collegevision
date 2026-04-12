@@ -286,6 +286,108 @@ function extractJsonArray(rawText: string) {
   return cleaned.slice(start, end + 1);
 }
 
+function parseGeminiCatalogText(rawText: string): unknown[] | null {
+  const arrayText = extractJsonArray(rawText);
+
+  if (arrayText) {
+    const parsed = JSON.parse(arrayText);
+    return Array.isArray(parsed) ? parsed : null;
+  }
+
+  const cleaned = rawText
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+  const objectStart = cleaned.indexOf("{");
+  const objectEnd = cleaned.lastIndexOf("}");
+
+  if (objectStart === -1 || objectEnd === -1 || objectEnd <= objectStart) {
+    return null;
+  }
+
+  const parsed = JSON.parse(cleaned.slice(objectStart, objectEnd + 1));
+  if (Array.isArray(parsed?.recommendations)) {
+    return parsed.recommendations;
+  }
+  if (Array.isArray(parsed?.courses)) {
+    return parsed.courses;
+  }
+  if (Array.isArray(parsed?.matches)) {
+    return parsed.matches;
+  }
+
+  return null;
+}
+
+function mapGeminiCatalogItems(items: unknown[], intent: MatchIntent): CatalogCourse[] {
+  return items
+    .map((item: any, index: number): CatalogCourse | null => {
+      const universityName =
+        typeof item?.universityName === "string" && item.universityName.trim()
+          ? item.universityName.trim()
+          : typeof item?.university === "string" && item.university.trim()
+            ? item.university.trim()
+            : typeof item?.institutionName === "string" && item.institutionName.trim()
+              ? item.institutionName.trim()
+              : null;
+      const courseName =
+        typeof item?.courseName === "string" && item.courseName.trim()
+          ? item.courseName.trim()
+          : typeof item?.programName === "string" && item.programName.trim()
+            ? item.programName.trim()
+            : typeof item?.program === "string" && item.program.trim()
+              ? item.program.trim()
+              : intent.degreeType
+                ? `Online ${intent.degreeType.toUpperCase()}`
+                : "Online Degree";
+
+      if (!universityName) {
+        return null;
+      }
+
+      const universitySlug =
+        typeof item?.universitySlug === "string" && item.universitySlug.trim()
+          ? slugify(item.universitySlug)
+          : slugify(universityName);
+      const category =
+        typeof item?.category === "string" && item.category.trim()
+          ? slugify(item.category)
+          : intent.degreeType
+            ? `online-${slugify(intent.degreeType)}`
+            : "online-degrees";
+
+      return {
+        id: `gemini-${universitySlug}-${slugify(courseName)}-${index + 1}`,
+        name: courseName,
+        degreeLevel: normalizeDegreeLevel(item?.degreeLevel),
+        durationMonths: normalizeNumber(item?.durationMonths, intent.studentLevel === "Bachelors" ? 36 : 24, 6, 60),
+        totalFeeInr: normalizeNumber(item?.totalFeeInr ?? item?.feeInr ?? item?.fees, 150000, 20000, 800000),
+        avgCtcInr: normalizeNumber(item?.avgCtcInr ?? item?.avgSalaryInr ?? item?.expectedCtcInr, 600000, 200000, 2500000),
+        hasZeroCostEmi: Boolean(item?.hasZeroCostEmi ?? item?.emiAvailable),
+        approvals: normalizeApprovals(item?.approvals),
+        category,
+        badgeLabel:
+          typeof item?.badgeLabel === "string" && item.badgeLabel.trim()
+            ? item.badgeLabel.trim().slice(0, 32)
+            : "AI Suggested",
+        generatedByAi: true,
+        sourceNote:
+          typeof item?.sourceNote === "string" && item.sourceNote.trim()
+            ? item.sourceNote.trim().slice(0, 180)
+            : "AI-generated recommendation. Verify final fees, approvals and eligibility with the university before applying.",
+        university: {
+          name: universityName,
+          slug: universitySlug,
+          logoUrl: null,
+          gradientStart: index % 2 === 0 ? "from-blue-50" : "from-emerald-50",
+          gradientEnd: "to-white",
+          isPremium: Boolean(item?.isPremium),
+        },
+      };
+    })
+    .filter((course): course is CatalogCourse => Boolean(course));
+}
+
 async function fetchGeminiGeneratedCatalog(query: string, intent: MatchIntent): Promise<CatalogCourse[] | null> {
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -318,78 +420,43 @@ ${JSON.stringify(intent)}
     `.trim();
 
     const result = await model.generateContent(prompt);
-    const jsonText = extractJsonArray(result.response.text());
+    const parsed = parseGeminiCatalogText(result.response.text());
 
-    if (!jsonText) {
-      return null;
+    const courses = parsed ? mapGeminiCatalogItems(parsed, intent) : [];
+
+    if (courses.length > 0) {
+      return courses;
     }
 
-    const parsed = JSON.parse(jsonText);
+    const retryPrompt = `
+Return JSON only:
+[
+  {
+    "universityName": "Example University",
+    "universitySlug": "example-university",
+    "courseName": "Online MBA",
+    "degreeLevel": "Masters",
+    "durationMonths": 24,
+    "totalFeeInr": 150000,
+    "avgCtcInr": 600000,
+    "hasZeroCostEmi": true,
+    "approvals": ["Verification pending"],
+    "category": "online-mba",
+    "badgeLabel": "AI Suggested",
+    "isPremium": false,
+    "sourceNote": "Verify final details before applying."
+  }
+]
 
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
+Create 6 Indian online-degree recommendations for: "${query.trim()}".
+Use the user's requested institution/program format when present. If the query mentions IIM, list IIM/IIM-associated executive management options first.
+    `.trim();
 
-    const courses = parsed
-      .map((item: any, index: number): CatalogCourse | null => {
-        const universityName =
-          typeof item?.universityName === "string" && item.universityName.trim()
-            ? item.universityName.trim()
-            : null;
-        const courseName =
-          typeof item?.courseName === "string" && item.courseName.trim()
-            ? item.courseName.trim()
-            : intent.degreeType
-              ? `Online ${intent.degreeType.toUpperCase()}`
-              : "Online Degree";
+    const retryResult = await model.generateContent(retryPrompt);
+    const retryParsed = parseGeminiCatalogText(retryResult.response.text());
+    const retryCourses = retryParsed ? mapGeminiCatalogItems(retryParsed, intent) : [];
 
-        if (!universityName) {
-          return null;
-        }
-
-        const universitySlug =
-          typeof item?.universitySlug === "string" && item.universitySlug.trim()
-            ? slugify(item.universitySlug)
-            : slugify(universityName);
-        const category =
-          typeof item?.category === "string" && item.category.trim()
-            ? slugify(item.category)
-            : intent.degreeType
-              ? `online-${slugify(intent.degreeType)}`
-              : "online-degrees";
-
-        return {
-          id: `gemini-${universitySlug}-${slugify(courseName)}-${index + 1}`,
-          name: courseName,
-          degreeLevel: normalizeDegreeLevel(item?.degreeLevel),
-          durationMonths: normalizeNumber(item?.durationMonths, intent.studentLevel === "Bachelors" ? 36 : 24, 6, 60),
-          totalFeeInr: normalizeNumber(item?.totalFeeInr, 150000, 20000, 800000),
-          avgCtcInr: normalizeNumber(item?.avgCtcInr, 600000, 200000, 2500000),
-          hasZeroCostEmi: Boolean(item?.hasZeroCostEmi),
-          approvals: normalizeApprovals(item?.approvals),
-          category,
-          badgeLabel:
-            typeof item?.badgeLabel === "string" && item.badgeLabel.trim()
-              ? item.badgeLabel.trim().slice(0, 32)
-              : "AI Suggested",
-          generatedByAi: true,
-          sourceNote:
-            typeof item?.sourceNote === "string" && item.sourceNote.trim()
-              ? item.sourceNote.trim().slice(0, 180)
-              : "AI-generated recommendation. Verify final fees, approvals and eligibility with the university before applying.",
-          university: {
-            name: universityName,
-            slug: universitySlug,
-            logoUrl: null,
-            gradientStart: index % 2 === 0 ? "from-blue-50" : "from-emerald-50",
-            gradientEnd: "to-white",
-            isPremium: Boolean(item?.isPremium),
-          },
-        };
-      })
-      .filter((course): course is CatalogCourse => Boolean(course));
-
-    return courses.length > 0 ? courses : null;
+    return retryCourses.length > 0 ? retryCourses : null;
   } catch (error) {
     console.error("[match-engine] Gemini catalog generation failed:", error);
     return null;
