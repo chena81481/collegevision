@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { University } from "@/lib/mockData";
 import { 
   Star, MapPin, CheckCircle, ShieldCheck, Download, PlayCircle, Users, ExternalLink, Briefcase, TrendingUp,
@@ -68,7 +69,13 @@ export function UniversityProfileContent({ university }: ProfileProps) {
         <div className="w-full lg:w-2/3 space-y-6">
           <div className="flex items-center gap-6">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-[32px] overflow-hidden bg-white/10 p-2 border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.3)] shrink-0 group">
-              <img src={university.logo} alt={university.name} className="w-full h-full object-cover rounded-[24px] group-hover:scale-105 transition-transform" />
+              <Image
+                src={university.logo}
+                alt={`${university.name} logo`}
+                width={128}
+                height={128}
+                className="h-full w-full rounded-[24px] object-cover transition-transform group-hover:scale-105"
+              />
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-2">
@@ -132,10 +139,12 @@ export function UniversityProfileContent({ university }: ProfileProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Virtual Campus Tour */}
               <div className="glass-panel rounded-[32px] overflow-hidden border border-white/10 relative group h-[400px]">
-                <img 
-                  src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80" 
-                  alt="Campus Tour" 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                <Image
+                  src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80"
+                  alt="Campus Tour"
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center gap-4">
@@ -220,7 +229,13 @@ export function UniversityProfileContent({ university }: ProfileProps) {
                     ].map((review) => (
                       <div key={review.name} className="glass-panel rounded-[24px] overflow-hidden border border-white/10 group cursor-pointer relative shadow-lg">
                         <div className="h-40 bg-zinc-800 relative">
-                           <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=500&q=80" className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" alt="review cover" />
+                           <Image
+                             src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=500&q=80"
+                             className="object-cover opacity-60 transition-opacity group-hover:opacity-80"
+                             alt="Review cover"
+                             fill
+                             sizes="(min-width: 1024px) 33vw, 100vw"
+                           />
                            <div className="absolute inset-0 flex items-center justify-center">
                              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
                                <Video className="w-6 h-6 text-white" />
@@ -231,7 +246,13 @@ export function UniversityProfileContent({ university }: ProfileProps) {
                            </div>
                         </div>
                         <div className="p-4 flex gap-3">
-                           <img src={review.img} className="w-10 h-10 rounded-full object-cover border border-white/20" alt={review.name}/>
+                           <Image
+                             src={review.img}
+                             className="h-10 w-10 rounded-full border border-white/20 object-cover"
+                             alt={review.name}
+                             width={40}
+                             height={40}
+                           />
                            <div>
                              <h4 className="font-bold text-sm text-white line-clamp-1">"{review.title}"</h4>
                              <p className="text-xs text-foreground/50 mt-0.5">{review.name} • {review.role}</p>
@@ -311,7 +332,13 @@ export function UniversityProfileContent({ university }: ProfileProps) {
                   { name: "Neha Gupta", role: "Data Scientist at Microsoft", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80" }
                 ].map((alumni) => (
                   <div key={alumni.name} className="glass-panel p-6 rounded-[24px] border border-white/10 flex items-center gap-4 hover:border-blue-500/30 transition-colors cursor-pointer shadow-lg group">
-                    <img src={alumni.img} alt={alumni.name} className="w-14 h-14 rounded-full object-cover border-2 border-white/10 group-hover:border-blue-400/50 transition-colors" />
+                    <Image
+                      src={alumni.img}
+                      alt={alumni.name}
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 rounded-full border-2 border-white/10 object-cover transition-colors group-hover:border-blue-400/50"
+                    />
                     <div className="flex-1">
                       <h4 className="font-bold text-foreground text-sm group-hover:text-blue-300 transition-colors">{alumni.name}</h4>
                       <p className="text-xs text-foreground/60 mt-1">{alumni.role}</p>

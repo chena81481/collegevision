@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -318,7 +319,13 @@ export function LeadCaptureModal({
                       <div className="flex -space-x-2">
                          {[11, 12, 13].map((i) => (
                            <div key={i} className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-200 border-2 border-white dark:border-zinc-950 overflow-hidden ring-1 ring-slate-100">
-                             <img src={`https://i.pravatar.cc/100?u=${i}`} alt="avatar" />
+                             <Image
+                               src={`https://i.pravatar.cc/100?u=${i}`}
+                               alt="Counselor avatar"
+                               width={32}
+                               height={32}
+                               className="h-full w-full object-cover"
+                             />
                            </div>
                          ))}
                       </div>

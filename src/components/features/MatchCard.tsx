@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { CheckCircle2, ShieldCheck, ArrowRight, TrendingUp, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useFeatureFlagVariantKey } from 'posthog-js/react';
@@ -71,7 +72,13 @@ export default function MatchCard({ course, isTopMatch }: MatchCardProps) {
           <div className="flex-1 space-y-4">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center p-2 shrink-0">
-                <img src={course.logoUrl || '/logo.png'} alt="University Logo" className="w-full h-full object-contain" />
+                <Image
+                  src={course.logoUrl || '/logo.png'}
+                  alt={`${course.universityName || 'University'} logo`}
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-contain"
+                />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-slate-900 leading-tight">{course.name}</h3>

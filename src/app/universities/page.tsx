@@ -1,5 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import { 
   GraduationCap, ShieldCheck, Star, 
@@ -164,7 +165,13 @@ export default async function UniversityDirectoryPage() {
               <div className="flex justify-between items-start mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-zinc-800 p-3 flex items-center justify-center border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-transform">
                   {uni.logo_url ? (
-                    <img src={uni.logo_url} alt={uni.name} className="w-full h-full object-contain" />
+                    <Image
+                      src={uni.logo_url}
+                      alt={`${uni.name} logo`}
+                      width={64}
+                      height={64}
+                      className="h-full w-full object-contain"
+                    />
                   ) : (
                     <GraduationCap className="w-8 h-8 text-blue-600" />
                   )}

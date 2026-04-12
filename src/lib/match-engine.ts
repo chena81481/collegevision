@@ -16,6 +16,8 @@ export interface MatchIntent {
   needsEMI: boolean;
   requiredApproval: string | null;
   careerGoal: string | null;
+  targetInstitution: string | null;
+  programFormat: "Executive" | "Online" | "Distance" | "Regular" | null;
   studentLevel: "Bachelors" | "Masters" | "Other";
   admissionReadiness: "High" | "Medium" | "Low";
   confidenceScore: number;
@@ -74,6 +76,11 @@ const CAREER_KEYWORDS: Record<string, string[]> = {
   "Human Resources": ["hr", "management", "mba"],
 };
 
+const INSTITUTION_PATTERNS: Array<{ pattern: RegExp; value: string }> = [
+  { pattern: /\biims?\b|\bindian institute of management\b/i, value: "IIM" },
+  { pattern: /\biits?\b|\bindian institute of technology\b/i, value: "IIT" },
+];
+
 function inferCareerGoal(query: string): string | null {
   for (const item of CAREER_PATTERNS) {
     if (item.pattern.test(query)) {
@@ -112,6 +119,31 @@ function inferStudentLevel(degreeType: string | null): MatchIntent["studentLevel
   return "Other";
 }
 
+function inferTargetInstitution(query: string): string | null {
+  for (const item of INSTITUTION_PATTERNS) {
+    if (item.pattern.test(query)) {
+      return item.value;
+    }
+  }
+  return null;
+}
+
+function inferProgramFormat(query: string): MatchIntent["programFormat"] {
+  if (/\bexecutive|excutive|exec\b/i.test(query)) {
+    return "Executive";
+  }
+  if (/\bonline\b/i.test(query)) {
+    return "Online";
+  }
+  if (/\bdistance|correspondence\b/i.test(query)) {
+    return "Distance";
+  }
+  if (/\bregular|campus|full[-\s]?time\b/i.test(query)) {
+    return "Regular";
+  }
+  return null;
+}
+
 function buildLocalIntent(query: string): MatchIntent {
   const parsed = parseQuery(query);
   const degreeType = parsed.degreeKeyword;
@@ -123,13 +155,22 @@ function buildLocalIntent(query: string): MatchIntent {
     needsEMI: parsed.requiresEmi,
     requiredApproval: parsed.requiredApprovals[0] ?? null,
     careerGoal: inferCareerGoal(query),
+    targetInstitution: inferTargetInstitution(query),
+    programFormat: inferProgramFormat(query),
     studentLevel: inferStudentLevel(degreeType),
     admissionReadiness: /\burgent|asap|this month|apply now\b/i.test(query)
       ? "High"
       : /\bexploring|research|compare\b/i.test(query)
         ? "Medium"
         : "Low",
-    confidenceScore: degreeType || parsed.maxBudgetInr || parsed.requiredApprovals.length > 0 ? 82 : 68,
+    confidenceScore:
+      degreeType ||
+      parsed.maxBudgetInr ||
+      parsed.requiredApprovals.length > 0 ||
+      inferTargetInstitution(query) ||
+      inferProgramFormat(query)
+        ? 86
+        : 68,
   };
 }
 
@@ -147,7 +188,11 @@ async function buildIntent(query: string): Promise<MatchIntent> {
     const prompt = `
 Extract structured requirements from this college search query.
 Return only valid JSON with these exact keys:
-degreeType, maxBudgetINR, isStrictBudget, needsEMI, requiredApproval, careerGoal, studentLevel, admissionReadiness, confidenceScore
+degreeType, maxBudgetINR, isStrictBudget, needsEMI, requiredApproval, careerGoal, targetInstitution, programFormat, studentLevel, admissionReadiness, confidenceScore
+
+Normalize common typos:
+- "excutive" means "Executive".
+- "iim" means targetInstitution "IIM".
 
 Query: "${query.trim()}"
     `.trim();
@@ -169,6 +214,8 @@ Query: "${query.trim()}"
       needsEMI: parsed.needsEMI ?? fallbackIntent.needsEMI,
       requiredApproval: parsed.requiredApproval ?? fallbackIntent.requiredApproval,
       careerGoal: parsed.careerGoal ?? fallbackIntent.careerGoal,
+      targetInstitution: parsed.targetInstitution ?? fallbackIntent.targetInstitution,
+      programFormat: parsed.programFormat ?? fallbackIntent.programFormat,
       studentLevel: parsed.studentLevel ?? fallbackIntent.studentLevel,
       admissionReadiness: parsed.admissionReadiness ?? fallbackIntent.admissionReadiness,
       confidenceScore:
@@ -255,6 +302,10 @@ You are CollegeVision's Indian online-degree discovery engine.
 Generate 8 relevant online degree recommendations for this student query. Do not limit yourself to the app's manual catalog.
 
 Rules:
+- Preserve hard institution preferences. If targetInstitution is "IIM", return IIM/IIM-associated executive management options first, not generic private universities.
+- Preserve program format. If programFormat is "Executive", prefer executive MBA, executive PGDM, executive PGP, or senior-management online/blended programs.
+- Correct typo intent: "excutive online mba program in iim" means executive online MBA/management programs from IIMs.
+- If no exact "online executive MBA" is confidently available from an IIM, return the closest IIM online/blended executive management options and say that exact naming must be verified in sourceNote.
 - Prefer Indian online universities/programs that are commonly known for online or distance learning.
 - If exact fee, CTC, EMI, or approval data is uncertain, provide conservative estimates and include "Verification pending" in approvals.
 - Do not invent official partnerships.
@@ -555,6 +606,36 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
     score += 20;
   }
 
+  if (intent.programFormat) {
+    const normalizedFormat = intent.programFormat.toLowerCase();
+    const courseText = `${course.name} ${course.university.name}`.toLowerCase();
+    if (
+      courseText.includes(normalizedFormat) ||
+      (normalizedFormat === "executive" && /\bepgp|epgdm|executive|senior management|advanced management\b/i.test(courseText))
+    ) {
+      score += 18;
+    } else if (normalizedFormat === "executive") {
+      score -= 10;
+    }
+  }
+
+  if (intent.targetInstitution) {
+    const institutionText = `${course.university.name} ${course.name}`.toLowerCase();
+    if (
+      intent.targetInstitution === "IIM" &&
+      (/\biim\b/i.test(institutionText) || institutionText.includes("indian institute of management"))
+    ) {
+      score += 35;
+    } else if (
+      intent.targetInstitution === "IIT" &&
+      (/\biit\b/i.test(institutionText) || institutionText.includes("indian institute of technology"))
+    ) {
+      score += 35;
+    } else {
+      score -= 30;
+    }
+  }
+
   if (intent.requiredApproval) {
     if (course.approvals.includes(intent.requiredApproval)) {
       score += 15;
@@ -633,9 +714,13 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
       ? finalFee <= intent.maxBudgetINR
         ? "Fits within your current budget band."
         : "Still viable if you can stretch your budget."
+      : intent.targetInstitution
+        ? `Prioritizes your ${intent.targetInstitution} institution preference.`
       : "Balanced fee-to-outcome profile.",
     isCareerMatch && intent.careerGoal
       ? `Strong fit for ${intent.careerGoal.toLowerCase()}-oriented roles.`
+      : intent.programFormat === "Executive"
+        ? "Designed for executive or working-professional learning intent."
       : intent.degreeType
         ? `Directly aligned with your ${intent.degreeType.toUpperCase()} search intent.`
         : "Good general-purpose option across employability and ROI.",
@@ -677,7 +762,10 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
       matchReasons,
       cautionFlags,
       monthlyEmiEstimate,
-      recommendedFor: intent.careerGoal ?? intent.degreeType ?? "ROI-first learners",
+      recommendedFor:
+        intent.programFormat === "Executive"
+          ? "Working professionals seeking executive management credentials"
+          : intent.careerGoal ?? intent.degreeType ?? "ROI-first learners",
       decisionSummary: buildDecisionSummary(course, intent, finalFee),
     } satisfies CourseMatch,
     isCareerMatch,
