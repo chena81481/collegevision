@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       source,
       message:
         source === "gemini_unavailable"
-          ? "Gemini did not return AI recommendations. Check GEMINI_API_KEY in production."
+          ? "Gemini did not return AI recommendations. Check the production Gemini key: GEMINI_API_KEY, GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or NEXT_PUBLIC_GEMINI_API_KEY."
           : undefined,
     });
   } catch (error) {

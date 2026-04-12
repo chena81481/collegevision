@@ -4,7 +4,17 @@ import { createClient } from '@/utils/supabase/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { MatcherSchema, MatcherInput } from '@/utils/matcher';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+function getGeminiApiKey() {
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+    ''
+  ).trim();
+}
+
+const genAI = new GoogleGenerativeAI(getGeminiApiKey());
 
 export const runtime = 'edge'; // Edge Runtime for sub-second responses
 

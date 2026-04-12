@@ -55,6 +55,16 @@ interface SupabaseCourseRow {
   }[] | null;
 }
 
+function getGeminiApiKey() {
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+    ""
+  ).trim();
+}
+
 const STRICT_BUDGET_PATTERN =
   /\b(strict|strictly|not more than|within|max(?:imum)?|cap|under)\b/i;
 const CAREER_PATTERNS: Array<{ pattern: RegExp; value: string }> = [
@@ -175,7 +185,7 @@ function buildLocalIntent(query: string): MatchIntent {
 
 async function buildIntent(query: string): Promise<MatchIntent> {
   const fallbackIntent = buildLocalIntent(query);
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getGeminiApiKey();
 
   if (!apiKey) {
     return fallbackIntent;
@@ -389,7 +399,7 @@ function mapGeminiCatalogItems(items: unknown[], intent: MatchIntent): CatalogCo
 }
 
 async function fetchGeminiGeneratedCatalog(query: string, intent: MatchIntent): Promise<CatalogCourse[] | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getGeminiApiKey();
 
   if (!apiKey) {
     return null;
@@ -843,7 +853,7 @@ async function enrichMatchesWithAiRoi(
   intent: MatchIntent,
   matches: CourseMatch[]
 ): Promise<CourseMatch[]> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getGeminiApiKey();
 
   if (!apiKey || matches.length === 0) {
     return matches;
