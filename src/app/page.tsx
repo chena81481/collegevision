@@ -149,7 +149,7 @@ export default function CollegeVision() {
       });
       const data = await res.json();
 
-      if (data.success && data.matches) {
+      if (data.success && data.matches?.length > 0) {
         setMatchResults(data.matches);
         setCurrentStep(1); // Advance to Matches
         
@@ -173,6 +173,9 @@ export default function CollegeVision() {
         setTimeout(() => {
           document.getElementById('colleges')?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
+      } else if (data.success && data.source === "gemini_unavailable") {
+        setMatchResults([]);
+        alert(data.message || "Gemini search is unavailable right now. Please check the Gemini API key in production.");
       } else {
         alert(data.error ?? 'Something went wrong. Please try again.');
       }

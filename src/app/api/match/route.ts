@@ -24,43 +24,47 @@ export async function POST(request: Request) {
     const { matches, parsedIntent, source } = await getMatchesForQuery(query, authToken);
     const topMatchIds = matches.map((match) => match.id);
 
-    await trackSearchEvent({
-      user,
-      sessionId,
-      query,
-      parsedIntent: parsedIntent as unknown as Record<string, unknown>,
-      matchCourseIds: topMatchIds,
-      resultCount: matches.length,
-    });
+    try {
+      await trackSearchEvent({
+        user,
+        sessionId,
+        query,
+        parsedIntent: parsedIntent as unknown as Record<string, unknown>,
+        matchCourseIds: topMatchIds,
+        resultCount: matches.length,
+      });
 
-    await Promise.all(
-      matches.map((match) =>
-        trackRoiCalculation({
-          user,
-          sessionId,
-          universitySlug: match.universitySlug,
-          courseId: match.id,
-          roiInput: {
-            totalFee: match.totalFeeInr,
-            avgCTC: match.avgCtcInr ?? 0,
-            currentSalary: 0,
-            durationMonths: match.durationMonths,
-            placementRate: Math.max(55, match.admissionProbability ?? 72),
-            loanInterestRate: match.hasZeroCostEmi ? 0 : 9,
-            isOnline: true,
-          },
-          roiOutput: calculateROI({
-            totalFee: match.totalFeeInr,
-            avgCTC: match.avgCtcInr ?? 0,
-            currentSalary: 0,
-            durationMonths: match.durationMonths,
-            placementRate: Math.max(55, match.admissionProbability ?? 72),
-            loanInterestRate: match.hasZeroCostEmi ? 0 : 9,
-            isOnline: true,
-          }),
-        })
-      )
-    );
+      await Promise.all(
+        matches.map((match) =>
+          trackRoiCalculation({
+            user,
+            sessionId,
+            universitySlug: match.universitySlug,
+            courseId: match.generatedByAi ? null : match.id,
+            roiInput: {
+              totalFee: match.totalFeeInr,
+              avgCTC: match.avgCtcInr ?? 0,
+              currentSalary: 0,
+              durationMonths: match.durationMonths,
+              placementRate: Math.max(55, match.admissionProbability ?? 72),
+              loanInterestRate: match.hasZeroCostEmi ? 0 : 9,
+              isOnline: true,
+            },
+            roiOutput: calculateROI({
+              totalFee: match.totalFeeInr,
+              avgCTC: match.avgCtcInr ?? 0,
+              currentSalary: 0,
+              durationMonths: match.durationMonths,
+              placementRate: Math.max(55, match.admissionProbability ?? 72),
+              loanInterestRate: match.hasZeroCostEmi ? 0 : 9,
+              isOnline: true,
+            }),
+          })
+        )
+      );
+    } catch (trackingError) {
+      console.error("[/api/match] Tracking failed without blocking Gemini results:", trackingError);
+    }
 
     return NextResponse.json({
       success: true,
