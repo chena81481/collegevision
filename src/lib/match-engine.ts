@@ -4,7 +4,6 @@ import { calculateROI } from "@/lib/roi-calculator";
 import { parseQuery } from "@/lib/query-parser";
 import type { CourseMatch } from "@/lib/types";
 import {
-  FALLBACK_COURSE_CATALOG,
   type CatalogCourse,
   type CatalogScholarship,
 } from "@/lib/course-catalog";
@@ -26,7 +25,7 @@ export interface MatchIntent {
 interface MatchEngineResult {
   parsedIntent: MatchIntent;
   matches: CourseMatch[];
-  source: "gemini" | "supabase" | "fallback";
+  source: "gemini" | "gemini_unavailable";
 }
 
 interface SupabaseCourseRow {
@@ -904,19 +903,9 @@ export async function getMatchesForQuery(
     fetchStudentScore(authToken),
   ]);
 
-  let source: MatchEngineResult["source"] = "gemini";
-  let sourceCatalog = geminiCatalog ?? [];
-
-  if (sourceCatalog.length === 0) {
-    const supabaseCatalog = await fetchCatalogFromSupabase();
-    if (supabaseCatalog && supabaseCatalog.length > 0) {
-      source = "supabase";
-      sourceCatalog = supabaseCatalog;
-    } else {
-      source = "fallback";
-      sourceCatalog = FALLBACK_COURSE_CATALOG;
-    }
-  }
+  const source: MatchEngineResult["source"] =
+    geminiCatalog && geminiCatalog.length > 0 ? "gemini" : "gemini_unavailable";
+  const sourceCatalog = geminiCatalog ?? [];
 
   const scoredMatches = sourceCatalog
     .map((course) => scoreCourse(course, parsedIntent, studentScore))

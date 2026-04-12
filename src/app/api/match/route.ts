@@ -67,6 +67,10 @@ export async function POST(request: Request) {
       parsedIntent,
       matches,
       source,
+      message:
+        source === "gemini_unavailable"
+          ? "Gemini did not return AI recommendations. Check GEMINI_API_KEY in production."
+          : undefined,
     });
   } catch (error) {
     console.error("[/api/match] Error:", error);
