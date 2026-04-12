@@ -6,6 +6,7 @@ import { Clock, TrendingUp, Coins, Target, ArrowRight, BarChart2, Check, Sparkle
 import { useRouter } from 'next/navigation';
 import type { CourseMatch } from '@/lib/types';
 import ScholarshipBadge from './ScholarshipBadge';
+import { LeadCaptureModal } from './LeadCaptureModal';
 
 interface OutcomeCardProps {
   course: CourseMatch;
@@ -58,15 +59,17 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
     : course.totalFeeInr;
 
   // Logic: Break-even Calculation (Years to recoup investment assuming 10% salary attribution)
-  const breakEvenYears = (finalFee / ((course.avgCtcInr || 600000) * 0.1)).toFixed(1);
+  const breakEvenYears = course.aiPaybackMonths
+    ? (course.aiPaybackMonths / 12).toFixed(1)
+    : (finalFee / ((course.avgCtcInr || 600000) * 0.1)).toFixed(1);
   
   // Logic: 8-Year Wealth Generation (Salary * 8 - Fee)
   const projectedEarnings = Math.round(((course.avgCtcInr || 600000) * 8 - finalFee) / 100000);
   
   // Updated ROI Display (Simplified for demonstration)
-  const effectiveRoi = course.qualifiedScholarship 
+  const effectiveRoi = course.aiRoiScore ?? (course.qualifiedScholarship 
     ? Math.round((course.roi || 0) * (1 + (course.qualifiedScholarship.discountPercentage / 100)))
-    : course.roi;
+    : course.roi);
 
   return (
     <motion.div 
@@ -85,6 +88,11 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
         <div className="flex-1 mr-4">
           <h3 className="text-xl font-black text-slate-900 leading-tight">{course.universityName}</h3>
           <p className="text-sm font-bold text-slate-400 mt-1">{course.courseName}</p>
+          {course.generatedByAi && (
+            <span className="mt-3 inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-blue-700">
+              Gemini-expanded option
+            </span>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           <div className="h-10 px-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center font-black text-[10px] text-slate-400">
@@ -115,6 +123,20 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
           <div className="rounded-[2rem] border border-blue-100 bg-blue-50/70 p-4">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-500 mb-2">Decision Brief</p>
             <p className="text-sm font-semibold leading-relaxed text-slate-700">{course.decisionSummary}</p>
+          </div>
+        )}
+
+        {course.aiRoiSummary && (
+          <div className="rounded-[2rem] border border-violet-100 bg-violet-50/80 p-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-600">AI ROI Read</p>
+              {course.aiOutcomeBand && (
+                <span className="rounded-full bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-violet-700 shadow-sm">
+                  {course.aiOutcomeBand}
+                </span>
+              )}
+            </div>
+            <p className="text-sm font-semibold leading-relaxed text-slate-700">{course.aiRoiSummary}</p>
           </div>
         )}
 
@@ -166,6 +188,9 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
               <p className="text-base font-black text-blue-900">{effectiveRoi}%</p>
               {course.qualifiedScholarship && <Sparkles className="w-3 h-3 text-emerald-400" />}
             </div>
+            {course.aiRoiScore && (
+              <p className="mt-1 text-[8px] font-black uppercase tracking-wider text-blue-500">AI adjusted</p>
+            )}
           </div>
         </div>
 
@@ -254,12 +279,26 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
         >
           <BarChart2 className="w-4 h-4" /> {isSelected ? 'Selected' : 'Compare'}
         </button>
-        <button 
-          onClick={handleViewDetails}
-          className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
-        >
-          View Details <ArrowRight className="w-4 h-4" />
-        </button>
+        {course.generatedByAi ? (
+          <LeadCaptureModal
+            defaultUniversityName={course.universityName}
+            defaultCourseName={course.courseName}
+            trigger={
+              <button
+                className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+              >
+                Verify & Apply <ArrowRight className="w-4 h-4" />
+              </button>
+            }
+          />
+        ) : (
+          <button 
+            onClick={handleViewDetails}
+            className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+          >
+            View Details <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </motion.div>
   );

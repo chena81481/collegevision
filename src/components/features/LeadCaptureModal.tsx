@@ -55,10 +55,14 @@ export function LeadCaptureModal({
   trigger,
   autoOpen = false,
   onSubmitted,
+  defaultUniversityName,
+  defaultCourseName,
 }: {
   trigger?: React.ReactNode;
   autoOpen?: boolean;
   onSubmitted?: () => void;
+  defaultUniversityName?: string;
+  defaultCourseName?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,7 +73,20 @@ export function LeadCaptureModal({
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(leadSchema),
+    defaultValues: {
+      course: defaultCourseName || "",
+    },
   });
+
+  const courseOptions = defaultCourseName && !ONLINE_COURSES.includes(defaultCourseName)
+    ? [defaultCourseName, ...ONLINE_COURSES]
+    : ONLINE_COURSES;
+
+  useEffect(() => {
+    if (defaultCourseName) {
+      setValue("course", defaultCourseName, { shouldValidate: true });
+    }
+  }, [defaultCourseName, setValue]);
 
   useEffect(() => {
     if (!autoOpen || typeof window === "undefined") return;
@@ -100,9 +117,9 @@ export function LeadCaptureModal({
       formData.append("studentName", data.name);
       formData.append("email", data.email);
       formData.append("phone", data.phone);
-      formData.append("courseName", data.course);
+      formData.append("courseName", data.course || defaultCourseName || "Online Degree");
       formData.append("state", data.state);
-      formData.append("universityName", "General Interest"); 
+      formData.append("universityName", defaultUniversityName || "General Interest");
       if (turnstileToken) {
         formData.append("cf-turnstile-response", turnstileToken);
       }
@@ -240,7 +257,7 @@ export function LeadCaptureModal({
                          </div>
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl border-white/10 bg-slate-900 text-white max-h-[250px]">
-                        {ONLINE_COURSES.map(course => (
+                        {courseOptions.map(course => (
                           <SelectItem key={course} value={course} className="font-bold py-2 md:py-3 transition-colors">
                             {course}
                           </SelectItem>

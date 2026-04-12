@@ -23,7 +23,6 @@ import PartnerLogos from '@/components/features/PartnerLogos';
 import ExperienceJourney from '@/components/features/ExperienceJourney';
 import FunnelBreadcrumbs from '@/components/features/FunnelBreadcrumbs';
 import ComparisonBar from '@/components/features/ComparisonBar';
-import PersistenceToast from '@/components/ui/PersistenceToast';
 import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
 import dynamic from 'next/dynamic';
 import { usePostHog } from 'posthog-js/react';
@@ -91,7 +90,6 @@ export default function CollegeVision() {
   const [user, setUser] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedForComparison, setSelectedForComparison] = useState<Set<string>>(new Set());
-  const [showPersistenceToast, setShowPersistenceToast] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const getJourneySessionId = () => {
@@ -101,18 +99,6 @@ export default function CollegeVision() {
     localStorage.setItem('college_vision_journey_id', created);
     return created;
   };
-
-  // Persistence: Hydrate from localStorage
-  useEffect(() => {
-    const leadCompleted = localStorage.getItem('collegevision_lead_completed');
-    const saved = localStorage.getItem('college_vision_session');
-    if (saved && !leadCompleted) {
-      const data = JSON.parse(saved);
-      if (data.searchQuery) {
-        setShowPersistenceToast(true);
-      }
-    }
-  }, []);
 
   // Save to localStorage
   useEffect(() => {
@@ -125,19 +111,6 @@ export default function CollegeVision() {
     };
     localStorage.setItem('college_vision_session', JSON.stringify(state));
   }, [searchQuery, matchResults, currentStep, selectedForComparison, parsedFilters]);
-
-  const handleResume = () => {
-    const saved = localStorage.getItem('college_vision_session');
-    if (saved) {
-      const data = JSON.parse(saved);
-      setSearchQuery(data.searchQuery || '');
-      setMatchResults(data.matchResults || null);
-      setCurrentStep(data.currentStep || 0);
-      setSelectedForComparison(new Set(data.selectedForComparison || []));
-      setParsedFilters(data.parsedFilters || null);
-    }
-    setShowPersistenceToast(false);
-  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -262,7 +235,6 @@ export default function CollegeVision() {
       <LeadCaptureModal
         autoOpen
         onSubmitted={() => {
-          setShowPersistenceToast(false);
           setSearchQuery('');
           setMatchResults(null);
           setParsedFilters(null);
@@ -476,7 +448,7 @@ export default function CollegeVision() {
 
       {/* 3. MATCHES — Outcome-Driven Redesign */}
       <RealDataMatches 
-        results={matchResults || DEFAULT_COURSES}
+        results={matchResults}
         parsedFilters={parsedFilters}
         onSelect={(id) => {
           setSelectedForComparison(prev => {
@@ -518,12 +490,6 @@ export default function CollegeVision() {
           setIsCompareOpen(true);
         }}
         onClear={() => setSelectedForComparison(new Set())}
-      />
-
-      <PersistenceToast 
-        isVisible={showPersistenceToast}
-        onResume={handleResume}
-        onDismiss={() => setShowPersistenceToast(false)}
       />
 
       <ExperienceJourney />

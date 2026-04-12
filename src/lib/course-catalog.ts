@@ -16,6 +16,8 @@ export interface CatalogCourse {
   approvals: string[];
   category: string;
   badgeLabel: string | null;
+  generatedByAi?: boolean;
+  sourceNote?: string;
   university: {
     name: string;
     slug: string;

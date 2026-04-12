@@ -16,7 +16,14 @@ export interface CourseMatch {
   hasZeroCostEmi: boolean;
   approvals: string[];
   badgeLabel: string | null;
+  generatedByAi?: boolean;
+  sourceNote?: string;
   roi: number | null;          // Calculated dynamically server-side
+  aiRoiScore?: number | null;
+  aiPaybackMonths?: number | null;
+  aiOutcomeBand?: "High" | "Moderate" | "Watchlist" | null;
+  aiRoiSummary?: string | null;
+  aiRoiRisks?: string[];
   category: string;             // e.g. "online-mba"
   matchScore: number;          // 0-100, higher = better match for the query
   confidenceScore: number;     // 0-100, how well the AI understood the intent

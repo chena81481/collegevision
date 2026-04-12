@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     const authToken = session?.access_token;
 
-    const { matches, parsedIntent } = await getMatchesForQuery(query, authToken);
+    const { matches, parsedIntent, source } = await getMatchesForQuery(query, authToken);
     const topMatchIds = matches.map((match) => match.id);
 
     await trackSearchEvent({
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
       success: true,
       parsedIntent,
       matches,
+      source,
     });
   } catch (error) {
     console.error("[/api/match] Error:", error);

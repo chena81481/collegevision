@@ -24,6 +24,7 @@ export interface MatchIntent {
 interface MatchEngineResult {
   parsedIntent: MatchIntent;
   matches: CourseMatch[];
+  source: "gemini" | "supabase" | "fallback";
 }
 
 interface SupabaseCourseRow {
@@ -184,6 +185,167 @@ function canUseSupabaseAdmin() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+function normalizeApprovals(approvals: unknown): string[] {
+  if (!Array.isArray(approvals)) {
+    return ["Verification pending"];
+  }
+
+  const cleaned = approvals
+    .filter((approval): approval is string => typeof approval === "string")
+    .map((approval) => approval.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+
+  return cleaned.length > 0 ? cleaned : ["Verification pending"];
+}
+
+function normalizeDegreeLevel(value: unknown): CatalogCourse["degreeLevel"] {
+  if (value === "Bachelors" || value === "Masters" || value === "Other") {
+    return value;
+  }
+
+  return "Other";
+}
+
+function normalizeNumber(value: unknown, fallback: number, min: number, max: number) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, Math.round(numeric)));
+}
+
+function extractJsonArray(rawText: string) {
+  const cleaned = rawText
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const start = cleaned.indexOf("[");
+  const end = cleaned.lastIndexOf("]");
+
+  if (start === -1 || end === -1 || end <= start) {
+    return null;
+  }
+
+  return cleaned.slice(start, end + 1);
+}
+
+async function fetchGeminiGeneratedCatalog(query: string, intent: MatchIntent): Promise<CatalogCourse[] | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  try {
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `
+You are CollegeVision's Indian online-degree discovery engine.
+Generate 8 relevant online degree recommendations for this student query. Do not limit yourself to the app's manual catalog.
+
+Rules:
+- Prefer Indian online universities/programs that are commonly known for online or distance learning.
+- If exact fee, CTC, EMI, or approval data is uncertain, provide conservative estimates and include "Verification pending" in approvals.
+- Do not invent official partnerships.
+- Return only a valid JSON array. No markdown and no explanation.
+- Each item must have these keys:
+universityName, universitySlug, courseName, degreeLevel, durationMonths, totalFeeInr, avgCtcInr, hasZeroCostEmi, approvals, category, badgeLabel, isPremium, sourceNote
+
+Student query: "${query.trim()}"
+Parsed intent:
+${JSON.stringify(intent)}
+    `.trim();
+
+    const result = await model.generateContent(prompt);
+    const jsonText = extractJsonArray(result.response.text());
+
+    if (!jsonText) {
+      return null;
+    }
+
+    const parsed = JSON.parse(jsonText);
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    const courses = parsed
+      .map((item: any, index: number): CatalogCourse | null => {
+        const universityName =
+          typeof item?.universityName === "string" && item.universityName.trim()
+            ? item.universityName.trim()
+            : null;
+        const courseName =
+          typeof item?.courseName === "string" && item.courseName.trim()
+            ? item.courseName.trim()
+            : intent.degreeType
+              ? `Online ${intent.degreeType.toUpperCase()}`
+              : "Online Degree";
+
+        if (!universityName) {
+          return null;
+        }
+
+        const universitySlug =
+          typeof item?.universitySlug === "string" && item.universitySlug.trim()
+            ? slugify(item.universitySlug)
+            : slugify(universityName);
+        const category =
+          typeof item?.category === "string" && item.category.trim()
+            ? slugify(item.category)
+            : intent.degreeType
+              ? `online-${slugify(intent.degreeType)}`
+              : "online-degrees";
+
+        return {
+          id: `gemini-${universitySlug}-${slugify(courseName)}-${index + 1}`,
+          name: courseName,
+          degreeLevel: normalizeDegreeLevel(item?.degreeLevel),
+          durationMonths: normalizeNumber(item?.durationMonths, intent.studentLevel === "Bachelors" ? 36 : 24, 6, 60),
+          totalFeeInr: normalizeNumber(item?.totalFeeInr, 150000, 20000, 800000),
+          avgCtcInr: normalizeNumber(item?.avgCtcInr, 600000, 200000, 2500000),
+          hasZeroCostEmi: Boolean(item?.hasZeroCostEmi),
+          approvals: normalizeApprovals(item?.approvals),
+          category,
+          badgeLabel:
+            typeof item?.badgeLabel === "string" && item.badgeLabel.trim()
+              ? item.badgeLabel.trim().slice(0, 32)
+              : "AI Suggested",
+          generatedByAi: true,
+          sourceNote:
+            typeof item?.sourceNote === "string" && item.sourceNote.trim()
+              ? item.sourceNote.trim().slice(0, 180)
+              : "AI-generated recommendation. Verify final fees, approvals and eligibility with the university before applying.",
+          university: {
+            name: universityName,
+            slug: universitySlug,
+            logoUrl: null,
+            gradientStart: index % 2 === 0 ? "from-blue-50" : "from-emerald-50",
+            gradientEnd: "to-white",
+            isPremium: Boolean(item?.isPremium),
+          },
+        };
+      })
+      .filter((course): course is CatalogCourse => Boolean(course));
+
+    return courses.length > 0 ? courses : null;
+  } catch (error) {
+    console.error("[match-engine] Gemini catalog generation failed:", error);
+    return null;
+  }
+}
+
 async function fetchCatalogFromSupabase(): Promise<CatalogCourse[] | null> {
   if (!canUseSupabaseAdmin()) {
     return null;
@@ -251,6 +413,7 @@ async function fetchCatalogFromSupabase(): Promise<CatalogCourse[] | null> {
       approvals: course.approvals ?? [],
       category: course.category ?? "online-degrees",
       badgeLabel: course.badge_label ?? null,
+      generatedByAi: false,
       scholarships: (course.scholarships ?? []).map((item) => ({
         name: item.name,
         minScore: item.min_score,
@@ -446,6 +609,12 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
   }
 
   const cautionFlags: string[] = [];
+  if (course.generatedByAi) {
+    cautionFlags.push("AI-expanded option: verify final approvals, fees, eligibility, and EMI terms before applying.");
+  }
+  if (course.sourceNote) {
+    cautionFlags.push(course.sourceNote);
+  }
   if (intent.maxBudgetINR && course.totalFeeInr > intent.maxBudgetINR) {
     cautionFlags.push("Sits above your stated budget, so treat this as a stretch option.");
   }
@@ -496,6 +665,8 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
       hasZeroCostEmi: course.hasZeroCostEmi,
       approvals: course.approvals,
       badgeLabel: course.badgeLabel,
+      generatedByAi: course.generatedByAi,
+      sourceNote: course.sourceNote,
       roi: Math.max(100, Math.round((roi.totalReturnsFiveYears / course.totalFeeInr) * 100)),
       category: course.category,
       matchScore: normalizedScore,
@@ -513,19 +684,164 @@ function scoreCourse(course: CatalogCourse, intent: MatchIntent, studentScore: n
   };
 }
 
+async function enrichMatchesWithAiRoi(
+  query: string,
+  intent: MatchIntent,
+  matches: CourseMatch[]
+): Promise<CourseMatch[]> {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey || matches.length === 0) {
+    return matches;
+  }
+
+  try {
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `
+You are CollegeVision's AI ROI analyst for Indian online degrees.
+Analyze these matched courses and estimate practical ROI for a student. Use the numeric formula ROI as a baseline, but adjust for brand signal, approval certainty, affordability, career fit, EMI risk, and data confidence.
+
+Return only a valid JSON array. No markdown.
+Each item must use exactly these keys:
+id, aiRoiScore, aiPaybackMonths, aiOutcomeBand, aiRoiSummary, aiRoiRisks
+
+Rules:
+- aiRoiScore is a percentage from 100 to 2500.
+- aiPaybackMonths is a realistic integer from 3 to 96.
+- aiOutcomeBand must be "High", "Moderate", or "Watchlist".
+- aiRoiSummary must be one short student-friendly sentence.
+- aiRoiRisks must be 1-3 short warning strings.
+- If university data is AI-generated or verification pending, be more conservative.
+
+Student query: "${query.trim()}"
+Parsed intent: ${JSON.stringify(intent)}
+Matches: ${JSON.stringify(
+      matches.map((match) => ({
+        id: match.id,
+        universityName: match.universityName,
+        courseName: match.courseName,
+        totalFeeInr: match.totalFeeInr,
+        avgCtcInr: match.avgCtcInr,
+        durationMonths: match.durationMonths,
+        formulaRoi: match.roi,
+        hasZeroCostEmi: match.hasZeroCostEmi,
+        approvals: match.approvals,
+        generatedByAi: match.generatedByAi,
+        decisionSummary: match.decisionSummary,
+      }))
+    )}
+    `.trim();
+
+    const result = await model.generateContent(prompt);
+    const jsonText = extractJsonArray(result.response.text());
+    if (!jsonText) {
+      return matches;
+    }
+
+    const parsed = JSON.parse(jsonText);
+    if (!Array.isArray(parsed)) {
+      return matches;
+    }
+
+    const aiRoiById = new Map<string, any>();
+    for (const item of parsed) {
+      if (typeof item?.id === "string") {
+        aiRoiById.set(item.id, item);
+      }
+    }
+
+    return matches.map((match) => {
+      const aiRoi = aiRoiById.get(match.id);
+      if (!aiRoi) {
+        return match;
+      }
+
+      const aiRoiScore = normalizeNumber(aiRoi.aiRoiScore, match.roi ?? 100, 100, 2500);
+      const aiPaybackMonths = normalizeNumber(
+        aiRoi.aiPaybackMonths,
+        Math.round((match.totalFeeInr / Math.max(match.avgCtcInr ?? 600000, 1)) * 12),
+        3,
+        96
+      );
+      const aiOutcomeBand =
+        aiRoi.aiOutcomeBand === "High" ||
+        aiRoi.aiOutcomeBand === "Moderate" ||
+        aiRoi.aiOutcomeBand === "Watchlist"
+          ? aiRoi.aiOutcomeBand
+          : aiRoiScore >= 900
+            ? "High"
+            : aiRoiScore >= 450
+              ? "Moderate"
+              : "Watchlist";
+      const aiRoiSummary =
+        typeof aiRoi.aiRoiSummary === "string" && aiRoi.aiRoiSummary.trim()
+          ? aiRoi.aiRoiSummary.trim().slice(0, 180)
+          : null;
+      const aiRoiRisks = Array.isArray(aiRoi.aiRoiRisks)
+        ? aiRoi.aiRoiRisks
+            .filter((risk: unknown): risk is string => typeof risk === "string")
+            .map((risk: string) => risk.trim())
+            .filter(Boolean)
+            .slice(0, 3)
+        : [];
+
+      return {
+        ...match,
+        roi: aiRoiScore,
+        aiRoiScore,
+        aiPaybackMonths,
+        aiOutcomeBand,
+        aiRoiSummary,
+        aiRoiRisks,
+        matchReasons: aiRoiSummary
+          ? [aiRoiSummary, ...(match.matchReasons ?? [])].slice(0, 3)
+          : match.matchReasons,
+        cautionFlags: [...(match.cautionFlags ?? []), ...aiRoiRisks].slice(0, 4),
+      };
+    });
+  } catch (error) {
+    console.error("[match-engine] Gemini ROI enrichment failed:", error);
+    return matches;
+  }
+}
+
 export async function getMatchesForQuery(
   query: string,
   authToken?: string
 ): Promise<MatchEngineResult> {
   const parsedIntent = await buildIntent(query);
-  const [catalog, studentScore] = await Promise.all([
+  const [supabaseCatalog, geminiCatalog, studentScore] = await Promise.all([
     fetchCatalogFromSupabase(),
+    fetchGeminiGeneratedCatalog(query, parsedIntent),
     fetchStudentScore(authToken),
   ]);
 
-  const sourceCatalog = catalog && catalog.length > 0 ? catalog : FALLBACK_COURSE_CATALOG;
+  const source =
+    geminiCatalog && geminiCatalog.length > 0
+      ? "gemini"
+      : supabaseCatalog && supabaseCatalog.length > 0
+        ? "supabase"
+        : "fallback";
 
-  const matches = sourceCatalog
+  const sourceCatalog =
+    source === "gemini"
+      ? [
+          ...(geminiCatalog ?? []),
+          ...(supabaseCatalog ?? []).filter(
+            (course) =>
+              !(geminiCatalog ?? []).some(
+                (generated) =>
+                  generated.university.slug === course.university.slug &&
+                  generated.name.toLowerCase() === course.name.toLowerCase()
+              )
+          ),
+        ]
+      : source === "supabase"
+        ? supabaseCatalog ?? []
+        : FALLBACK_COURSE_CATALOG;
+
+  const scoredMatches = sourceCatalog
     .map((course) => scoreCourse(course, parsedIntent, studentScore))
     .filter((item): item is NonNullable<typeof item> => Boolean(item))
     .sort((left, right) => {
@@ -537,11 +853,14 @@ export async function getMatchesForQuery(
       }
       return left.match.totalFeeInr - right.match.totalFeeInr;
     })
-    .slice(0, 3)
+    .slice(0, 6)
     .map((item) => item.match);
+
+  const matches = await enrichMatchesWithAiRoi(query, parsedIntent, scoredMatches);
 
   return {
     parsedIntent,
     matches,
+    source,
   };
 }

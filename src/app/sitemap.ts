@@ -10,6 +10,9 @@ const siteUrl =
     : "https://collegevision.in";
 const now = new Date();
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const staticRoutes = [
   "",
   "/universities",
@@ -35,6 +38,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: path === "" ? "daily" : "weekly",
     priority: index === 0 ? 1 : path === "/universities" ? 0.95 : 0.85,
   }));
+
+  const contentEntries: MetadataRoute.Sitemap = [
+    ...blogArticles.map((article) => ({
+      url: `${siteUrl}/blog/${article.slug}`,
+      lastModified: new Date(article.updatedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.72,
+    })),
+    ...pillarPages.map((page) => ({
+      url: `${siteUrl}/rankings/${page.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.74,
+    })),
+  ];
 
   try {
     const supabase = createAdminClient();
@@ -92,18 +110,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const allEntries = [
       ...baseEntries,
-      ...blogArticles.map((article) => ({
-        url: `${siteUrl}/blog/${article.slug}`,
-        lastModified: new Date(article.updatedAt),
-        changeFrequency: "monthly" as const,
-        priority: 0.72,
-      })),
-      ...pillarPages.map((page) => ({
-        url: `${siteUrl}/rankings/${page.slug}`,
-        lastModified: now,
-        changeFrequency: "monthly" as const,
-        priority: 0.74,
-      })),
+      ...contentEntries,
       ...categoryEntries,
       ...genericUniversityEntries,
       ...categoryUniversityEntries,
@@ -117,6 +124,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   } catch (error) {
     console.error("[sitemap] Falling back to static routes:", error);
-    return baseEntries;
+    return [...baseEntries, ...contentEntries];
   }
 }
