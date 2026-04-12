@@ -219,7 +219,7 @@ Query: "${query.trim()}"
     `.trim();
 
     const result = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash-lite",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
     const rawText = (result.text || "")
@@ -455,9 +455,9 @@ Parsed Intent: ${JSON.stringify(intent)}
 
     let result;
     const modelsToTry = [
-      { name: "gemini-2.0-flash", grounded: true },
-      { name: "gemini-1.5-pro", grounded: true },
-      { name: "gemini-1.5-flash", grounded: false },
+      { name: "gemini-2.5-flash", grounded: true },
+      { name: "gemini-2.5-flash-lite", grounded: true },
+      { name: "gemini-2.5-flash-lite", grounded: false },
     ];
 
     const attemptErrors: any[] = [];
@@ -935,7 +935,7 @@ Matches: ${JSON.stringify(
     `.trim();
 
     const result = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash-lite",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
     const jsonText = extractJsonArray(result.text || "");
