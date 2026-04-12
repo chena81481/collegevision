@@ -899,35 +899,24 @@ export async function getMatchesForQuery(
   authToken?: string
 ): Promise<MatchEngineResult> {
   const parsedIntent = await buildIntent(query);
-  const [supabaseCatalog, geminiCatalog, studentScore] = await Promise.all([
-    fetchCatalogFromSupabase(),
+  const [geminiCatalog, studentScore] = await Promise.all([
     fetchGeminiGeneratedCatalog(query, parsedIntent),
     fetchStudentScore(authToken),
   ]);
 
-  const source =
-    geminiCatalog && geminiCatalog.length > 0
-      ? "gemini"
-      : supabaseCatalog && supabaseCatalog.length > 0
-        ? "supabase"
-        : "fallback";
+  let source: MatchEngineResult["source"] = "gemini";
+  let sourceCatalog = geminiCatalog ?? [];
 
-  const sourceCatalog =
-    source === "gemini"
-      ? [
-          ...(geminiCatalog ?? []),
-          ...(supabaseCatalog ?? []).filter(
-            (course) =>
-              !(geminiCatalog ?? []).some(
-                (generated) =>
-                  generated.university.slug === course.university.slug &&
-                  generated.name.toLowerCase() === course.name.toLowerCase()
-              )
-          ),
-        ]
-      : source === "supabase"
-        ? supabaseCatalog ?? []
-        : FALLBACK_COURSE_CATALOG;
+  if (sourceCatalog.length === 0) {
+    const supabaseCatalog = await fetchCatalogFromSupabase();
+    if (supabaseCatalog && supabaseCatalog.length > 0) {
+      source = "supabase";
+      sourceCatalog = supabaseCatalog;
+    } else {
+      source = "fallback";
+      sourceCatalog = FALLBACK_COURSE_CATALOG;
+    }
+  }
 
   const scoredMatches = sourceCatalog
     .map((course) => scoreCourse(course, parsedIntent, studentScore))
