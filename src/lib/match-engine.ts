@@ -56,13 +56,21 @@ interface SupabaseCourseRow {
 }
 
 function getGeminiApiKey() {
-  return (
+  const key = (
     process.env.GEMINI_API_KEY ||
     process.env.GOOGLE_API_KEY ||
     process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
     process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
     ""
   ).trim();
+  
+  if (!key) {
+    console.error("[match-engine] CRITICAL: No Gemini API Key found in environment variables.");
+  } else {
+    console.log("[match-engine] API Key found (ends with ...%s)", key.slice(-4));
+  }
+  
+  return key;
 }
 
 const STRICT_BUDGET_PATTERN =
@@ -440,14 +448,40 @@ Student Query: "${query.trim()}"
 Parsed Intent: ${JSON.stringify(intent)}
 `;
 
-    const result = await ai.models.generateContent({
-      model: "gemini-1.5-pro",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: {
-        tools: [{ googleSearch: {} } as any],
-      },
-    });
-    const parsed = parseGeminiCatalogText(result.text || "");
+    let result;
+    const modelsToTry = [
+      { name: "gemini-2.0-flash", grounded: true },
+      { name: "gemini-1.5-pro", grounded: true },
+      { name: "gemini-1.5-flash", grounded: false },
+    ];
+
+    for (const modelInfo of modelsToTry) {
+      try {
+        console.log(`[match-engine] Attempting match discovery with ${modelInfo.name} (grounded: ${modelInfo.grounded})...`);
+        const tools = modelInfo.grounded ? [{ googleSearch: {} } as any] : undefined;
+        
+        result = await ai.models.generateContent({
+          model: modelInfo.name,
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          config: tools ? { tools } : undefined,
+        });
+        
+        if (result.text) {
+          console.log(`[match-engine] Successfully received results from ${modelInfo.name}`);
+          break;
+        }
+      } catch (error) {
+        console.warn(`[match-engine] Call to ${modelInfo.name} failed:`, error);
+        continue;
+      }
+    }
+
+    if (!result || !result.text) {
+      console.error("[match-engine] ALL Gemini model attempts failed. Returning empty matches.");
+      return null;
+    }
+
+    const parsed = parseGeminiCatalogText(result.text);
 
     const courses = parsed ? mapGeminiCatalogItems(parsed, intent) : [];
 
