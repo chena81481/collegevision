@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 import { calculateROI } from "@/lib/roi-calculator";
 import { parseQuery } from "@/lib/query-parser";
@@ -192,8 +192,7 @@ async function buildIntent(query: string): Promise<MatchIntent> {
   }
 
   try {
-    const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `
 Extract structured requirements from this college search query.
 Return only valid JSON with these exact keys:
@@ -206,9 +205,11 @@ Normalize common typos:
 Query: "${query.trim()}"
     `.trim();
 
-    const result = await model.generateContent(prompt);
-    const rawText = result.response
-      .text()
+    const result = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+    const rawText = (result.text || "")
       .replace(/```json/gi, "")
       .replace(/```/g, "")
       .trim();
@@ -406,67 +407,51 @@ async function fetchGeminiGeneratedCatalog(query: string, intent: MatchIntent): 
   }
 
   try {
-    const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `
-You are CollegeVision's Indian online-degree discovery engine.
-Generate 8 relevant online degree recommendations for this student query. Do not limit yourself to the app's manual catalog.
+You are the CollegeVision Discovery Engine, a premium Indian EdTech consultant.
+Your mission is to recommend the 3-5 best Indian Online or Distance universities based on the student's budget, career goal, and timeline.
 
-Rules:
-- Preserve hard institution preferences. If targetInstitution is "IIM", return IIM/IIM-associated executive management options first, not generic private universities.
-- Preserve program format. If programFormat is "Executive", prefer executive MBA, executive PGDM, executive PGP, or senior-management online/blended programs.
-- Correct typo intent: "excutive online mba program in iim" means executive online MBA/management programs from IIMs.
-- If no exact "online executive MBA" is confidently available from an IIM, return the closest IIM online/blended executive management options and say that exact naming must be verified in sourceNote.
-- Prefer Indian online universities/programs that are commonly known for online or distance learning.
-- If exact fee, CTC, EMI, or approval data is uncertain, provide conservative estimates and include "Verification pending" in approvals.
-- Do not invent official partnerships.
-- Return only a valid JSON array. No markdown and no explanation.
-- Each item must have these keys:
-universityName, universitySlug, courseName, degreeLevel, durationMonths, totalFeeInr, avgCtcInr, hasZeroCostEmi, approvals, category, badgeLabel, isPremium, sourceNote
+SEARCH GROUNDING INSTRUCTIONS:
+- Use Google Search to verify the latest 2026 tuition fees, UGC-DEB/AICTE/NAAC approval statuses, and average placement CTCs for Indian universities.
+- Focus on top-tier providers (e.g., Amity, Manipal, LPU, Jain, Cu, Symbiosis, IIMs, IITs).
 
-Student query: "${query.trim()}"
-Parsed intent:
-${JSON.stringify(intent)}
-    `.trim();
+RULES:
+- For "Executive" intent or "IIM" queries, prioritize IIM Executive PGP/PGDM or specialized management certificates.
+- If the budget is strict, do NOT exceed it unless the ROI is exceptional, in which case explain why it is a "stretch" option in the sourceNote.
+- Return ONLY a valid JSON array of objects. No markdown.
 
-    const result = await model.generateContent(prompt);
-    const parsed = parseGeminiCatalogText(result.response.text());
+JSON SCHEMA:
+大学 (universityName): String
+universitySlug: String (kebab-case)
+courseName: String
+degreeLevel: "Bachelors" | "Masters" | "Other"
+durationMonths: Number
+totalFeeInr: Number
+avgCtcInr: Number
+hasZeroCostEmi: Boolean
+approvals: String[]
+category: String (kebab-case)
+badgeLabel: String (e.g. "Global Brand", "Best Placement", "Budget Winner")
+isPremium: Boolean
+sourceNote: String (Max 150 chars: explaining why this fits the query + grounding verification note)
+
+Student Query: "${query.trim()}"
+Parsed Intent: ${JSON.stringify(intent)}
+`;
+
+    const result = await ai.models.generateContent({
+      model: "gemini-1.5-pro",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        tools: [{ googleSearch: {} } as any],
+      },
+    });
+    const parsed = parseGeminiCatalogText(result.text || "");
 
     const courses = parsed ? mapGeminiCatalogItems(parsed, intent) : [];
 
-    if (courses.length > 0) {
-      return courses;
-    }
-
-    const retryPrompt = `
-Return JSON only:
-[
-  {
-    "universityName": "Example University",
-    "universitySlug": "example-university",
-    "courseName": "Online MBA",
-    "degreeLevel": "Masters",
-    "durationMonths": 24,
-    "totalFeeInr": 150000,
-    "avgCtcInr": 600000,
-    "hasZeroCostEmi": true,
-    "approvals": ["Verification pending"],
-    "category": "online-mba",
-    "badgeLabel": "AI Suggested",
-    "isPremium": false,
-    "sourceNote": "Verify final details before applying."
-  }
-]
-
-Create 6 Indian online-degree recommendations for: "${query.trim()}".
-Use the user's requested institution/program format when present. If the query mentions IIM, list IIM/IIM-associated executive management options first.
-    `.trim();
-
-    const retryResult = await model.generateContent(retryPrompt);
-    const retryParsed = parseGeminiCatalogText(retryResult.response.text());
-    const retryCourses = retryParsed ? mapGeminiCatalogItems(retryParsed, intent) : [];
-
-    return retryCourses.length > 0 ? retryCourses : null;
+    return courses;
   } catch (error) {
     console.error("[match-engine] Gemini catalog generation failed:", error);
     return null;
@@ -860,8 +845,7 @@ async function enrichMatchesWithAiRoi(
   }
 
   try {
-    const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `
 You are CollegeVision's AI ROI analyst for Indian online degrees.
 Analyze these matched courses and estimate practical ROI for a student. Use the numeric formula ROI as a baseline, but adjust for brand signal, approval certainty, affordability, career fit, EMI risk, and data confidence.
@@ -897,8 +881,11 @@ Matches: ${JSON.stringify(
     )}
     `.trim();
 
-    const result = await model.generateContent(prompt);
-    const jsonText = extractJsonArray(result.response.text());
+    const result = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+    const jsonText = extractJsonArray(result.text || "");
     if (!jsonText) {
       return matches;
     }
