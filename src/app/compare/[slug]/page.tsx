@@ -10,8 +10,6 @@ import {
 import { createAdminClient, getCachedUniversityData } from '@/utils/supabase/admin';
 import { formatINR } from '@/app/[category]/[slug]/utils';
 import Script from 'next/script';
-import { createClient } from '@/utils/supabase/server';
-import { trackUniversityComparison } from '@/lib/student-journey';
 import { calculateROI } from '@/lib/roi-calculator';
 import { FALLBACK_COURSE_CATALOG } from '@/lib/course-catalog';
 
@@ -114,23 +112,10 @@ export default async function CompareUniversities({ params }: ComparePageProps) 
 
   if (!uni1 || !uni2) notFound();
 
-  const u1Course = uni1.courses?.[0] || {};
-  const u2Course = uni2.courses?.[0] || {};
+  const u1Course = uni1.courses?.[0];
+  const u2Course = uni2.courses?.[0];
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  await trackUniversityComparison({
-    user,
-    primaryUniversitySlug: uni1.slug,
-    comparedUniversitySlug: uni2.slug,
-    comparedCourseIds: [u1Course.id, u2Course.id].filter(Boolean),
-    metadata: {
-      source: 'compare_page',
-    },
-  });
+  if (!u1Course || !u2Course) notFound();
 
   const u1ROIModel = u1Course.avg_ctc_inr && u1Course.total_fee_inr
     ? calculateROI({

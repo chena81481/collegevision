@@ -86,6 +86,10 @@ export default async function UniversityProfile({ params, searchParams }: Univer
   const { data: { user } } = await supabase.auth.getUser();
 
   const selectedCourse = university.courses.find((c: any) => c.id === searchCourseId) || university.courses[0];
+  
+  if (!selectedCourse) {
+    notFound();
+  }
   const avgCtc = selectedCourse?.avg_ctc_inr ?? 0;
   const totalFee = selectedCourse?.total_fee_inr ?? 0;
   const roi = avgCtc && totalFee ? Math.round(((avgCtc * 3 - totalFee) / totalFee) * 100) : null;

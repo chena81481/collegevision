@@ -31,7 +31,7 @@ const leadSchema = z.object({
   course: z.string().min(1, "Please select a course"),
   state: z.string().min(1, "Please select your state"),
   spamPromise: z.literal(true, {
-    errorMap: () => ({ message: "You must agree to the zero-spam promise" }),
+    message: "You must agree to the zero-spam promise",
   }),
 });
 

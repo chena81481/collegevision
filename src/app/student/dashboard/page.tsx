@@ -487,7 +487,7 @@ export default function StudentDashboard() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleApply(match.course_id, match.course.university_id)}
+                          onClick={() => handleApply(match.course_id, match.course?.university_id)}
                           disabled={isSubmitting === match.course_id}
                           className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-colors shadow-sm text-center disabled:opacity-50"
                         >
