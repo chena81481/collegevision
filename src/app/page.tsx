@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { 
   Search, ShieldCheck, CheckCircle2, Lock, ArrowRight, Star, 
   GraduationCap, Info, Menu, X, Wallet, Target, Landmark, 
-  ArrowDown, ChevronLeft, ChevronRight, Heart, Sparkles
+  ArrowDown, ChevronLeft, ChevronRight, Heart, Sparkles, MessageCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -769,14 +769,32 @@ export default function CollegeVision() {
         </div>
 
         {/* STEP 5: Sticky Bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-[80] transition-opacity">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-[80] flex flex-col sm:flex-row gap-3">
+          <button 
+            onClick={() => {
+              const manuallySelected = (matchResults ?? DEFAULT_COURSES).filter((course) =>
+                selectedForComparison.has(course.id)
+              );
+              const comparisonSet = (manuallySelected.length >= 2
+                ? manuallySelected
+                : (matchResults ?? DEFAULT_COURSES)
+              ).slice(0, 3);
+              const top = comparisonSet[0];
+              const text = `Found a UGC-Approved ${top.courseName} at ${top.universityName}. Fee: ₹${(top.totalFeeInr/100000).toFixed(1)}L. ROI is ${(top.roi!/100).toFixed(1)}x. Check the breakdown here: https://collegevision.in/universities/${top.universitySlug}`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            }}
+            className="flex-1 border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 py-4 rounded-[2rem] text-xs font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest active:scale-[0.98]"
+          >
+            <MessageCircle className="w-4 h-4" /> Share ROI Report with Parent
+          </button>
+
           <button 
             onClick={() => {
               setIsCompareOpen(false);
               setCurrentStep(3); // Advance to Application
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-[2rem] text-sm font-black transition-all shadow-xl shadow-blue-100 uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-[0.98] animate-in slide-in-from-bottom-5 duration-500"
+            className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-[2rem] text-sm font-black transition-all shadow-xl shadow-blue-100 uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-[0.98]"
           >
             🔥 Get Admission Help Now <ArrowRight className="w-5 h-5" />
           </button>

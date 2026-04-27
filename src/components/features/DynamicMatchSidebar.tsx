@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, BarChart3, TrendingUp, CheckCircle, Info, Filter, Search, BadgeIndianRupee, ShieldCheck } from 'lucide-react';
+import { Sparkles, BarChart3, TrendingUp, CheckCircle, Info, Filter, Search, BadgeIndianRupee, ShieldCheck, HelpCircle } from 'lucide-react';
 import { usePostHog } from 'posthog-js/react';
 import type { CourseMatch } from '@/lib/types';
 import { parseIntentFromQuery } from '@/lib/intent-utils';
+import Tooltip from '@/components/ui/Tooltip';
 
 interface DynamicMatchSidebarProps {
   isSearching: boolean;
@@ -17,6 +18,7 @@ export default function DynamicMatchSidebar({ isSearching, results, query }: Dyn
   const [currentIndex, setCurrentIndex] = useState(0);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [isReacting, setIsReacting] = useState(false);
   const posthog = usePostHog();
 
   const loadingSteps = [
@@ -61,6 +63,15 @@ export default function DynamicMatchSidebar({ isSearching, results, query }: Dyn
     return () => window.clearInterval(timer);
   }, [isSearching, results]);
 
+  // Reactive "Thinking" pulse when query updates in real-time
+  useEffect(() => {
+    if (!query || query.length <= 3 || isSearching || (results && results.length > 0)) return;
+    
+    setIsReacting(true);
+    const timer = setTimeout(() => setIsReacting(false), 800);
+    return () => clearTimeout(timer);
+  }, [query, isSearching, results]);
+
   const activeResults = results || [];
   const previewPrompts = [
     'online mba under 2 lakh with emi',
@@ -78,7 +89,7 @@ export default function DynamicMatchSidebar({ isSearching, results, query }: Dyn
       <AnimatePresence mode="wait">
         
         {/* 1. INITIAL EMPTY STATE (Before User Interacts) */}
-        {!isSearching && activeResults.length === 0 && (!query || query.length <= 3) && (
+        {!isSearching && activeResults.length === 0 && (
           <motion.div 
             key="empty"
             initial={{ opacity: 0 }} 
@@ -86,37 +97,65 @@ export default function DynamicMatchSidebar({ isSearching, results, query }: Dyn
             exit={{ opacity: 0 }}
             className="flex flex-col h-full"
           >
-            <div className="rounded-[2.5rem] border border-slate-200 bg-white shadow-xl overflow-hidden flex-1 flex flex-col">
-              <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white">
+            <div className={`rounded-[2.5rem] border transition-all duration-500 overflow-hidden flex-1 flex flex-col ${isReacting ? 'border-blue-400 shadow-2xl shadow-blue-500/20 bg-blue-50/10' : 'border-slate-200 bg-white shadow-xl'}`}>
+              <div className={`px-5 py-4 border-b transition-colors duration-500 ${isReacting ? 'bg-blue-600 border-blue-500' : 'bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 border-slate-100'} text-white`}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-blue-200">AI Match Preview</p>
-                    <h3 className="mt-1 text-lg font-black">Tell CollegeVision what matters</h3>
+                    <p className={`text-[10px] font-black uppercase tracking-[0.24em] transition-colors ${isReacting ? 'text-blue-100' : 'text-blue-200'}`}>
+                      {isReacting ? 'AI is Processing...' : 'AI Match Preview'}
+                    </p>
+                    <h3 className="mt-1 text-lg font-black">
+                      {isReacting ? 'Evaluating Options' : 'Tell CollegeVision what matters'}
+                    </h3>
                   </div>
-                  <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-blue-200" />
-                  </div>
+                  <motion.div 
+                    animate={isReacting ? { rotate: 360, scale: [1, 1.2, 1] } : {}}
+                    transition={isReacting ? { duration: 0.8, repeat: Infinity } : {}}
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${isReacting ? 'bg-white/20' : 'bg-white/10'}`}
+                  >
+                    <Sparkles className={`w-5 h-5 transition-colors ${isReacting ? 'text-white' : 'text-blue-200'}`} />
+                  </motion.div>
                 </div>
               </div>
 
               <div className="p-5 flex-1 flex flex-col">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className={`rounded-2xl border transition-all duration-500 px-4 py-3 ${isReacting ? 'border-blue-200 bg-blue-50 shadow-sm' : 'border-slate-200 bg-slate-50'}`}>
                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    <Search className="w-3.5 h-3.5" />
-                    Example Search
+                    <Search className={`w-3.5 h-3.5 ${isReacting ? 'text-blue-500 animate-pulse' : ''}`} />
+                    {query ? 'Current Goal' : 'Example Search'}
                   </div>
-                  <AnimatePresence mode="wait">
-                    <motion.p
-                      key={previewPrompts[previewIndex]}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.35 }}
-                      className="mt-2 text-sm font-bold text-slate-800"
-                    >
-                      {previewPrompts[previewIndex]}
-                    </motion.p>
-                  </AnimatePresence>
+                  
+                  <div className="min-h-[1.5rem] mt-2">
+                    {query ? (
+                       <div className="flex flex-wrap gap-1.5">
+                         {parseIntentFromQuery(query).map((token, i) => (
+                           <motion.span 
+                             key={`${token.value}-${i}`}
+                             initial={{ opacity: 0, scale: 0.8 }}
+                             animate={{ opacity: 1, scale: 1 }}
+                             className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase border transition-colors ${
+                               isReacting ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600'
+                             }`}
+                           >
+                             {token.value}
+                           </motion.span>
+                         ))}
+                       </div>
+                    ) : (
+                      <AnimatePresence mode="wait">
+                        <motion.p
+                          key={previewPrompts[previewIndex]}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.35 }}
+                          className="text-sm font-bold text-slate-800"
+                        >
+                          {previewPrompts[previewIndex]}
+                        </motion.p>
+                      </AnimatePresence>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -124,21 +163,34 @@ export default function DynamicMatchSidebar({ isSearching, results, query }: Dyn
                     <motion.div
                       key={card.name}
                       animate={{
-                        scale: previewIndex === index ? 1 : 0.97,
-                        opacity: previewIndex === index ? 1 : 0.58,
-                        y: previewIndex === index ? 0 : 4,
+                        scale: isReacting ? 1.02 : (query ? 1 : (previewIndex === index ? 1 : 0.97)),
+                        opacity: isReacting ? 0.9 : (query ? 0.8 : (previewIndex === index ? 1 : 0.58)),
+                        y: isReacting ? 0 : (query ? 0 : (previewIndex === index ? 0 : 4)),
+                        borderColor: isReacting && index === 0 ? 'rgba(59, 130, 246, 0.5)' : 'rgba(226, 232, 240, 1)'
                       }}
                       transition={{ duration: 0.35 }}
-                      className="rounded-2xl border border-slate-200 bg-white p-4"
+                      className="rounded-2xl border bg-white p-4 relative"
                     >
+                      {isReacting && index === 0 && (
+                        <div className="absolute inset-0 bg-blue-500/5 animate-pulse rounded-2xl" />
+                      )}
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <h4 className="text-sm font-black text-slate-900">{card.name}</h4>
-                          <p className="mt-1 text-xs text-slate-500">{card.detail}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {isReacting ? 'Recalculating fit score...' : card.detail}
+                          </p>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black text-white ${card.accent}`}>
-                          {card.fit}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black text-white transition-all ${isReacting ? 'bg-blue-600 scale-110' : card.accent}`}>
+                            {isReacting ? '...' : card.fit}
+                          </span>
+                          {!isReacting && (
+                            <Tooltip content={`High fit score based on ${card.detail.toLowerCase()}.`}>
+                              <HelpCircle className="w-3 h-3 text-slate-300" />
+                            </Tooltip>
+                          )}
+                        </div>
                       </div>
                     </motion.div>
                   ))}
@@ -241,6 +293,9 @@ export default function DynamicMatchSidebar({ isSearching, results, query }: Dyn
               <div className="flex justify-between items-start mb-4">
                 <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> {activeResults[currentIndex].matchScore}% Match Score
+                  <Tooltip content="Score based on ROI, degree level alignment, and budget fit.">
+                    <HelpCircle className="w-3 h-3 text-blue-400 cursor-help" />
+                  </Tooltip>
                 </div>
                 <button className="text-slate-300 hover:text-blue-600 transition-colors">
                   <Info className="w-4 h-4" />

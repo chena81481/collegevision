@@ -2,7 +2,10 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import type { MatcherInput, MatchResult } from '@/utils/matcher';
 import { findVectorMatches } from '@/app/actions/match';
-import { Sparkles, Loader2, Trophy } from 'lucide-react';
+import { Sparkles, Loader2, Trophy, HelpCircle, GraduationCap, CheckCircle2, AlertCircle } from 'lucide-react';
+import Tooltip from '@/components/ui/Tooltip';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DiscoveryResultProps {
   input: MatcherInput;
@@ -48,10 +51,18 @@ async function WinnerStream({ input }: { input: MatcherInput }) {
           </div>
           <div className="flex flex-col md:flex-row gap-8">
              <div className="flex-1">
-                <div className="text-blue-600 text-sm font-black uppercase tracking-widest mb-2">94% Core Match</div>
+                <div className="flex items-center gap-2 mb-2">
+                   <div className="text-blue-600 text-sm font-black uppercase tracking-widest">94% Core Match</div>
+                   <Tooltip content="Matches because it fits your ₹2L budget, offers zero-cost EMI, and is ranked #1 for your target career ROI.">
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help hover:text-blue-600 transition-colors" />
+                   </Tooltip>
+                </div>
                 <h3 className="text-3xl font-black text-slate-900 mb-4">{winner.universityName}</h3>
                 <p className="text-slate-500 font-medium mb-8">This program aligns with your skill goals and budget constraints perfectly.</p>
-                <div className="grid grid-cols-3 gap-4">
+                
+                <EligibilityCheck />
+
+                <div className="grid grid-cols-3 gap-4 mt-8">
                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       <div className="text-[10px] font-black text-slate-400 uppercase">3-Yr ROI</div>
                       <div className="text-xl font-black text-emerald-600">{winner.roiScore}x</div>
@@ -87,7 +98,12 @@ async function AlternativesStream({ input }: { input: MatcherInput }) {
     <div className="space-y-6">
       {alternatives.map((match: MatchResult) => (
         <div key={match.courseId} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:border-blue-500/30 transition-all">
-          <div className="text-[10px] font-black text-slate-400 uppercase mb-1">Strong Match - {match.matchScore}%</div>
+          <div className="flex items-center gap-2 mb-1">
+             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Strong Match - {match.matchScore}%</div>
+             <Tooltip content={`High fit based on your goals and approval preferences.`}>
+                <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
+             </Tooltip>
+          </div>
           <h4 className="font-bold text-slate-900 mb-4">{match.universityName}</h4>
           <div className="flex justify-between items-center text-sm font-bold">
              <span className="text-slate-500">ROI: {match.roiScore}x</span>
@@ -97,6 +113,70 @@ async function AlternativesStream({ input }: { input: MatcherInput }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function EligibilityCheck() {
+  const [percent, setPercent] = useState('');
+  const [result, setResult] = useState<'eligible' | 'not-eligible' | null>(null);
+
+  const checkEligibility = () => {
+    const val = parseFloat(percent);
+    if (isNaN(val)) return;
+    setResult(val >= 50 ? 'eligible' : 'not-eligible');
+  };
+
+  return (
+    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+      <div className="flex items-center gap-2 mb-4">
+        <GraduationCap className="w-4 h-4 text-slate-400" />
+        <span className="text-xs font-bold text-slate-900 uppercase tracking-widest">Quick Eligibility Check</span>
+      </div>
+      
+      {!result ? (
+        <div className="flex gap-2">
+          <input 
+            type="number" 
+            placeholder="Graduation %" 
+            value={percent}
+            onChange={(e) => setPercent(e.target.value)}
+            className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-blue-500 transition-all"
+          />
+          <button 
+            onClick={checkEligibility}
+            className="bg-slate-900 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all"
+          >
+            Check Now
+          </button>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`flex items-center justify-between p-3 rounded-xl border ${
+              result === 'eligible' 
+                ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
+                : 'bg-rose-50 border-rose-100 text-rose-700'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              {result === 'eligible' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+              <div>
+                <p className="text-xs font-black uppercase">{result === 'eligible' ? 'Eligible to Apply' : 'Low Eligibility'}</p>
+                <p className="text-[10px] opacity-80">{result === 'eligible' ? 'You meet the 50% cutoff' : 'Typically requires 50%'}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => {setResult(null); setPercent('');}}
+              className="text-[9px] font-black uppercase tracking-tighter hover:underline"
+            >
+              Reset
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ const JOURNEY_STEPS = [
   {
     number: "01",
     title: "Share Your Reality",
-    description: 'What you type: "I have ₹2L budget, can dedicate 10 hrs/week, want tech skills"',
+    description: 'Select your goals: "I want an online MBA with budget under ₹2L and I need Zero-Cost EMI"',
     time: "1 minute",
     emoji: "🎯",
     bg: "bg-blue-50",
@@ -40,7 +40,7 @@ const DEMO_FRAMES = [
     id: 'search',
     label: 'Step 1',
     title: 'Student shares goals',
-    subtitle: 'Budget, course, and weekly study time',
+    subtitle: 'Degree, budget, and EMI preference',
     accent: 'from-sky-500 to-cyan-400',
     chip: 'AI Intake',
   },
@@ -163,14 +163,18 @@ export default function ExperienceJourney() {
                         transition={{ duration: 0.4 }}
                         className="mt-4 rounded-2xl border border-white/10 bg-white/10 p-4"
                       >
-                        <div className="flex items-center gap-2 text-sm font-bold">
-                          <Search className="w-4 h-4 text-sky-300" />
-                          Need an online MBA under Rs 2 lakh
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-3 text-[13px] font-bold leading-relaxed">
+                          <span className="text-white/40 font-medium">I want an</span>
+                          <span className="px-2 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded text-blue-300">Online MBA</span>
+                          <span className="text-white/40 font-medium">with budget under</span>
+                          <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded text-emerald-300">₹2 Lakhs</span>
+                          <span className="text-white/40 font-medium">and I need</span>
+                          <span className="px-2 py-0.5 bg-violet-500/20 border border-violet-500/30 rounded text-violet-300">Zero-Cost EMI</span>
                         </div>
-                        <p className="mt-3 text-sm text-white/70">Working professional, wants EMI, strong ROI, and recognized approvals.</p>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {["Budget aware", "EMI needed", "Career growth"].map((tag) => (
-                            <span key={tag} className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold text-white/75">
+                        
+                        <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-2">
+                          {["UGC-DEB", "ROI Focused", "Working Professional"].map((tag) => (
+                            <span key={tag} className="rounded-full bg-white/5 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-white/40 border border-white/5">
                               {tag}
                             </span>
                           ))}

@@ -33,6 +33,7 @@ const leadSchema = z.object({
   spamPromise: z.literal(true, {
     message: "You must agree to the zero-spam promise",
   }),
+  directToUniversity: z.boolean().default(false),
 });
 
 const INDIAN_STATES = [
@@ -130,6 +131,7 @@ export function LeadCaptureModal({
       formData.append("courseName", data.course || defaultCourseName || "Online Degree");
       formData.append("state", data.state);
       formData.append("universityName", defaultUniversityName || "General Interest");
+      formData.append("directToUniversity", data.directToUniversity ? "true" : "false");
       if (turnstileToken) {
         formData.append("cf-turnstile-response", turnstileToken);
       }
@@ -299,7 +301,24 @@ export function LeadCaptureModal({
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 transition-all hover:bg-slate-100/50">
+                    <input 
+                      type="checkbox" 
+                      {...register("directToUniversity")}
+                      id="directToUniversity"
+                      className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <label htmlFor="directToUniversity" className="text-[11px] md:text-xs font-black text-slate-800 dark:text-slate-200 leading-relaxed cursor-pointer select-none block mb-1">
+                        Forward my profile to the university admission desk ONLY.
+                      </label>
+                      <p className="text-[9px] font-bold text-slate-500 leading-tight">
+                        Your number will NOT be added to a calling list. You will receive one official prospectus via WhatsApp.
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="flex items-start gap-3 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 group transition-all hover:bg-blue-50">
                     <input 
                       type="checkbox" 

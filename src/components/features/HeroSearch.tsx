@@ -14,13 +14,16 @@ interface HeroSearchProps {
 export default function HeroSearch({ setQuery, onSearch, parsedIntent }: HeroSearchProps) {
   return (
     <div className="w-full max-w-4xl mx-auto mt-10">
-      <MadLibsSearch onSearch={(q) => {
-        setQuery(q);
-        // Using a micro-task to ensure state is updated before triggering search
-        setTimeout(() => {
-          onSearch(new Event('submit') as any);
-        }, 0);
-      }} />
+      <MadLibsSearch 
+        onSearch={(q) => {
+          setQuery(q);
+          // Using a micro-task to ensure state is updated before triggering search
+          setTimeout(() => {
+            onSearch(new Event('submit') as any);
+          }, 0);
+        }} 
+        onUpdate={setQuery}
+      />
       
       {/* Micro-copy for AI Confidence */}
       <p className="text-center text-slate-400 text-[10px] md:text-xs mt-8 font-medium uppercase tracking-widest">

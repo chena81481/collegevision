@@ -6,16 +6,24 @@ import { Search, ChevronDown, Sparkles } from 'lucide-react';
 
 interface MadLibsSearchProps {
   onSearch: (query: string) => void;
+  onUpdate?: (query: string) => void;
 }
 
 const DEGREES = ['MBA', 'MCA', 'BBA', 'BCA', 'B.Com', 'M.Com', 'Data Science'];
 const BUDGETS = ['₹1 Lakh', '₹2 Lakhs', '₹3 Lakhs', '₹5 Lakhs', 'Premium'];
 const EMI_OPTIONS = ['Zero-Cost EMI', 'Standard EMI', 'No EMI'];
 
-export default function MadLibsSearch({ onSearch }: MadLibsSearchProps) {
+export default function MadLibsSearch({ onSearch, onUpdate }: MadLibsSearchProps) {
   const [degree, setDegree] = useState(DEGREES[0]);
   const [budget, setBudget] = useState(BUDGETS[0]);
   const [emi, setEmi] = useState(EMI_OPTIONS[0]);
+
+  // Real-time updates for reactive UI elements
+  React.useEffect(() => {
+    if (onUpdate) {
+      onUpdate(`Online ${degree} with budget under ${budget} and ${emi}`);
+    }
+  }, [degree, budget, emi, onUpdate]);
 
   const handleApply = () => {
     const query = `Online ${degree} with budget under ${budget} and ${emi}`;

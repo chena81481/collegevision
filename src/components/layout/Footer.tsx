@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { GraduationCap, Facebook, Twitter, Instagram, Linkedin, ArrowRight } from "lucide-react";
+import { GraduationCap, Facebook, Twitter, Instagram, Linkedin, ArrowRight, AlertTriangle } from "lucide-react";
 
 export function Footer() {
   return (
@@ -89,12 +89,19 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-foreground/40 gap-4 relative z-10">
+      <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-foreground/40 gap-6 relative z-10">
         <p>© 2026 CollegeVision AI. All rights strictly reserved.</p>
-        <div className="flex gap-4">
-           <span>UGC Approved Data</span>
-           <span className="w-1 h-1 rounded-full bg-foreground/20 self-center" />
-           <span>100% Verified Reviews</span>
+        
+        <div className="flex flex-wrap items-center justify-center gap-6">
+           <button className="flex items-center gap-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white px-4 py-2 rounded-full border border-rose-500/20 transition-all font-black uppercase tracking-widest active:scale-95 group">
+              <AlertTriangle className="w-3.5 h-3.5 group-hover:animate-bounce" /> Report Spam Call
+           </button>
+           
+           <div className="flex gap-4 items-center">
+              <span>UGC Approved Data</span>
+              <span className="w-1 h-1 rounded-full bg-foreground/20 self-center" />
+              <span>100% Verified Reviews</span>
+           </div>
         </div>
       </div>
 
