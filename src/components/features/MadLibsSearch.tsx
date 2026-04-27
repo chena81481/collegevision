@@ -2,64 +2,91 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { Search, ChevronDown, Sparkles } from 'lucide-react';
 
 interface MadLibsSearchProps {
   onSearch: (query: string) => void;
 }
 
 const DEGREES = ['MBA', 'MCA', 'BBA', 'BCA', 'B.Com', 'M.Com', 'Data Science'];
-const INDUSTRIES = ['Tech', 'Management', 'Marketing', 'Finance', 'Human Resources', 'Operations'];
-const BUDGETS = ['Under 2 Lakhs', '2-4 Lakhs', '4-6 Lakhs', 'Premium (Flexible)'];
+const BUDGETS = ['₹1 Lakh', '₹2 Lakhs', '₹3 Lakhs', '₹5 Lakhs', 'Premium'];
+const EMI_OPTIONS = ['Zero-Cost EMI', 'Standard EMI', 'No EMI'];
 
 export default function MadLibsSearch({ onSearch }: MadLibsSearchProps) {
   const [degree, setDegree] = useState(DEGREES[0]);
-  const [industry, setIndustry] = useState(INDUSTRIES[0]);
   const [budget, setBudget] = useState(BUDGETS[0]);
+  const [emi, setEmi] = useState(EMI_OPTIONS[0]);
 
   const handleApply = () => {
-    const query = `Online ${degree} for career in ${industry} within budget ${budget}`;
+    const query = `Online ${degree} with budget under ${budget} and ${emi}`;
     onSearch(query);
   };
 
+  const SelectWrapper = ({ value, onChange, options, colorClass }: any) => (
+    <div className="relative inline-block group">
+      <select 
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`appearance-none bg-transparent border-b-2 border-slate-200 hover:border-blue-500 font-black text-blue-600 focus:outline-none cursor-pointer pr-6 transition-all duration-300 ${colorClass}`}
+      >
+        {options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+      <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors pointer-events-none" />
+    </div>
+  );
+
   return (
-    <div className="w-full bg-white/40 backdrop-blur-xl border border-white/60 p-6 md:p-8 rounded-[2.5rem] shadow-2xl">
-      <div className="flex flex-wrap items-center justify-center gap-y-4 gap-x-2 text-lg md:text-2xl font-bold text-slate-800 leading-relaxed text-center">
-        <span>I want to study</span>
-        <select 
-          value={degree}
-          onChange={(e) => setDegree(e.target.value)}
-          className="bg-blue-50 text-blue-700 px-3 py-1 rounded-xl border-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none"
-        >
-          {DEGREES.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <span>to advance my career in</span>
-        <select 
-          value={industry}
-          onChange={(e) => setIndustry(e.target.value)}
-          className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl border-none focus:ring-2 focus:ring-emerald-500 cursor-pointer appearance-none"
-        >
-          {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-        </select>
-        <span>with a budget of</span>
-        <select 
-          value={budget}
-          onChange={(e) => setBudget(e.target.value)}
-          className="bg-violet-50 text-violet-700 px-3 py-1 rounded-xl border-none focus:ring-2 focus:ring-violet-500 cursor-pointer appearance-none"
-        >
-          {BUDGETS.map(b => <option key={b} value={b}>{b}</option>)}
-        </select>
-        <span>.</span>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full bg-white/60 backdrop-blur-2xl border border-white/80 p-8 md:p-12 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden"
+    >
+      {/* Decorative Glow */}
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-400/10 blur-[80px] rounded-full pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-400/10 blur-[80px] rounded-full pointer-events-none" />
+
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-y-6 gap-x-3 text-xl md:text-3xl font-bold text-slate-800 leading-relaxed text-center">
+        <span className="text-slate-500 font-medium">I want an online</span>
+        <SelectWrapper 
+          value={degree} 
+          onChange={setDegree} 
+          options={DEGREES} 
+          colorClass="text-blue-600 border-blue-100"
+        />
+        <span className="text-slate-500 font-medium">with a budget under</span>
+        <SelectWrapper 
+          value={budget} 
+          onChange={setBudget} 
+          options={BUDGETS} 
+          colorClass="text-emerald-600 border-emerald-100"
+        />
+        <span className="text-slate-500 font-medium">and I need</span>
+        <SelectWrapper 
+          value={emi} 
+          onChange={setEmi} 
+          options={EMI_OPTIONS} 
+          colorClass="text-violet-600 border-violet-100"
+        />
+        <span className="text-slate-500 font-medium">.</span>
       </div>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={handleApply}
-        className="mt-8 mx-auto flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all"
-      >
-        Find Best Matches <Search className="w-4 h-4" />
-      </motion.button>
-    </div>
+      <div className="mt-12 flex flex-col items-center gap-4">
+        <motion.button
+          whileHover={{ scale: 1.02, boxShadow: '0 20px 40px -12px rgba(37, 99, 235, 0.3)' }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleApply}
+          className="group relative flex items-center justify-center gap-3 px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl transition-all overflow-hidden"
+        >
+          <span className="relative z-10">Find Best Matches</span>
+          <Search className="relative z-10 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.button>
+        
+        <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+          <Sparkles className="w-3 h-3 text-blue-500" /> 
+          AI Matcher Active
+        </p>
+      </div>
+    </motion.div>
   );
 }

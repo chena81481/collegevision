@@ -30,6 +30,9 @@ const leadSchema = z.object({
   phone: z.string().regex(/^[6-9]\d{9}$/, "Invalid Indian phone number"),
   course: z.string().min(1, "Please select a course"),
   state: z.string().min(1, "Please select your state"),
+  spamPromise: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the zero-spam promise" }),
+  }),
 });
 
 const INDIAN_STATES = [
@@ -294,6 +297,21 @@ export function LeadCaptureModal({
                     </Select>
                     {errors.state && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.state.message as string}</p>}
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-start gap-3 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 group transition-all hover:bg-blue-50">
+                    <input 
+                      type="checkbox" 
+                      {...register("spamPromise")}
+                      id="spamPromise"
+                      className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <label htmlFor="spamPromise" className="text-[11px] md:text-xs font-bold text-slate-700 dark:text-slate-300 leading-relaxed cursor-pointer select-none">
+                      I agree to let CollegeVision share my details <span className="text-blue-600 dark:text-blue-400">ONLY with my top 3 selected universities</span>. I will not receive calls from unselected colleges.
+                    </label>
+                  </div>
+                  {errors.spamPromise && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2">{errors.spamPromise.message as string}</p>}
                 </div>
 
                 <div className="pt-2">

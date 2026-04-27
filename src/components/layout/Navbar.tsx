@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ChevronDown, Sparkles, BarChart3, BookOpen, GraduationCap, LifeBuoy, Users, Info, Menu, X } from 'lucide-react';
+import { ChevronDown, Sparkles, BarChart3, BookOpen, GraduationCap, LifeBuoy, Users, Info, Menu, X, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
@@ -29,6 +29,7 @@ const NAV_DATA = [
     label: "Tools",
     links: [
       { label: "ROI Calculator", href: "/#roi-calculator", icon: <BarChart3 className="w-4 h-4" /> },
+      { label: "UGC Scam Checker", href: "/scam-checker", icon: <ShieldCheck className="w-4 h-4" /> },
       { label: "Comparison Tool", href: "/compare", icon: <BarChart3 className="w-4 h-4" /> },
       { label: "Career Guides", href: "/blog", icon: <LifeBuoy className="w-4 h-4" /> },
     ]
@@ -45,8 +46,13 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
         
         {/* Logo */}
-        <Link href="/" className="text-xl font-black tracking-tighter text-blue-600 flex items-center gap-1 group">
-          COLLEGE<span className="text-slate-900 group-hover:text-blue-600 transition-colors">VISION</span>
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="w-8 h-8 rounded-lg overflow-hidden shadow-md group-hover:scale-110 transition-transform">
+            <img src="/icon.png" alt="CollegeVision Logo" className="w-full h-full object-cover" />
+          </div>
+          <span className="text-xl font-black tracking-tighter text-blue-600 flex items-center gap-1">
+            COLLEGE<span className="text-slate-900 group-hover:text-blue-600 transition-colors">VISION</span>
+          </span>
         </Link>
 
         {/* Desktop Links */}

@@ -15,9 +15,11 @@ export function Footer() {
         
         {/* Brand Area */}
         <div className="flex-1 space-y-6">
-          <Link href="/" className="flex items-center gap-2 font-black text-2xl tracking-tighter">
-            <GraduationCap className="h-8 w-8 text-violet-500" />
-            <span>College<span className="text-violet-500">Vision</span></span>
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-2xl group-hover:scale-110 transition-transform">
+              <img src="/icon.png" alt="CollegeVision Logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="font-black text-2xl tracking-tighter">College<span className="text-blue-500">Vision</span></span>
           </Link>
           <p className="text-foreground/60 max-w-sm text-sm leading-relaxed">
             The intelligent University Aggregator. Stop guessing, start calculating your ROI, and let AI build your perfect academic journey.

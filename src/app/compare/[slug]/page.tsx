@@ -13,8 +13,53 @@ import Script from 'next/script';
 import { createClient } from '@/utils/supabase/server';
 import { trackUniversityComparison } from '@/lib/student-journey';
 import { calculateROI } from '@/lib/roi-calculator';
+import { FALLBACK_COURSE_CATALOG } from '@/lib/course-catalog';
 
 export const revalidate = 86400;
+
+export async function generateStaticParams() {
+  const slugs = FALLBACK_COURSE_CATALOG.map(c => c.university.slug);
+  const params = [];
+  
+  for (let i = 0; i < slugs.length; i++) {
+    for (let j = 0; j < slugs.length; j++) {
+      if (i !== j) {
+        params.push({ slug: `${slugs[i]}-vs-${slugs[j]}` });
+      }
+    }
+  }
+  
+  return params;
+}
+
+// Fallback helper to get data from catalog or DB
+async function getComparisonData(slug: string) {
+  try {
+    // Try DB first
+    const data = await getCachedUniversityData(slug);
+    if (data) return data;
+  } catch (e) {
+    // Fallback to catalog
+    const catalogItem = FALLBACK_COURSE_CATALOG.find(c => c.university.slug === slug);
+    if (catalogItem) {
+      return {
+        name: catalogItem.university.name,
+        slug: catalogItem.university.slug,
+        courses: [{
+          id: catalogItem.id,
+          name: catalogItem.name,
+          total_fee_inr: catalogItem.totalFeeInr,
+          avg_ctc_inr: catalogItem.avgCtcInr,
+          has_zero_cost_emi: catalogItem.hasZeroCostEmi,
+          approvals: catalogItem.approvals,
+          duration_months: catalogItem.durationMonths,
+          category: catalogItem.category
+        }]
+      };
+    }
+  }
+  return null;
+}
 
 interface ComparePageProps {
   params: Promise<{ slug: string }>;
@@ -26,8 +71,8 @@ export async function generateMetadata({ params }: ComparePageProps): Promise<Me
   
   if (!uni1Slug || !uni2Slug) return { title: 'Comparison' };
 
-  const uni1 = await getCachedUniversityData(uni1Slug.replace(/-online-.*/, ''));
-  const uni2 = await getCachedUniversityData(uni2Slug.replace(/-online-.*/, ''));
+  const uni1 = await getComparisonData(uni1Slug.replace(/-online-.*/, ''));
+  const uni2 = await getComparisonData(uni2Slug.replace(/-online-.*/, ''));
 
   if (!uni1 || !uni2) return { title: 'Compare Universities' };
 
@@ -64,8 +109,8 @@ export default async function CompareUniversities({ params }: ComparePageProps) 
   const uni1Slug = uni1Raw.split('-online-')[0];
   const uni2Slug = uni2Raw.split('-online-')[0];
 
-  const uni1 = await getCachedUniversityData(uni1Slug);
-  const uni2 = await getCachedUniversityData(uni2Slug);
+  const uni1 = await getComparisonData(uni1Slug);
+  const uni2 = await getComparisonData(uni2Slug);
 
   if (!uni1 || !uni2) notFound();
 
@@ -115,10 +160,11 @@ export default async function CompareUniversities({ params }: ComparePageProps) 
   const comparisonItems = [
     { label: 'UGC-DEB Approved', val1: u1Course.approvals?.includes('UGC-DEB'), val2: u2Course.approvals?.includes('UGC-DEB'), type: 'boolean' },
     { label: 'Total Fee', val1: u1Course.total_fee_inr, val2: u2Course.total_fee_inr, type: 'currency', better: 'lower' },
+    { label: 'Pocket Savings', val1: Math.max(0, (u2Course.total_fee_inr || 0) - (u1Course.total_fee_inr || 0)), val2: Math.max(0, (u1Course.total_fee_inr || 0) - (u2Course.total_fee_inr || 0)), type: 'currency', better: 'higher' },
     { label: '5-Year ROI', val1: u1ROI, val2: u2ROI, type: 'percentage', better: 'higher' },
     { label: 'Avg. CTC', val1: u1Course.avg_ctc_inr, val2: u2Course.avg_ctc_inr, type: 'currency', better: 'higher' },
     { label: 'Break-even', val1: u1ROIModel?.breakEvenYear ?? 0, val2: u2ROIModel?.breakEvenYear ?? 0, type: 'years', better: 'lower' },
-    { label: 'EMI Available', val1: u1Course.has_zero_cost_emi, val2: u2Course.has_zero_cost_emi, type: 'boolean' },
+    { label: 'Zero-Cost EMI', val1: u1Course.has_zero_cost_emi, val2: u2Course.has_zero_cost_emi, type: 'boolean' },
     { label: 'NAAC A+ Grade', val1: u1Course.approvals?.includes('NAAC A+'), val2: u2Course.approvals?.includes('NAAC A+'), type: 'boolean' },
   ];
   const breadcrumbJsonLd = {

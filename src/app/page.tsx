@@ -14,7 +14,6 @@ import AuthModal from '@/components/features/AuthModal';
 import type { CourseMatch, MatchApiResponse, ParsedQuery } from '@/lib/types';
 import MatchCard from '@/components/features/MatchCard';
 import HeroSearch from '@/components/features/HeroSearch';
-import PrimaryMatchButton from '@/components/features/PrimaryMatchButton';
 import DynamicMatchSidebar from '@/components/features/DynamicMatchSidebar';
 import RealDataMatches from '@/components/features/RealDataMatches';
 import TopTrustRibbon from '@/components/layout/TopTrustRibbon';
@@ -279,20 +278,17 @@ export default function CollegeVision() {
               <h1 className="text-5xl md:text-6xl lg:text-[68px] font-black tracking-tight text-slate-900 leading-[1.05] text-center lg:text-left">
                 Find the right <br className="hidden sm:block" />
                 online degree. <br />
-                <span className="text-slate-400 font-medium">
-                  Without the <span className="text-slate-900 font-black relative inline-block">bias.<div className="absolute bottom-1 left-0 w-full h-4 bg-blue-100/80 -z-10 rounded-sm"></div></span>
+                <span className="text-slate-400 font-medium text-4xl md:text-5xl lg:text-6xl">
+                  Backed by <span className="text-slate-900 font-black relative inline-block">real ROI data.<div className="absolute bottom-1 left-0 w-full h-4 bg-blue-100/80 -z-10 rounded-sm"></div></span>
                 </span>
               </h1>
             </div>
           </div>
 
-          <div className="space-y-4 max-w-xl relative">
+          <div className="space-y-4 max-w-4xl relative">
             <HeroSearch 
-              query={searchQuery}
               setQuery={setSearchQuery}
               onSearch={handleSearch}
-              onSuggestionClick={(text) => triggerSearch(text)}
-              isLoading={isLoading}
               parsedIntent={parsedFilters?.careerGoal || parsedFilters?.degreeKeyword}
             />
             
@@ -311,11 +307,6 @@ export default function CollegeVision() {
                 className="w-full h-full bg-gradient-to-r from-transparent via-blue-500 to-transparent"
               />
             </div>
-
-            <PrimaryMatchButton 
-              onClick={(e) => handleSearch(e as any)}
-              isLoading={isLoading}
-            />
           </div>
             
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 pl-1 sm:pl-5">
@@ -325,7 +316,6 @@ export default function CollegeVision() {
           </div>
 
           <ContextualTrustBadges />
-          <PartnerLogos />
         </div>
 
         {/* Right: The Dynamic Results Sidebar */}
@@ -338,6 +328,13 @@ export default function CollegeVision() {
           />
         </div>
       </section>
+
+      <div className="bg-slate-50/50 py-8 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center mb-6">Our Official University Partners</p>
+          <PartnerLogos />
+        </div>
+      </div>
 
       <section className="bg-white py-14 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
@@ -496,51 +493,78 @@ export default function CollegeVision() {
 
       <ExperienceJourney />
 
-      {/* 5. HYPER-SPECIFIC TESTIMONIALS (Card styling & Stars added) */}
-      <section className="py-24 bg-white">
+      {/* 5. SOCIAL PROOF & REAL CONVERSATIONS */}
+      <section className="py-24 bg-slate-50 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-semibold text-center text-slate-900 mb-16 tracking-tight">Verified decisions.</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-[11px] font-black uppercase tracking-[0.24em] text-blue-600 mb-3">Real Trust, No Fluff</h2>
+            <p className="text-3xl md:text-5xl font-black tracking-tight text-slate-900">Why thousands are skipping <br /> agents and using CollegeVision.</p>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 border-l-4 border-l-blue-400 hover:shadow-lg transition-shadow">
-              <div className="flex gap-1 mb-4">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}
-              </div>
-              <p className="text-slate-700 leading-relaxed mb-8 italic">"Saved ₹3 Lakhs by skipping 2 over-priced universities. The AI caught that the university I wanted didn't have NAAC A+ approval."</p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">R</div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">Rahul M.</div>
-                  <div className="text-xs text-slate-500 font-medium">Online MCA • Feb 2026 Batch</div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            {/* The Problem: Reddit/Quora Snippets */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-red-600 font-bold text-xs">R/</span>
                 </div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">The Problem (From Reddit/Quora)</h3>
+              </div>
+              
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-slate-600 text-sm italic mb-4 leading-relaxed">
+                  "UGC-DEB just blacklisted 3 universities I was looking at. My agent didn't even know! Is there any site that actually tracks this live?"
+                </p>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
+                  <span>u/StudentLife_India</span> • <span>r/Indian_Academia</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-slate-600 text-sm italic mb-4 leading-relaxed">
+                  "Beware of 'Online Degree' ads on Instagram. Most are shell companies with zero placement data. They just want your registration fee."
+                </p>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
+                  <span>u/CareerAdvice_99</span> • <span>r/OnlineMBA</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-orange-400">
+                <p className="text-slate-800 font-bold text-sm mb-2">💡 The Solution</p>
+                <p className="text-slate-600 text-xs">
+                  We verify approval status every 24 hours directly from government databases. No agents. No bias. Just data.
+                </p>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 border-l-4 border-l-emerald-400 hover:shadow-lg transition-shadow">
-              <div className="flex gap-1 mb-4">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}
-              </div>
-              <p className="text-slate-700 leading-relaxed mb-8 italic">"Found out about ROI break-even in 4 years versus the 8 years I thought. I just told it my EMI limit and it filtered out all the noise."</p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg">S</div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">Sneha K.</div>
-                  <div className="text-xs text-slate-500 font-medium">Online BBA • Jan 2026 Batch</div>
+            {/* The Evidence: WhatsApp Screenshots */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <span className="text-emerald-600 font-bold text-xs">WA</span>
                 </div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Real User Gratitude</h3>
               </div>
-            </div>
 
-            <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 border-l-4 border-l-purple-400 hover:shadow-lg transition-shadow md:col-span-2 lg:col-span-1">
-              <div className="flex gap-1 mb-4">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}
-              </div>
-              <p className="text-slate-700 leading-relaxed mb-8 italic">"Got 3 backup options within my ₹1.5L budget in exactly 10 minutes. Applied directly through the dashboard without talking to an agent."</p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-lg">A</div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">Arjun P.</div>
-                  <div className="text-xs text-slate-500 font-medium">Online M.Com • Mar 2026 Batch</div>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg"
+                >
+                  <img src="/testimonials/whatsapp_1.png" alt="WhatsApp Testimonial" className="w-full h-auto" />
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg mt-4 sm:mt-8"
+                >
+                  <img src="/testimonials/whatsapp_2.png" alt="WhatsApp Testimonial" className="w-full h-auto" />
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="hidden sm:block rounded-3xl overflow-hidden border border-slate-200 shadow-lg sm:col-span-2 max-w-sm mx-auto"
+                >
+                  <img src="/testimonials/whatsapp_3.png" alt="WhatsApp Testimonial" className="w-full h-auto" />
+                </motion.div>
               </div>
             </div>
           </div>
