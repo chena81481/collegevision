@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { 
   Search, ShieldCheck, CheckCircle2, Lock, ArrowRight, Star, 
@@ -128,15 +129,14 @@ export default function CollegeVision() {
 
   const posthog = usePostHog();
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  const triggerSearch = async (queryToUse: string) => {
+    if (!queryToUse.trim()) return;
 
-    localStorage.removeItem('collegevision_lead_completed');
+    localStorage.removeItem('college_vision_lead_completed');
     
     // Track Funnel Start
     posthog.capture('AI_Match_Started', {
-      query: searchQuery,
+      query: queryToUse,
       is_logged_in: !!user
     });
 
@@ -145,7 +145,7 @@ export default function CollegeVision() {
       const res = await fetch('/api/match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery, sessionId: getJourneySessionId() }),
+        body: JSON.stringify({ query: queryToUse, sessionId: getJourneySessionId() }),
       });
       const data = await res.json();
 
@@ -165,7 +165,7 @@ export default function CollegeVision() {
           maxBudgetInr: data.parsedIntent?.maxBudgetINR ?? null,
           degreeKeyword: data.parsedIntent?.degreeType ?? null,
           requiresEmi: data.parsedIntent?.needsEMI ?? false,
-          careerGoal: data.parsedIntent?.careerGoal ?? null, // Added careerGoal
+          careerGoal: data.parsedIntent?.careerGoal ?? null,
           requiredApprovals: data.parsedIntent?.requiredApproval
             ? [data.parsedIntent.requiredApproval]
             : [],
@@ -185,6 +185,11 @@ export default function CollegeVision() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await triggerSearch(searchQuery);
   };
 
   // Handle scroll for sticky navbar shadow
@@ -231,7 +236,6 @@ export default function CollegeVision() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-200 selection:text-blue-900 overflow-x-hidden scroll-smooth transition-opacity duration-500">
       <div className="fixed top-0 w-full z-[100]">
-        <TopTrustRibbon />
         <Navbar />
       </div>
 
@@ -246,13 +250,16 @@ export default function CollegeVision() {
         }}
       />
       
-      <div className="pt-24 lg:pt-32">
+      <div className="pt-16 lg:pt-20">
         <FunnelBreadcrumbs currentStep={currentStep} />
       </div>
       
 
       {/* 1. HERO SECTION (Input Border Animation & Glows) */}
       <section className="max-w-7xl mx-auto px-6 pt-16 lg:pt-24 pb-20 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative">
+        {/* Shared Background Connection Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-gradient-to-r from-blue-50/20 via-transparent to-blue-50/20 blur-3xl -z-10 pointer-events-none opacity-50" />
+        
         {/* Subtle Background Gradient */}
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50/30 via-white to-white -z-20 pointer-events-none"></div>
 
@@ -279,14 +286,32 @@ export default function CollegeVision() {
             </div>
           </div>
 
-          <div className="space-y-4 max-w-xl">
+          <div className="space-y-4 max-w-xl relative">
             <HeroSearch 
               query={searchQuery}
               setQuery={setSearchQuery}
               onSearch={handleSearch}
+              onSuggestionClick={(text) => triggerSearch(text)}
               isLoading={isLoading}
               parsedIntent={parsedFilters?.careerGoal || parsedFilters?.degreeKeyword}
             />
+            
+            {/* Visual Data Flow Beam */}
+            <div className="hidden lg:block absolute right-[-40px] top-1/2 -translate-y-1/2 w-20 h-[2px] overflow-hidden">
+              <motion.div 
+                animate={{ 
+                  x: searchQuery.length > 3 ? ["-100%", "100%"] : "0%",
+                  opacity: searchQuery.length > 3 ? [0, 1, 0] : 0
+                }}
+                transition={{ 
+                  duration: 1.5, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+                className="w-full h-full bg-gradient-to-r from-transparent via-blue-500 to-transparent"
+              />
+            </div>
+
             <PrimaryMatchButton 
               onClick={(e) => handleSearch(e as any)}
               isLoading={isLoading}
@@ -309,6 +334,7 @@ export default function CollegeVision() {
           <DynamicMatchSidebar 
             isSearching={isLoading}
             results={matchResults}
+            query={searchQuery}
           />
         </div>
       </section>
@@ -372,7 +398,22 @@ export default function CollegeVision() {
         </div>
       </section>
 
-      {/* 2. THE BRAINS (Staggered hover effects, colored borders) */}
+      {/* 3. MATCHES — Outcome-Driven Redesign */}
+      <RealDataMatches 
+        results={matchResults}
+        parsedFilters={parsedFilters}
+        onSelect={(id) => {
+          setSelectedForComparison(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+          });
+        } }
+        selectedIds={selectedForComparison}
+      />
+
+      {/* 2. THE BRAINS (Moved below matches for progressive disclosure) */}
       <section id="features" className="bg-slate-50 pt-20 pb-16 border-y border-slate-100 relative">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
@@ -405,12 +446,6 @@ export default function CollegeVision() {
               <p className="text-sm text-slate-500 leading-relaxed">Strictly filter by UGC-DEB, AICTE, and NAAC A+ grades for safety.</p>
             </div>
           </div>
-
-          <div className="flex justify-center mt-16 absolute -bottom-5 left-1/2 -translate-x-1/2 z-10">
-            <a href="#colleges" className="bg-white px-6 py-2.5 rounded-full border border-slate-200 shadow-md text-sm text-blue-600 font-semibold flex items-center gap-2 hover:bg-slate-50 hover:text-blue-700 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-              See matches below <ArrowDown className="w-4 h-4 animate-bounce" />
-            </a>
-          </div>
         </div>
       </section>
 
@@ -418,51 +453,15 @@ export default function CollegeVision() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="rounded-[2.5rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-8 md:p-10 text-white shadow-2xl">
             <div className="max-w-3xl">
-              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-blue-300 mb-3">Production Upgrade</p>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Decision intelligence, not just a comparison list.</h2>
+              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-blue-300 mb-3">Decision Intelligence</p>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Transparent matching for high-stakes choices.</h2>
               <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-                CollegeVision now explains why a university fits, warns where it misses your constraints, estimates monthly affordability, and surfaces application-readiness context before you talk to a counselor.
+                CollegeVision now explains why a university fits, warns where it misses your constraints, and surfaces application-readiness context.
               </p>
-            </div>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  title: 'Transparent Match Logic',
-                  body: 'Each result now shows why it matched your intent instead of asking you to trust a hidden score.',
-                },
-                {
-                  title: 'Risk & Caution Flags',
-                  body: 'Budget stretch, missing approvals, and EMI gaps are surfaced before a student makes the wrong move.',
-                },
-                {
-                  title: 'Affordability Layer',
-                  body: 'EMI and scholarship-adjusted views make the shortlist more actionable for real families.',
-                },
-              ].map((item) => (
-                <div key={item.title} className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-                  <h3 className="text-lg font-black text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">{item.body}</p>
-                </div>
-              ))}
             </div>
           </div>
         </div>
       </section>
-
-      {/* 3. MATCHES — Outcome-Driven Redesign */}
-      <RealDataMatches 
-        results={matchResults}
-        parsedFilters={parsedFilters}
-        onSelect={(id) => {
-          setSelectedForComparison(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-          });
-        } }
-        selectedIds={selectedForComparison}
-      />
 
       <ComparisonBar 
         selectedCount={selectedForComparison.size}

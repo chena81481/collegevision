@@ -164,47 +164,54 @@ export default async function CompareUniversities({ params }: ComparePageProps) 
 
         {/* Comparison Table */}
         <div className="bg-white rounded-[32px] shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-3 bg-slate-900 text-white p-6 md:p-8">
-            <div className="text-sm font-bold opacity-50 flex items-center">Category</div>
-            <div className="text-center font-black text-lg md:text-xl truncate px-2">{uni1.name}</div>
-            <div className="text-center font-black text-lg md:text-xl truncate px-2">{uni2.name}</div>
-          </div>
+          {/* Scrollable Container */}
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="min-w-[600px] md:min-w-full">
+              {/* Table Header */}
+              <div className="grid grid-cols-[160px_1fr_1fr] md:grid-cols-3 bg-slate-900 text-white p-6 md:p-8 sticky top-0 z-20">
+                <div className="text-sm font-bold opacity-50 flex items-center">Category</div>
+                <div className="text-center font-black text-lg md:text-xl truncate px-2">{uni1.name}</div>
+                <div className="text-center font-black text-lg md:text-xl truncate px-2">{uni2.name}</div>
+              </div>
 
-          <div className="divide-y divide-slate-100">
-            {comparisonItems.map((item, idx) => {
-              const u1Better = item.better === 'higher' ? item.val1 > item.val2 : item.better === 'lower' ? item.val1 < item.val2 : false;
-              const u2Better = item.better === 'higher' ? item.val2 > item.val1 : item.better === 'lower' ? item.val2 < item.val1 : false;
+              <div className="divide-y divide-slate-100">
+                {comparisonItems.map((item, idx) => {
+                  const u1Better = item.better === 'higher' ? (item.val1 > item.val2) : item.better === 'lower' ? (item.val1 < item.val2) : false;
+                  const u2Better = item.better === 'higher' ? (item.val2 > item.val1) : item.better === 'lower' ? (item.val2 < item.val1) : false;
 
-              return (
-                <div key={idx} className="grid grid-cols-3 p-6 md:p-8 hover:bg-slate-50 transition-colors">
-                  <div className="text-sm md:text-base font-bold text-slate-500 flex items-center">{item.label}</div>
-                  
-                  <div className={`text-center ${u1Better ? 'font-black text-blue-600' : 'font-semibold text-slate-900'}`}>
-                    {renderValue(item.val1, item.type)}
-                    {u1Better && <span className="block text-[10px] text-blue-500 uppercase tracking-tighter mt-1">Winner</span>}
-                  </div>
-                  
-                  <div className={`text-center ${u2Better ? 'font-black text-blue-600' : 'font-semibold text-slate-900'}`}>
-                    {renderValue(item.val2, item.type)}
-                    {u2Better && <span className="block text-[10px] text-blue-500 uppercase tracking-tighter mt-1">Winner</span>}
-                  </div>
+                  return (
+                    <div key={idx} className="grid grid-cols-[160px_1fr_1fr] md:grid-cols-3 p-6 md:p-8 hover:bg-slate-50 transition-colors group">
+                      <div className="text-xs md:text-base font-bold text-slate-500 flex items-center bg-white sticky left-0 z-10 md:static group-hover:bg-slate-50 transition-colors pr-4">
+                        {item.label}
+                      </div>
+                      
+                      <div className={`text-center ${u1Better ? 'font-black text-blue-600' : 'font-semibold text-slate-900'}`}>
+                        {renderValue(item.val1, item.type)}
+                        {u1Better && <span className="block text-[10px] text-blue-500 uppercase tracking-tighter mt-1">Winner</span>}
+                      </div>
+                      
+                      <div className={`text-center ${u2Better ? 'font-black text-blue-600' : 'font-semibold text-slate-900'}`}>
+                        {renderValue(item.val2, item.type)}
+                        {u2Better && <span className="block text-[10px] text-blue-500 uppercase tracking-tighter mt-1">Winner</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-[160px_1fr_1fr] md:grid-cols-3 p-8 bg-slate-50 border-t border-slate-100">
+                <div className="sticky left-0 bg-slate-50 z-10 md:static"></div>
+                <div className="px-4">
+                  <Link href={`/${u1Course.category?.toLowerCase() || 'online'}/${uni1.slug}`} className="block w-full text-center bg-blue-600 text-white py-3 rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-all">
+                    Full Profile
+                  </Link>
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-3 p-8 bg-slate-50 border-t border-slate-100">
-            <div></div>
-            <div className="px-4">
-              <Link href={`/${u1Course.category?.toLowerCase() || 'online'}/${uni1.slug}`} className="block w-full text-center bg-blue-600 text-white py-3 rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-all">
-                Full Profile
-              </Link>
-            </div>
-            <div className="px-4">
-              <Link href={`/${u2Course.category?.toLowerCase() || 'online'}/${uni2.slug}`} className="block w-full text-center bg-white text-slate-900 border border-slate-200 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
-                Full Profile
-              </Link>
+                <div className="px-4">
+                  <Link href={`/${u2Course.category?.toLowerCase() || 'online'}/${uni2.slug}`} className="block w-full text-center bg-white text-slate-900 border border-slate-200 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
+                    Full Profile
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>

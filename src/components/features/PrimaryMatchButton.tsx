@@ -65,8 +65,8 @@ export default function PrimaryMatchButton({ onClick, isLoading }: PrimaryMatchB
       </div>
 
       {/* 3. Reassurance Micro-copy */}
-      <p className="text-[11px] text-slate-400 uppercase tracking-widest font-bold">
-        100% Free • No Credit Card Required • Official University Data
+      <p className="text-[11px] text-slate-400 uppercase tracking-widest font-black">
+        🔒 Search anonymously. 0 Spam Calls. • 100% Free
       </p>
     </div>
   );

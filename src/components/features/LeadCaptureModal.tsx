@@ -58,12 +58,18 @@ export function LeadCaptureModal({
   onSubmitted,
   defaultUniversityName,
   defaultCourseName,
+  title,
+  description,
+  buttonText,
 }: {
   trigger?: React.ReactNode;
   autoOpen?: boolean;
   onSubmitted?: () => void;
   defaultUniversityName?: string;
   defaultCourseName?: string;
+  title?: string;
+  description?: string;
+  buttonText?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,7 +143,9 @@ export function LeadCaptureModal({
           res.message ||
             (res.status === "PARTIAL"
               ? "Your form was received, but our CRM sync needs a quick retry from our side."
-              : "Your details are safely stored and our counselor can now follow up.")
+              : buttonText?.includes("Save") 
+                ? "Your shortlist has been saved! Check your email for the detailed analysis."
+                : "Your details are safely stored and our counselor can now follow up.")
         );
         setSubmitted(true);
         onSubmitted?.();
@@ -186,10 +194,10 @@ export function LeadCaptureModal({
                 </div>
                 
                 <DialogTitle className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
-                   Compare & Select from <span className="text-blue-600">100+</span>
+                   {title || <>Compare & Select from <span className="text-blue-600">100+</span></>}
                 </DialogTitle>
                 <DialogDescription className="text-sm md:text-base font-bold text-slate-500 dark:text-slate-400">
-                   Best University for your Top Online Course
+                   {description || "Best University for your Top Online Course"}
                 </DialogDescription>
 
                 <div className="flex justify-center items-center gap-4 md:gap-6 mt-4 md:mt-6 opacity-80 group">
@@ -307,7 +315,7 @@ export function LeadCaptureModal({
                       <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin text-white" />
                     ) : (
                       <>
-                        FIND BEST UNIVERSITY
+                        {buttonText || "FIND BEST UNIVERSITY"}
                         <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1.5 transition-transform text-white" />
                       </>
                     )}

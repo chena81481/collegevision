@@ -7,15 +7,18 @@ import { useRouter } from 'next/navigation';
 import type { CourseMatch } from '@/lib/types';
 import ScholarshipBadge from './ScholarshipBadge';
 import { LeadCaptureModal } from './LeadCaptureModal';
+import Tooltip from '@/components/ui/Tooltip';
+import { AlertCircle } from 'lucide-react';
 
 interface OutcomeCardProps {
   course: CourseMatch;
+  categoryLabel?: string;
   isTopMatch?: boolean;
   onSelect: (id: string) => void;
   isSelected: boolean;
 }
 
-function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
+function OutcomeCard({ course, categoryLabel, isTopMatch, onSelect, isSelected }: OutcomeCardProps) {
   const router = useRouter();
 
   const handleViewDetails = async () => {
@@ -74,10 +77,19 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
   return (
     <motion.div 
       whileHover={{ y: -10 }}
+      layout
       className={`relative bg-white border-2 rounded-[2.5rem] p-8 shadow-xl hover:shadow-2xl transition-all flex flex-col h-full ${
         isSelected ? 'border-blue-600 ring-4 ring-blue-600/10' : 'border-slate-100'
-      }`}
+      } ${isTopMatch ? 'md:col-span-2 lg:col-span-3 border-blue-200 bg-gradient-to-br from-white via-white to-blue-50/30' : ''}`}
     >
+      {categoryLabel && (
+        <div className={`absolute -top-4 left-8 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-20 flex items-center gap-2 ${
+          isTopMatch ? 'bg-slate-900 text-white' : 'bg-blue-600 text-white'
+        }`}>
+          {isTopMatch ? <Sparkles className="w-3 h-3 text-yellow-400" /> : <TrendingUp className="w-3 h-3" />}
+          {categoryLabel}
+        </div>
+      )}
       {isSelected && (
         <div className="absolute -top-3 -right-3 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg z-20">
           <Check className="w-4 h-4" />
@@ -245,17 +257,21 @@ function OutcomeCard({ course, onSelect, isSelected }: OutcomeCardProps) {
         </div>
 
         {course.cautionFlags && course.cautionFlags.length > 0 && (
-          <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4">
-            <p className="mb-3 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-amber-700">
-              <AlertTriangle className="h-3 w-3" /> Watch-outs Before You Apply
-            </p>
-            <div className="flex flex-col gap-2">
-              {course.cautionFlags.slice(0, 2).map((flag) => (
-                <p key={flag} className="text-[11px] font-bold leading-snug text-amber-900">
-                  <span className="mr-1.5 text-amber-500">•</span>{flag}
-                </p>
-              ))}
-            </div>
+          <div className="flex justify-end pt-2">
+            <Tooltip content={
+              <div className="space-y-2">
+                <p className="border-b border-white/20 pb-1 mb-1 font-black text-amber-400 uppercase tracking-widest text-[8px]">Review Required</p>
+                {course.cautionFlags.map((flag, i) => (
+                  <p key={i} className="flex gap-2 leading-tight">
+                    <span className="text-amber-500">•</span> {flag}
+                  </p>
+                ))}
+              </div>
+            }>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-100 rounded-full text-[9px] font-black uppercase tracking-widest text-amber-700 hover:bg-amber-100 transition-colors cursor-help">
+                <AlertCircle className="w-3 h-3" /> {course.cautionFlags.length} Warning{course.cautionFlags.length > 1 ? 's' : ''}
+              </div>
+            </Tooltip>
           </div>
         )}
       </div>
@@ -327,11 +343,27 @@ export default function RealDataMatches({ results, parsedFilters, onSelect, sele
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
             Matches Built on <span className="text-blue-600">Real Outcomes</span>
           </h2>
-          <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-5 py-2.5 rounded-full text-blue-700 text-sm font-bold shadow-sm">
-            <Target className="w-4 h-4 text-blue-600 animate-pulse" />
-            Based on 15,000+ graduate outcomes tracked since 2020
+          <div className="flex flex-col items-center gap-6">
+            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-5 py-2.5 rounded-full text-blue-700 text-sm font-bold shadow-sm">
+              <Target className="w-4 h-4 text-blue-600 animate-pulse" />
+              Based on 15,000+ graduate outcomes tracked since 2020
+            </div>
+
+            <LeadCaptureModal 
+              title="Save Your Perfect Shortlist"
+              description="Enter your email to receive this custom ROI analysis and save these matches for later."
+              buttonText="SAVE MY SHORTLIST"
+              trigger={
+                <button className="flex items-center gap-2 px-8 py-3.5 bg-slate-900 hover:bg-black text-white rounded-full font-black text-sm transition-all shadow-xl hover:-translate-y-1 active:scale-95 group">
+                  <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white group-hover:rotate-12 transition-transform">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  💾 SAVE MY SHORTLIST
+                </button>
+              }
+            />
           </div>
-          <p className="mt-5 text-sm font-medium text-slate-500 max-w-3xl mx-auto leading-relaxed">
+          <p className="mt-8 text-sm font-medium text-slate-500 max-w-3xl mx-auto leading-relaxed">
             Each recommendation now explains why it fits, what could block it, and how affordability changes under EMI or scholarship scenarios.
           </p>
         </div>
@@ -359,14 +391,24 @@ export default function RealDataMatches({ results, parsedFilters, onSelect, sele
 
         {/* The Match Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {displayResults.map((course) => (
-            <OutcomeCard 
-              key={course.id}
-              course={course}
-              onSelect={onSelect}
-              isSelected={selectedIds.has(course.id)}
-            />
-          ))}
+          {displayResults.map((course, index) => {
+            let label = "";
+            if (index === 0) label = "Best Overall Match";
+            else if (course.roi === Math.max(...displayResults.map(c => c.roi || 0))) label = "ROI Leader";
+            else if (course.durationMonths === Math.min(...displayResults.map(c => c.durationMonths || 999))) label = "Fastest Completion";
+            else if (course.approvals.includes("NAAC A++")) label = "Safest Approvals";
+            
+            return (
+              <OutcomeCard 
+                key={course.id}
+                course={course}
+                categoryLabel={label}
+                isTopMatch={index === 0}
+                onSelect={onSelect}
+                isSelected={selectedIds.has(course.id)}
+              />
+            );
+          })}
         </div>
 
         {/* Empty state fallback if no search yet or no results */}

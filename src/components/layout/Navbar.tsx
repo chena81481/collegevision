@@ -99,7 +99,7 @@ export default function Navbar() {
           </Link>
           <LeadCaptureModal 
             trigger={
-              <button className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 transition-all active:scale-95">
+              <button className="border-2 border-slate-900 group-hover:border-blue-600 bg-white text-slate-900 hover:text-blue-600 px-5 py-2.5 rounded-xl text-sm font-black transition-all active:scale-95">
                 Start Free
               </button>
             } 
@@ -167,7 +167,7 @@ export default function Navbar() {
                 </Link>
                 <LeadCaptureModal 
                   trigger={
-                    <button className="w-full py-4 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-xl shadow-slate-200 active:scale-[0.98] transition-all">
+                    <button className="w-full py-4 border-2 border-slate-900 bg-white text-slate-900 rounded-2xl text-sm font-black active:scale-[0.98] transition-all">
                       Start Free
                     </button>
                   } 

@@ -33,6 +33,19 @@ export default function ComparisonBar({ selectedCount, onCompare, onClear }: Com
 
             <div className="flex items-center gap-3">
               <button 
+                onClick={() => {
+                  const message = `Check out these ${selectedCount} college picks I'm comparing on CollegeVision! 🎓%0A%0ASee the ROI breakdown here: ${window.location.href}`;
+                  window.open(`https://wa.me/?text=${message}`, '_blank');
+                }}
+                className="p-3 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-2xl transition-all flex items-center gap-2 font-black text-xs uppercase tracking-tighter"
+                title="Share with Family"
+              >
+                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                  <span className="text-[10px]">W</span>
+                </div>
+                Share
+              </button>
+              <button 
                 onClick={onClear}
                 className="p-3 text-slate-400 hover:text-white transition-colors"
                 title="Clear Selection"

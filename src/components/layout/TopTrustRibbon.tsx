@@ -1,26 +1,40 @@
-"use client";
+import { motion } from 'framer-motion';
 
-import React from 'react';
+const TRUST_SIGNALS = [
+  "Trusted by 52,000+ Students",
+  "Verified Govt. Data (2026)",
+  "0% Processing Fees",
+  "Official University Partner",
+  "UGC-DEB Accredited Programs",
+  "100% Admission Support"
+];
 
 export default function TopTrustRibbon() {
   return (
-    <div className="w-full bg-slate-900 py-2.5 px-4 overflow-hidden relative z-[60]">
-      <div className="max-w-7xl mx-auto flex justify-center md:justify-between items-center text-[10px] md:text-xs font-bold text-slate-300 uppercase tracking-[0.15em]">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            Trusted by 52,000+ Students
-          </span>
-          <span className="hidden md:block opacity-30">|</span>
-          <span className="hidden md:flex items-center gap-1.5">
-            Verified Govt. Data (2026)
-          </span>
-        </div>
-        <div className="hidden md:flex items-center gap-4">
-          <span>0% Processing Fees</span>
-          <span className="opacity-30">|</span>
-          <span className="text-blue-400">Official University Partner</span>
-        </div>
+    <div className="w-full bg-slate-900 py-2 px-4 overflow-hidden relative z-[60] border-b border-white/5">
+      <div className="max-w-7xl mx-auto relative flex items-center h-5">
+        <motion.div 
+          initial={{ x: "0%" }}
+          animate={{ x: "-50%" }}
+          transition={{ 
+            duration: 30, 
+            repeat: Infinity, 
+            ease: "linear" 
+          }}
+          className="flex items-center gap-12 whitespace-nowrap"
+        >
+          {/* Double content for seamless looping */}
+          {[...TRUST_SIGNALS, ...TRUST_SIGNALS].map((signal, i) => (
+            <div key={i} className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+              {signal}
+            </div>
+          ))}
+        </motion.div>
+        
+        {/* Gradient overlays for fade effect */}
+        <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-slate-900 to-transparent z-10" />
+        <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-slate-900 to-transparent z-10" />
       </div>
     </div>
   );

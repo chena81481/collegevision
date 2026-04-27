@@ -5,16 +5,40 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, BarChart3, TrendingUp, CheckCircle, Info, Filter, Search, BadgeIndianRupee, ShieldCheck } from 'lucide-react';
 import { usePostHog } from 'posthog-js/react';
 import type { CourseMatch } from '@/lib/types';
+import { parseIntentFromQuery } from '@/lib/intent-utils';
 
 interface DynamicMatchSidebarProps {
   isSearching: boolean;
   results: CourseMatch[] | null;
+  query?: string;
 }
 
-export default function DynamicMatchSidebar({ isSearching, results }: DynamicMatchSidebarProps) {
+export default function DynamicMatchSidebar({ isSearching, results, query }: DynamicMatchSidebarProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [loadingStep, setLoadingStep] = useState(0);
   const posthog = usePostHog();
+
+  const loadingSteps = [
+    "Parsing budget constraints...",
+    "Filtering UGC-DEB and NAAC approvals...",
+    "Analyzing ROI against historical data...",
+    "Generating personalized shortlist..."
+  ];
+
+  // Cycle through loading steps
+  useEffect(() => {
+    if (!isSearching) {
+      setLoadingStep(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingStep((prev) => (prev + 1) % loadingSteps.length);
+    }, 2800);
+
+    return () => clearInterval(interval);
+  }, [isSearching, loadingSteps.length]);
 
   // Reset index when fresh results arrive
   useEffect(() => {
@@ -54,7 +78,7 @@ export default function DynamicMatchSidebar({ isSearching, results }: DynamicMat
       <AnimatePresence mode="wait">
         
         {/* 1. INITIAL EMPTY STATE (Before User Interacts) */}
-        {!isSearching && activeResults.length === 0 && (
+        {!isSearching && activeResults.length === 0 && (!query || query.length <= 3) && (
           <motion.div 
             key="empty"
             initial={{ opacity: 0 }} 
@@ -142,7 +166,7 @@ export default function DynamicMatchSidebar({ isSearching, results }: DynamicMat
         )}
 
         {/* 2. LOADING STATE (After 'Match Me' Click) */}
-        {isSearching && (
+        {(isSearching || (query && query.length > 3 && activeResults.length === 0)) && (
           <motion.div 
             key="loading"
             initial={{ opacity: 0 }} 
@@ -154,9 +178,44 @@ export default function DynamicMatchSidebar({ isSearching, results }: DynamicMat
               <div className="w-20 h-20 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
               <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-blue-600" />
             </div>
-            <div className="space-y-2">
-              <h3 className="font-bold text-slate-800 animate-pulse">✨ Smart matching in progress</h3>
-              <p className="text-xs text-slate-500">Analyzing placement data & fee structures...</p>
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-800 animate-pulse">
+                {isSearching ? '✨ Smart matching in progress' : '🧠 AI is brainstorming...'}
+              </h3>
+              
+              <div className="h-4 flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  <motion.p 
+                    key={isSearching ? loadingStep : 'brainstorming'}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-xs text-blue-600 font-bold"
+                  >
+                    {isSearching 
+                      ? loadingSteps[loadingStep] 
+                      : `Parsing requirements for "${query}"`}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+              
+              {!isSearching && query && query.length > 3 && (
+                <div className="flex flex-wrap justify-center gap-2 mt-4 pt-4 border-t border-blue-50">
+                  {parseIntentFromQuery(query).map((token, i) => (
+                    <motion.span 
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-lg border border-blue-100"
+                    >
+                      {token.type}: {token.value}
+                    </motion.span>
+                  ))}
+                  <span className="px-3 py-1 bg-slate-50 text-slate-400 text-[10px] font-black uppercase rounded-lg animate-pulse">
+                    Parsing...
+                  </span>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -167,6 +226,7 @@ export default function DynamicMatchSidebar({ isSearching, results }: DynamicMat
             key="results"
             initial={{ x: 50, opacity: 0 }} 
             animate={{ x: 0, opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="flex flex-col h-full"
           >
             <div className="flex justify-between items-center mb-4">
