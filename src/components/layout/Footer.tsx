@@ -2,109 +2,103 @@
 
 import React from "react";
 import Link from "next/link";
-import { GraduationCap, Facebook, Twitter, Instagram, Linkedin, ArrowRight, AlertTriangle } from "lucide-react";
+import { Instagram, Linkedin } from "lucide-react";
+
+const FOOTER_LINKS = [
+  {
+    title: "Programs",
+    links: [
+      ["Online MBA", "/online-mba"],
+      ["Online MCA", "/online-mca"],
+      ["Online BBA", "/online-bba"],
+      ["Online BCA", "/online-bca"],
+    ],
+  },
+  {
+    title: "Universities",
+    links: [
+      ["All Universities", "/universities"],
+      ["Amity Online", "/universities/amity-online"],
+      ["Jain Online", "/universities/jain-online"],
+      ["LPU Online", "/universities/lpu-online"],
+    ],
+  },
+  {
+    title: "Rankings",
+    links: [
+      ["Best Online MBA", "/rankings/best-online-mba-colleges-in-india-2026"],
+      ["Best Online MCA", "/rankings/best-online-mca-colleges-in-india-2026"],
+      ["Best Online BBA", "/rankings/best-online-bba-colleges-in-india-2026"],
+      ["Best Online BCA", "/rankings/best-online-bca-colleges-in-india-2026"],
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      ["UGC-DEB Guide", "/blog/ugc-deb-approved-online-universities-guide"],
+      ["Compare Tool", "/compare"],
+      ["Career Blog", "/blog"],
+      ["FAQs", "/faq"],
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      ["Contact", "/faq"],
+      ["Privacy", "/privacy"],
+      ["Terms", "/privacy"],
+    ],
+  },
+];
 
 export function Footer() {
   return (
-    <footer className="w-full bg-black/50 backdrop-blur-3xl border-t border-white/5 pt-16 pb-8 px-4 sm:px-6 lg:px-8 mt-24 relative overflow-hidden">
-      
-      {/* Dynamic Background Glow */}
-      <div className="absolute bottom-[-20%] left-[20%] w-[60%] h-[300px] rounded-full bg-gradient-to-t from-violet-600/10 to-transparent blur-[120px] pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-24 relative z-10">
-        
-        {/* Brand Area */}
-        <div className="flex-1 space-y-6">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-2xl group-hover:scale-110 transition-transform">
-              <img src="/icon.png" alt="CollegeVision Logo" className="w-full h-full object-cover" />
+    <footer className="w-full border-t border-slate-200 bg-slate-50 px-6 py-16">
+      <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.2fr_3fr]">
+        <div>
+          <Link href="/" className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-xl shadow-sm">
+              <img src="/icon.png" alt="CollegeVision Logo" className="h-full w-full object-cover" />
             </div>
-            <span className="font-black text-2xl tracking-tighter">College<span className="text-blue-500">Vision</span></span>
+            <span className="text-2xl font-black tracking-normal text-slate-900">
+              College<span className="text-blue-600">Vision</span>
+            </span>
           </Link>
-          <p className="text-foreground/60 max-w-sm text-sm leading-relaxed">
-            The intelligent University Aggregator. Stop guessing, start calculating your ROI, and let AI build your perfect academic journey.
+          <p className="mt-5 max-w-sm text-sm font-medium leading-relaxed text-slate-600">
+            Compare online universities with verified approvals, fees, ROI, scholarships, and placement support.
           </p>
-          <div className="flex gap-4 pt-2">
-            {[Facebook, Twitter, Instagram, Linkedin].map((Icon, idx) => (
-              <a key={idx} href="#" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-foreground/50 hover:bg-violet-600/20 hover:text-violet-400 hover:border-violet-500/30 transition-all">
-                <Icon className="w-5 h-5" />
-              </a>
-            ))}
+          <div className="mt-6 flex gap-3">
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-blue-600 hover:text-blue-600">
+              <Linkedin className="h-5 w-5" />
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-blue-600 hover:text-blue-600">
+              <Instagram className="h-5 w-5" />
+            </a>
           </div>
         </div>
 
-        {/* Links Area */}
-        <div className="flex-[3] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
-           
-           <div className="space-y-4">
-             <h4 className="font-bold tracking-wider text-sm">Programs</h4>
-             <ul className="space-y-3 text-sm text-foreground/60">
-               <li><Link href="/online-mba" className="hover:text-blue-400 transition-colors">Online MBA</Link></li>
-               <li><Link href="/online-mca" className="hover:text-blue-400 transition-colors">Online MCA</Link></li>
-               <li><Link href="/online-bba" className="hover:text-blue-400 transition-colors">Online BBA</Link></li>
-               <li><Link href="/online-bca" className="hover:text-blue-400 transition-colors">Online BCA</Link></li>
-             </ul>
-           </div>
-
-           <div className="space-y-4">
-             <h4 className="font-bold tracking-wider text-sm">Universities</h4>
-             <ul className="space-y-3 text-sm text-foreground/60">
-               <li><Link href="/universities" className="hover:text-blue-400 transition-colors">All Universities</Link></li>
-               <li><Link href="/universities/amity-online" className="hover:text-blue-400 transition-colors">Amity Online</Link></li>
-               <li><Link href="/universities/jain-online" className="hover:text-blue-400 transition-colors">Jain Online</Link></li>
-               <li><Link href="/universities/lpu-online" className="hover:text-blue-400 transition-colors">LPU Online</Link></li>
-             </ul>
-           </div>
-
-           <div className="space-y-4">
-             <h4 className="font-bold tracking-wider text-sm">Rankings</h4>
-             <ul className="space-y-3 text-sm text-foreground/60">
-               <li><Link href="/rankings/best-online-mba-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online MBA</Link></li>
-               <li><Link href="/rankings/best-online-mca-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online MCA</Link></li>
-               <li><Link href="/rankings/best-online-bba-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online BBA</Link></li>
-               <li><Link href="/rankings/best-online-bca-colleges-in-india-2026" className="hover:text-blue-400 transition-colors">Best Online BCA</Link></li>
-             </ul>
-           </div>
-
-           <div className="space-y-4">
-             <h4 className="font-bold tracking-wider text-sm">Resources</h4>
-             <ul className="space-y-3 text-sm text-foreground/60">
-               <li><Link href="/blog/ugc-deb-approved-online-universities-guide" className="hover:text-blue-400 transition-colors">UGC-DEB Guide</Link></li>
-               <li><Link href="/compare" className="hover:text-blue-400 transition-colors">Compare Tool</Link></li>
-               <li><Link href="/blog" className="hover:text-blue-400 transition-colors">Career Blog</Link></li>
-               <li><Link href="/faq" className="hover:text-blue-400 transition-colors">FAQs</Link></li>
-             </ul>
-           </div>
-
-           <div className="space-y-4">
-             <h4 className="font-bold tracking-wider text-sm">Company</h4>
-             <ul className="space-y-3 text-sm text-foreground/60">
-               <li><Link href="/faq" className="hover:text-blue-400 transition-colors">About Us</Link></li>
-               <li><Link href="/faq" className="hover:text-blue-400 transition-colors">Contact</Link></li>
-               <li><Link href="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
-               <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">LinkedIn</a></li>
-               <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Instagram</a></li>
-             </ul>
-           </div>
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5">
+          {FOOTER_LINKS.map((group) => (
+            <div key={group.title}>
+              <h3 className="text-sm font-black text-slate-900">{group.title}</h3>
+              <ul className="mt-4 space-y-3">
+                {group.links.map(([label, href]) => (
+                  <li key={label}>
+                    <Link href={href} className="text-sm font-medium text-slate-600 transition-colors hover:text-blue-600">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-foreground/40 gap-6 relative z-10">
-        <p>© 2026 CollegeVision AI. All rights strictly reserved.</p>
-        
-        <div className="flex flex-wrap items-center justify-center gap-6">
-           <button className="flex items-center gap-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white px-4 py-2 rounded-full border border-rose-500/20 transition-all font-black uppercase tracking-widest active:scale-95 group">
-              <AlertTriangle className="w-3.5 h-3.5 group-hover:animate-bounce" /> Report Spam Call
-           </button>
-           
-           <div className="flex gap-4 items-center">
-              <span>UGC Approved Data</span>
-              <span className="w-1 h-1 rounded-full bg-foreground/20 self-center" />
-              <span>100% Verified Reviews</span>
-           </div>
-        </div>
+      <div className="mx-auto mt-12 flex max-w-7xl flex-col gap-4 border-t border-slate-200 pt-8 text-sm font-medium text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <p>© 2026 CollegeVision. All rights reserved.</p>
+        <p>UGC approval data | Verified university profiles | Student-first comparisons</p>
       </div>
-
     </footer>
   );
 }

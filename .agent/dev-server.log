@@ -1,0 +1,24 @@
+
+> collegevision@0.1.0 dev
+> next dev --port 3000
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.31.203:3000
+- Environments: .env.local, .env
+
+✓ Starting...
+✓ Ready in 4.6s
+○ Compiling / ...
+ GET / 200 in 14.9s (compile: 13.8s, render: 1072ms)
+✓ Compiled in 1640ms
+ GET / 200 in 1780ms (compile: 1213ms, render: 566ms)
+ GET / 200 in 1841ms (compile: 131ms, render: 1710ms)
+ GET / 200 in 1101ms (compile: 42ms, render: 1059ms)
+ GET / 200 in 442ms (compile: 44ms, render: 398ms)
+✓ Compiled in 1567ms
+✓ Compiled in 868ms
+ GET / 200 in 3.4s (compile: 2.2s, render: 1196ms)
+ GET / 200 in 672ms (compile: 48ms, render: 623ms)
+✓ Compiled in 635ms
+ GET / 200 in 3.2s (compile: 1910ms, render: 1244ms)

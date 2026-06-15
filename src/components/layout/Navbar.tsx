@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ChevronDown, Sparkles, BarChart3, BookOpen, GraduationCap, LifeBuoy, Users, Info, Menu, X, ShieldCheck } from 'lucide-react';
+import { ChevronDown, BookOpen, GraduationCap, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
 
 const NAV_DATA = [
   { label: "Universities", href: "/universities" },
@@ -19,8 +18,7 @@ const NAV_DATA = [
   },
   { label: "Compare", href: "/compare" },
   { label: "Rankings", href: "/rankings" },
-  { label: "Guides", href: "/blog" },
-  { label: "About", href: "/faq" }
+  { label: "Resources", href: "/blog" }
 ];
 
 export default function Navbar() {
@@ -102,7 +100,7 @@ export default function Navbar() {
           <Link 
             href="/#search-section" 
             onClick={handleFindMatch}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 px-5 py-2.5 rounded-xl text-sm font-black transition-all active:scale-95 hover:shadow-emerald-500/30"
+            className="hidden sm:inline-flex bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 px-5 py-2.5 rounded-xl text-sm font-black transition-all active:scale-95 hover:shadow-blue-600/30"
           >
             Find My Match
           </Link>
@@ -173,7 +171,7 @@ export default function Navbar() {
                     setIsMobileMenuOpen(false);
                     handleFindMatch(e);
                   }}
-                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-center text-sm font-black active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-center text-sm font-black active:scale-[0.98] transition-all"
                 >
                   Find My Match
                 </Link>
