@@ -28,6 +28,17 @@
 }
 
 @theme {
+  --color-primary: #0f172a;
+  --color-secondary: #10b981;
+  --color-accent: #3b82f6;
+  --color-background-custom: #f8fafc;
+
+  --text-h1: 56px;
+  --text-h2: 40px;
+  --text-h3: 28px;
+  --text-body: 18px;
+  --text-small: 16px;
+
   --color-glass-bg: var(--glass-bg);
   --color-glass-border: var(--glass-border);
 
@@ -62,3 +73,14 @@
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
 }
+
+@utility section-spacing {
+  padding-top: 120px;
+  padding-bottom: 120px;
+}
+
+@utility section-padding-min {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+

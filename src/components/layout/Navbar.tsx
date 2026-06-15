@@ -7,39 +7,35 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
 
 const NAV_DATA = [
+  { label: "Universities", href: "/universities" },
   {
-    label: "PG Programs",
+    label: "Programs",
     links: [
       { label: "Online MBA", href: "/online-mba", icon: <GraduationCap className="w-4 h-4" /> },
       { label: "Online MCA", href: "/online-mca", icon: <GraduationCap className="w-4 h-4" /> },
-      { label: "Online M.Com", href: "/online-mcom", icon: <GraduationCap className="w-4 h-4" /> },
-      { label: "Online MA", href: "/online-ma", icon: <GraduationCap className="w-4 h-4" /> },
-    ]
-  },
-  {
-    label: "UG Programs",
-    links: [
       { label: "Online BBA", href: "/online-bba", icon: <BookOpen className="w-4 h-4" /> },
       { label: "Online BCA", href: "/online-bca", icon: <BookOpen className="w-4 h-4" /> },
-      { label: "Online B.Com", href: "/online-bcom", icon: <BookOpen className="w-4 h-4" /> },
-      { label: "Online BA", href: "/online-ba", icon: <BookOpen className="w-4 h-4" /> },
     ]
   },
-  {
-    label: "Tools",
-    links: [
-      { label: "ROI Calculator", href: "/#roi-calculator", icon: <BarChart3 className="w-4 h-4" /> },
-      { label: "UGC Scam Checker", href: "/scam-checker", icon: <ShieldCheck className="w-4 h-4" /> },
-      { label: "Comparison Tool", href: "/compare", icon: <BarChart3 className="w-4 h-4" /> },
-      { label: "Career Guides", href: "/blog", icon: <LifeBuoy className="w-4 h-4" /> },
-    ]
-  },
-  { label: "Universities", href: "/universities" }
+  { label: "Compare", href: "/compare" },
+  { label: "Rankings", href: "/rankings" },
+  { label: "Guides", href: "/blog" },
+  { label: "About", href: "/faq" }
 ];
 
 export default function Navbar() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleFindMatch = (e: React.MouseEvent) => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      e.preventDefault();
+      const el = document.getElementById('search-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
 
   return (
     <nav className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 h-16 flex items-center">
@@ -103,13 +99,13 @@ export default function Navbar() {
           <Link href="/signin" className="hidden sm:block text-sm font-bold text-slate-600 hover:text-blue-600">
             Sign In
           </Link>
-          <LeadCaptureModal 
-            trigger={
-              <button className="border-2 border-slate-900 group-hover:border-blue-600 bg-white text-slate-900 hover:text-blue-600 px-5 py-2.5 rounded-xl text-sm font-black transition-all active:scale-95">
-                Start Free
-              </button>
-            } 
-          />
+          <Link 
+            href="/#search-section" 
+            onClick={handleFindMatch}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 px-5 py-2.5 rounded-xl text-sm font-black transition-all active:scale-95 hover:shadow-emerald-500/30"
+          >
+            Find My Match
+          </Link>
           <button 
             className="lg:hidden p-2 text-slate-600"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -153,7 +149,7 @@ export default function Navbar() {
                     </div>
                   ) : (
                     <Link 
-                      href={item.label === "Universities" ? "/universities" : item.label === "Resources" ? "/blog" : "#"}
+                      href={item.href || "#"}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="text-lg font-black text-slate-900 active:text-blue-600 transition-colors"
                     >
@@ -171,13 +167,16 @@ export default function Navbar() {
                 >
                   Sign In
                 </Link>
-                <LeadCaptureModal 
-                  trigger={
-                    <button className="w-full py-4 border-2 border-slate-900 bg-white text-slate-900 rounded-2xl text-sm font-black active:scale-[0.98] transition-all">
-                      Start Free
-                    </button>
-                  } 
-                />
+                <Link 
+                  href="/#search-section" 
+                  onClick={(e) => {
+                    setIsMobileMenuOpen(false);
+                    handleFindMatch(e);
+                  }}
+                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-center text-sm font-black active:scale-[0.98] transition-all"
+                >
+                  Find My Match
+                </Link>
               </div>
             </div>
           </motion.div>

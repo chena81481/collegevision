@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { 
   Search, ShieldCheck, CheckCircle2, Lock, ArrowRight, Star, 
   GraduationCap, Info, Menu, X, Wallet, Target, Landmark, 
-  ArrowDown, ChevronLeft, ChevronRight, Heart, Sparkles, MessageCircle
+  ArrowDown, ChevronLeft, ChevronRight, Heart, Sparkles, MessageCircle,
+  TrendingUp, Check
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -18,9 +19,7 @@ import DynamicMatchSidebar from '@/components/features/DynamicMatchSidebar';
 import RealDataMatches from '@/components/features/RealDataMatches';
 import TopTrustRibbon from '@/components/layout/TopTrustRibbon';
 import Navbar from '@/components/layout/Navbar';
-import ContextualTrustBadges from '@/components/features/ContextualTrustBadges';
 import PartnerLogos from '@/components/features/PartnerLogos';
-import ExperienceJourney from '@/components/features/ExperienceJourney';
 import FunnelBreadcrumbs from '@/components/features/FunnelBreadcrumbs';
 import ComparisonBar from '@/components/features/ComparisonBar';
 import { LeadCaptureModal } from '@/components/features/LeadCaptureModal';
@@ -254,38 +253,191 @@ export default function CollegeVision() {
       </div>
       
 
-      {/* 1. HERO SECTION (Input Border Animation & Glows) */}
-      <section className="max-w-7xl mx-auto px-6 pt-16 lg:pt-24 pb-20 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative">
-        {/* Shared Background Connection Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-gradient-to-r from-blue-50/20 via-transparent to-blue-50/20 blur-3xl -z-10 pointer-events-none opacity-50" />
-        
-        {/* Subtle Background Gradient */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50/30 via-white to-white -z-20 pointer-events-none"></div>
+      {/* 1. HERO SECTION (Redesigned with beautiful glass card UI and clear value-focused copy) */}
+      <section className="max-w-7xl mx-auto px-6 pt-16 lg:pt-28 pb-20 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative">
+        {/* Glow Effects */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-gradient-to-r from-blue-50/10 via-transparent to-blue-50/10 blur-3xl -z-10 pointer-events-none opacity-40" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50/20 via-white to-white -z-20 pointer-events-none"></div>
 
-        <div className="flex-1 w-full space-y-8 z-10">
+        {/* Left Side: Headline, Subheading & CTAs */}
+        <div className="flex-1 w-full space-y-8 z-10 text-center lg:text-left">
           <div className="space-y-6">
-            <div className="flex flex-col items-center mb-6 lg:items-start text-center">
-              {/* The Rating Chip */}
-              <div className="mb-4 flex items-center gap-2 bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 shadow-sm w-fit">
-                <div className="flex text-yellow-500">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-current" />
-                  ))}
-                </div>
-                <span className="text-xs font-bold text-slate-700">4.8/5 (50K+ Users)</span>
-              </div>
-
-              <h1 className="text-5xl md:text-6xl lg:text-[68px] font-black tracking-tight text-slate-900 leading-[1.05] text-center lg:text-left">
-                Find the right <br className="hidden sm:block" />
-                online degree. <br />
-                <span className="text-slate-400 font-medium text-4xl md:text-5xl lg:text-6xl">
-                  Backed by <span className="text-slate-900 font-black relative inline-block">real ROI data.<div className="absolute bottom-1 left-0 w-full h-4 bg-blue-100/80 -z-10 rounded-sm"></div></span>
-                </span>
-              </h1>
-            </div>
+            <h1 className="text-h1 font-black tracking-tight text-slate-900 leading-[1.08] max-w-2xl mx-auto lg:mx-0">
+              Find the Best <br className="hidden sm:block" />
+              Online Degree <br />
+              <span className="text-blue-600">in 2 Minutes</span>
+            </h1>
+            <p className="text-body text-slate-600 font-medium max-w-lg mx-auto lg:mx-0 leading-relaxed">
+              Compare fees, ROI, placements, approvals and EMI options across 100+ universities.
+            </p>
           </div>
 
-          <div className="space-y-4 max-w-4xl relative">
+          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <button 
+              onClick={() => {
+                const el = document.getElementById('search-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 px-8 py-4 rounded-full font-black text-sm uppercase tracking-wider transition-all active:scale-95 text-center cursor-pointer"
+            >
+              Find My Match
+            </button>
+            <button 
+              onClick={() => {
+                const el = document.getElementById('colleges');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto border-2 border-slate-900 hover:bg-slate-50 text-slate-900 px-8 py-4 rounded-full font-black text-sm uppercase tracking-wider transition-all active:scale-95 text-center cursor-pointer"
+            >
+              Compare Universities
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side: Premium Glass Card Mockup */}
+        <div className="w-full max-w-md lg:max-w-none flex-1 flex justify-center relative">
+          <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/30 to-emerald-100/20 rounded-[3rem] -rotate-3 scale-105 -z-10" />
+          
+          <div className="w-full max-w-sm bg-white/70 backdrop-blur-md border border-white/60 shadow-2xl rounded-[2.5rem] p-6 relative overflow-hidden">
+            {/* Glowing backdrop elements inside the mockup */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-3xl" />
+
+            <div className="relative z-10 space-y-4">
+              {/* Mockup Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200/50">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Match Engine v2.4</p>
+                  <h3 className="text-sm font-black text-slate-900">Your Fit Rankings</h3>
+                </div>
+                <div className="bg-emerald-500/10 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5" /> 94% Top Match
+                </div>
+              </div>
+
+              {/* University Match 1 */}
+              <div className="bg-white/95 border border-slate-100 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center font-black text-orange-600 text-xs shrink-0">
+                    AMITY
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-900 text-xs">Amity Online</h4>
+                    <p className="text-[10px] text-slate-500 font-bold">Online MBA • UGC-DEB</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-xs font-black text-slate-900">94% Match</p>
+                    <p className="text-[9px] text-emerald-600 font-black uppercase">Top ROI</p>
+                  </div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+              </div>
+
+              {/* University Match 2 */}
+              <div className="bg-white/80 border border-slate-100/50 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center font-black text-blue-600 text-xs shrink-0">
+                    JAIN
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-900 text-xs">Jain University</h4>
+                    <p className="text-[10px] text-slate-500 font-bold">Online MBA • NAAC A+</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-xs font-black text-slate-900">91% Match</p>
+                    <p className="text-[9px] text-blue-600 font-black uppercase">0% EMI</p>
+                  </div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                </div>
+              </div>
+
+              {/* University Match 3 */}
+              <div className="bg-white/60 border border-slate-100/30 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center font-black text-red-600 text-xs shrink-0">
+                    LPU
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-900 text-xs">LPU Online</h4>
+                    <p className="text-[10px] text-slate-500 font-bold">Online MBA • AICTE</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-xs font-black text-slate-900">89% Match</p>
+                    <p className="text-[9px] text-slate-400 font-black uppercase">Budget-safe</p>
+                  </div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                </div>
+              </div>
+
+              {/* Mini analytics overlay chart mockup */}
+              <div className="bg-slate-900 text-white rounded-2xl p-4 flex items-center justify-between gap-4 shadow-lg">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[8px] text-slate-400 font-black uppercase tracking-wider">Salary Multiplier</p>
+                    <p className="text-xs font-black">1.8L Fee → <span className="text-emerald-400">12.5x ROI</span></p>
+                  </div>
+                </div>
+                <div className="flex items-end gap-1 h-8 shrink-0">
+                  <div className="w-1 h-3 bg-white/20 rounded-full" />
+                  <div className="w-1 h-5 bg-white/40 rounded-full" />
+                  <div className="w-1.5 h-7 bg-emerald-400 rounded-full animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. PARTNERS LOGO STRIP & SOCIAL PROOF NUMBERS */}
+      <section className="bg-slate-50/50 py-12 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400 text-center mb-6">Trusted University Partners</p>
+          <PartnerLogos />
+          
+          {/* Social Proof Stats Cards Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16 max-w-5xl mx-auto">
+            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm text-center">
+              <p className="text-3xl font-black text-slate-900">52,000+</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-2">Students Guided</p>
+            </div>
+            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm text-center">
+              <p className="text-3xl font-black text-slate-900">100+</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-2">Universities</p>
+            </div>
+            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm text-center">
+              <p className="text-3xl font-black text-slate-900">₹12 Cr+</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-2">Scholarships Tracked</p>
+            </div>
+            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm text-center">
+              <p className="text-3xl font-black text-slate-900">4.8 Rating</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-2">Verified Reviews</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. AI SEARCH SECTION (Relocated below Hero/Logos for better UX conversion) */}
+      <section id="search-section" className="bg-white section-spacing scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="text-h2 font-black text-slate-900 tracking-tight">
+              Tell the AI counselor what you want
+            </h2>
+            <p className="text-body text-slate-600 font-medium mt-3">
+              Type your degree level, target budget, and EMI preferences below to see immediate verified options.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto relative">
             <HeroSearch 
               setQuery={setSearchQuery}
               onSearch={handleSearch}
@@ -308,86 +460,59 @@ export default function CollegeVision() {
               />
             </div>
           </div>
-            
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 pl-1 sm:pl-5">
-            <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Takes 2 mins. AI Powered.
-            </p>
-          </div>
-
-          <ContextualTrustBadges />
-        </div>
-
-        {/* Right: The Dynamic Results Sidebar */}
-        <div className="w-full sm:w-[400px] lg:w-auto flex-1 relative group mt-8 lg:mt-0">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/50 to-slate-50 rounded-[4rem] -rotate-3 scale-105 -z-10 transition-transform duration-700 group-hover:rotate-0 group-hover:scale-100 hidden lg:block"></div>
-          <DynamicMatchSidebar 
-            isSearching={isLoading}
-            results={matchResults}
-            query={searchQuery}
-          />
         </div>
       </section>
 
-      <div className="bg-slate-50/50 py-8 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center mb-6">Our Official University Partners</p>
-          <PartnerLogos />
-        </div>
-      </div>
-
-      <section className="bg-white py-14 border-b border-slate-100">
+      {/* 4. POPULAR RESEARCH PATHS */}
+      <section className="bg-slate-50/50 py-16 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-8">
             <div className="max-w-3xl">
               <p className="text-[11px] font-black uppercase tracking-[0.24em] text-blue-600 mb-3">Popular Research Paths</p>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">Start from the page that matches your research intent.</h2>
-              <p className="mt-4 text-sm md:text-base leading-relaxed text-slate-600">
-                These pages are designed to become strong next-click destinations for students, parents, and search engines looking for clearer program and university journeys.
-              </p>
+              <h2 className="text-3xl font-black tracking-tight text-slate-900">Start from the page that matches your research intent.</h2>
             </div>
             <Link href="/universities" className="inline-flex items-center gap-2 text-sm font-black text-blue-600 hover:text-blue-700">
               Open university directory <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {[
               {
                 href: "/universities",
                 title: "University Directory",
-                body: "Browse verified university profile pages with cleaner detail routes.",
+                body: "Browse verified university profile pages.",
               },
               {
                 href: "/online-mba",
                 title: "Online MBA Comparison",
-                body: "Open one of the most competitive high-intent program category pages.",
+                body: "Open high-intent program category pages.",
               },
               {
                 href: "/online-mca",
                 title: "Online MCA Programs",
-                body: "Compare technical programs with fee and career context built in.",
+                body: "Compare technical programs with fee context.",
               },
               {
                 href: "/explore",
                 title: "Explore More Matches",
-                body: "Use broader discovery when you want to go beyond one category or budget view.",
+                body: "Go beyond one category or budget view.",
               },
               {
                 href: "/blog",
                 title: "Career Guides",
-                body: "Read decision guides on approvals, ROI, MBA, MCA and working-professional choices.",
+                body: "Read decision guides on approvals and ROI.",
               },
             ].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:bg-white hover:shadow-xl"
+                className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
               >
-                <p className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{item.body}</p>
-                <div className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-                  Open page <ArrowRight className="w-4 h-4" />
+                <p className="text-base font-black text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{item.body}</p>
+                <div className="mt-4 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-blue-600">
+                  Open page <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </Link>
             ))}
@@ -395,7 +520,7 @@ export default function CollegeVision() {
         </div>
       </section>
 
-      {/* 3. MATCHES — Outcome-Driven Redesign */}
+      {/* 5. MATCHES — Outcome-Driven Redesign */}
       <RealDataMatches 
         results={matchResults}
         parsedFilters={parsedFilters}
@@ -410,56 +535,7 @@ export default function CollegeVision() {
         selectedIds={selectedForComparison}
       />
 
-      {/* 2. THE BRAINS (Moved below matches for progressive disclosure) */}
-      <section id="features" className="bg-slate-50 pt-20 pb-16 border-y border-slate-100 relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-sm font-bold text-blue-600 tracking-wider uppercase mb-2">The Brains</h2>
-            <p className="text-2xl font-semibold text-slate-900">Tell the AI what matters to you.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="group bg-white border border-slate-200 border-l-4 border-l-teal-500 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-500/10 hover:bg-teal-50/30 transition-all duration-300 p-8 rounded-2xl cursor-pointer hover:-translate-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
-                <Wallet className="w-6 h-6 text-teal-600" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 mb-2">What's your budget?</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">Filter by total fees and highlight universities offering zero-cost EMI.</p>
-            </div>
-            
-            <div className="group bg-white border border-slate-200 border-l-4 border-l-orange-500 hover:border-orange-300 hover:shadow-xl hover:shadow-orange-500/10 hover:bg-orange-50/30 transition-all duration-300 p-8 rounded-2xl cursor-pointer hover:-translate-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
-                <Target className="w-6 h-6 text-orange-600" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 mb-2">What's your dream role?</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">Match with programs that have historical placement data in your target industry.</p>
-            </div>
-            
-            <div className="group bg-white border border-slate-200 border-l-4 border-l-purple-500 hover:border-purple-300 hover:shadow-xl hover:shadow-purple-500/10 hover:bg-purple-50/30 transition-all duration-300 p-8 rounded-2xl cursor-pointer hover:-translate-y-2 md:col-span-2 lg:col-span-1">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
-                <Landmark className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 mb-2">What approvals matter?</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">Strictly filter by UGC-DEB, AICTE, and NAAC A+ grades for safety.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-16 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="rounded-[2.5rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-8 md:p-10 text-white shadow-2xl">
-            <div className="max-w-3xl">
-              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-blue-300 mb-3">Decision Intelligence</p>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Transparent matching for high-stakes choices.</h2>
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-                CollegeVision now explains why a university fits, warns where it misses your constraints, and surfaces application-readiness context.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* 6. COMPARISON BAR */}
       <ComparisonBar 
         selectedCount={selectedForComparison.size}
         onCompare={async () => {
@@ -491,101 +567,148 @@ export default function CollegeVision() {
         onClear={() => setSelectedForComparison(new Set())}
       />
 
-      <ExperienceJourney />
-
-      {/* 5. SOCIAL PROOF & REAL CONVERSATIONS */}
-      <section className="py-24 bg-slate-50 border-y border-slate-100">
+      {/* 7. HEAD-TO-HEAD COMPARISON PREVIEW */}
+      <section className="bg-slate-50 border-y border-slate-100 section-spacing">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-[11px] font-black uppercase tracking-[0.24em] text-blue-600 mb-3">Real Trust, No Fluff</h2>
-            <p className="text-3xl md:text-5xl font-black tracking-tight text-slate-900">Why thousands are skipping <br /> agents and using CollegeVision.</p>
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full">Compare Head-to-Head</span>
+            <h2 className="text-h2 font-black text-slate-900 mt-6 tracking-tight">No Bias. Just Real Outcomes.</h2>
+            <p className="text-body text-slate-600 font-medium mt-3">See how popular universities rank side-by-side. Transparent fees, approvals, and placement multiplier.</p>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            {/* The Problem: Reddit/Quora Snippets */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                  <span className="text-red-600 font-bold text-xs">R/</span>
-                </div>
-                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">The Problem (From Reddit/Quora)</h3>
-              </div>
-              
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-slate-600 text-sm italic mb-4 leading-relaxed">
-                  "UGC-DEB just blacklisted 3 universities I was looking at. My agent didn't even know! Is there any site that actually tracks this live?"
-                </p>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
-                  <span>u/StudentLife_India</span> • <span>r/Indian_Academia</span>
-                </div>
+
+          <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 md:p-8 shadow-xl max-w-4xl mx-auto overflow-x-auto">
+            <div className="min-w-[500px]">
+              <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] gap-4 items-center border-b border-slate-100 pb-4">
+                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">Metrics</div>
+                <div className="font-black text-slate-900 text-center text-sm md:text-base">Amity University</div>
+                <div className="font-black text-slate-900 text-center text-sm md:text-base">Jain University</div>
               </div>
 
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-slate-600 text-sm italic mb-4 leading-relaxed">
-                  "Beware of 'Online Degree' ads on Instagram. Most are shell companies with zero placement data. They just want your registration fee."
-                </p>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
-                  <span>u/CareerAdvice_99</span> • <span>r/OnlineMBA</span>
-                </div>
+              <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] gap-4 items-center py-4 border-b border-slate-100">
+                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">Total Fee</div>
+                <div className="text-center text-sm font-bold text-slate-900">₹1,75,000</div>
+                <div className="text-center text-sm font-bold text-slate-900">₹1,50,000</div>
               </div>
 
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-orange-400">
-                <p className="text-slate-800 font-bold text-sm mb-2">💡 The Solution</p>
-                <p className="text-slate-600 text-xs">
-                  We verify approval status every 24 hours directly from government databases. No agents. No bias. Just data.
-                </p>
-              </div>
-            </div>
-
-            {/* The Evidence: WhatsApp Screenshots */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <span className="text-emerald-600 font-bold text-xs">WA</span>
-                </div>
-                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Real User Gratitude</h3>
+              <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] gap-4 items-center py-4 border-b border-slate-100">
+                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">Avg Salary</div>
+                <div className="text-center text-sm font-bold text-emerald-600">₹8.5 LPA</div>
+                <div className="text-center text-sm font-bold text-slate-700">₹6.5 LPA</div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg"
-                >
-                  <img src="/testimonials/whatsapp_1.png" alt="WhatsApp Testimonial" className="w-full h-auto" />
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg mt-4 sm:mt-8"
-                >
-                  <img src="/testimonials/whatsapp_2.png" alt="WhatsApp Testimonial" className="w-full h-auto" />
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  className="hidden sm:block rounded-3xl overflow-hidden border border-slate-200 shadow-lg sm:col-span-2 max-w-sm mx-auto"
-                >
-                  <img src="/testimonials/whatsapp_3.png" alt="WhatsApp Testimonial" className="w-full h-auto" />
-                </motion.div>
+              <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] gap-4 items-center py-4 border-b border-slate-100">
+                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">Projected ROI</div>
+                <div className="text-center text-sm font-black text-blue-600">13.5x Multiplier</div>
+                <div className="text-center text-sm font-black text-blue-600">12.0x Multiplier</div>
+              </div>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] gap-4 items-center py-4 border-b border-slate-100">
+                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">EMI Plan</div>
+                <div className="text-center text-sm text-emerald-600 font-bold">0% Interest</div>
+                <div className="text-center text-sm text-emerald-600 font-bold">0% Interest</div>
+              </div>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] gap-4 items-center pt-4">
+                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">Approvals</div>
+                <div className="text-center text-xs font-bold text-slate-500 bg-slate-50 py-1 rounded">UGC, NAAC A+</div>
+                <div className="text-center text-xs font-bold text-slate-500 bg-slate-50 py-1 rounded">UGC, AICTE</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. SOFTENED PRO SECTION */}
-      <section id="roi-calculator" className="py-12 bg-white pb-24">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="bg-slate-900 text-white rounded-[2.5rem] p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl overflow-hidden relative">
-            <div className="absolute -right-20 -top-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl"></div>
-            <div className="space-y-4 flex-1 z-10 text-center md:text-left">
-              <div className="text-blue-400 text-xs font-bold tracking-widest uppercase mb-2">Want deeper insights?</div>
-              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Advanced ROI analysis for parents & professionals.</h2>
-              <div className="flex flex-col sm:flex-row gap-4 text-sm text-slate-300 mt-6 justify-center md:justify-start">
-                <span className="flex items-center justify-center md:justify-start gap-2 bg-white/10 px-4 py-2 rounded-lg"><CheckCircle2 className="w-4 h-4 text-green-400"/> Break-even graphs</span>
-                <span className="flex items-center justify-center md:justify-start gap-2 bg-white/10 px-4 py-2 rounded-lg"><CheckCircle2 className="w-4 h-4 text-green-400"/> Historical placements</span>
+      {/* 8. REAL TESTIMONIALS (Replacing stock snippets and screenshots) */}
+      <section className="bg-white section-spacing">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3.5 py-1.5 rounded-full">Student Stories</span>
+            <h2 className="text-h2 font-black text-slate-900 mt-6 tracking-tight">Real Success, Real Savings</h2>
+            <p className="text-body text-slate-600 font-medium mt-3">Read how other professionals used CollegeVision to bypass brokers, analyze fees, and save on admission costs.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
+              <p className="text-slate-600 text-sm font-medium leading-relaxed italic">
+                "Found my MBA in 3 days and saved ₹85,000. The ROI comparison tool made the decision extremely simple. No spam calls or sales pressure."
+              </p>
+              <div className="flex items-center gap-3 mt-8">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-amber-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                  PS
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 leading-none">Priya Sharma</h4>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">Bangalore • Amity Online MBA</p>
+                </div>
               </div>
             </div>
-            <button className="whitespace-nowrap bg-white text-slate-900 px-8 py-4 rounded-full font-bold text-sm hover:bg-blue-50 transition-colors z-10 w-full md:w-auto hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-              Explore PRO Free
+
+            {/* Testimonial 2 */}
+            <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
+              <p className="text-slate-600 text-sm font-medium leading-relaxed italic">
+                "UGC credentials and approval checking is a lifesaver. I wanted to verify LPU Online approvals before signing up, and CollegeVision had live government data links updated."
+              </p>
+              <div className="flex items-center gap-3 mt-8">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                  RV
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 leading-none">Rohan Verma</h4>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">Mumbai • LPU Online MBA</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimonial 3 */}
+            <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
+              <p className="text-slate-600 text-sm font-medium leading-relaxed italic">
+                "Compared 3 universities side-by-side on total cost and monthly EMI. The zero-cost EMI plans let me pay without high upfront admission fee stress."
+              </p>
+              <div className="flex items-center gap-3 mt-8">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                  AR
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 leading-none">Aditi Rao</h4>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">Hyderabad • Jain Online MCA</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. STANDARDIZED CALL TO ACTION SECTION (No explore pro or secondary spam tags) */}
+      <section className="bg-slate-900 text-white relative overflow-hidden section-spacing">
+        {/* Glow decorative overlays */}
+        <div className="absolute -left-40 -top-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-40 -bottom-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10 space-y-8">
+          <h2 className="text-h2 font-black leading-tight tracking-tight">Ready to take the next step?</h2>
+          <p className="text-body text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            Get matched with the perfect online degree program in 2 minutes. Free consultation, verified ROI data, and spam-free direct admission routes.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 max-w-md mx-auto">
+            <button 
+              onClick={() => {
+                const el = document.getElementById('search-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-emerald-500/20 active:scale-95 hover:shadow-emerald-500/30 cursor-pointer"
+            >
+              Find My Best Degree Match
+            </button>
+            <button 
+              onClick={() => {
+                const el = document.getElementById('colleges');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto border-2 border-white/20 hover:border-white/50 text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-wider transition-all active:scale-95 cursor-pointer"
+            >
+              Compare Universities
             </button>
           </div>
         </div>
